@@ -1136,6 +1136,7 @@ static const struct {
 	{ "et131x", et131x_dump_regs },
 	{ "altera_tse", altera_tse_dump_regs },
 	{ "vmxnet3", vmxnet3_dump_regs },
+	{ "fjes", fjes_dump_regs },
 #endif
 };
 
