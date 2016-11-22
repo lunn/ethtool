@@ -2972,7 +2972,8 @@ static int do_sset(struct cmd_context *ctx)
 				fprintf(stderr,	"\n");
 			}
 			if (autoneg_wanted == AUTONEG_ENABLE &&
-			    advertising_wanted == NULL) {
+			    advertising_wanted == NULL &&
+			    full_advertising_wanted == NULL) {
 				unsigned int i;
 
 				/* Auto negotiation enabled, but with
