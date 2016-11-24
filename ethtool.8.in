@@ -340,6 +340,18 @@ ethtool \- query or control network driver and hardware settings
 .B2 tx-lpi on off
 .BN tx-timer
 .BN advertise
+.HP
+.B ethtool \-\-set\-phy\-tunable
+.I devname
+.RB [
+.B downshift
+.A1 on off
+.BN count
+.RB ]
+.HP
+.B ethtool \-\-get\-phy\-tunable
+.I devname
+.RB [ downshift ]
 .
 .\" Adjust lines (i.e. full justification) and hyphenate.
 .ad
@@ -946,6 +958,34 @@ Values are as for
 .BI tx-timer \ N
 Sets the amount of time the device should stay in idle mode prior to asserting
 its Tx LPI (in microseconds). This has meaning only when Tx LPI is enabled.
+.RE
+.TP
+.B \-\-set\-phy\-tunable
+Sets the PHY tunable parameters.
+.RS 4
+.TP
+.A2 downshift on off
+Specifies whether downshift should be enabled
+.TS
+nokeep;
+lB	l.
+.BI count \ N
+Sets the PHY downshift re-tries count.
+.TE
+.PD
+.RE
+.TP
+.B \-\-get\-phy\-tunable
+Gets the PHY tunable parameters.
+.RS 4
+.TP
+.B downshift
+For operation in cabling environments that are incompatible with 1000BASE-T,
+PHY device provides an automatic link speed downshift operation.
+Link speed downshift after N failed 1000BASE-T auto-negotiation attempts.
+Downshift is useful where cable does not have the 4 pairs instance.
+
+Gets the PHY downshift count/status.
 .RE
 .SH BUGS
 Not supported (in part or whole) on all network drivers.
