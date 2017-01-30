@@ -588,7 +588,9 @@ lB	l	lB.
 0x020	1000baseT Full
 0x20000	1000baseKX Full
 0x20000000000	1000baseX Full
-0x8000	2500baseX Full	(not supported by IEEE standards)
+0x800000000000  2500baseT Full
+0x8000	2500baseX Full	(not supported by IEEE standards)'
+0x1000000000000  5000baseT Full
 0x1000	10000baseT Full
 0x40000	10000baseKX4 Full
 0x80000	10000baseKR Full
