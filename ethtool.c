@@ -4792,10 +4792,10 @@ static const struct option {
 	{ "-T|--show-time-stamping", 1, do_tsinfo,
 	  "Show time stamping capabilities" },
 	{ "-x|--show-rxfh-indir|--show-rxfh", 1, do_grxfh,
-	  "Show Rx flow hash indirection and/or hash key" },
+	  "Show Rx flow hash indirection table and/or RSS hash key" },
 	{ "-X|--set-rxfh-indir|--rxfh", 1, do_srxfh,
-	  "Set Rx flow hash indirection and/or hash key",
-	  "		[ equal N | weight W0 W1 ... ]\n"
+	  "Set Rx flow hash indirection table and/or RSS hash key",
+	  "		[ equal N | weight W0 W1 ... | default ]\n"
 	  "		[ hkey %x:%x:%x:%x:%x:.... ]\n" },
 	{ "-f|--flash", 1, do_flash,
 	  "Flash firmware image from the specified file to a region on the device",
