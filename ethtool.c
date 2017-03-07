@@ -3644,6 +3644,35 @@ static int do_grxfhindir(struct cmd_context *ctx,
 	return 0;
 }
 
+static void print_grxfh_hfunc(struct cmd_context *ctx, __u8 hfunc)
+{
+	unsigned int func_id = ffs(hfunc) - 1;
+	struct ethtool_gstrings *strings;
+
+	printf("RSS hash function: ");
+	if (!hfunc) {
+		printf("unknown\n");
+		return;
+	}
+
+	strings = get_stringset(ctx, ETH_SS_RSS_HASH_FUNCS, 0, 1);
+	if (!strings) {
+		if (errno != EOPNOTSUPP)
+			printf("%s\n", strerror(errno));
+		else
+			printf("unnamed (%d)\n", func_id);
+		return;
+	}
+
+	if (func_id < strings->len)
+		printf("%s\n",
+		       (char *)strings->data + func_id * ETH_GSTRING_LEN);
+	else
+		printf("unnamed (%d)\n", func_id);
+
+	free(strings);
+}
+
 static int do_grxfh(struct cmd_context *ctx)
 {
 	struct ethtool_rxfh rss_head = {0};
@@ -3688,6 +3717,8 @@ static int do_grxfh(struct cmd_context *ctx)
 	}
 
 	print_indir_table(ctx, &ring_count, rss->indir_size, rss->rss_config);
+
+	print_grxfh_hfunc(ctx, rss->hfunc);
 
 	indir_bytes = rss->indir_size * sizeof(rss->rss_config[0]);
 	hkey = ((char *)rss->rss_config + indir_bytes);
