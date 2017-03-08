@@ -301,6 +301,8 @@ ethtool \- query or control network driver and hardware settings
 .BI weight\  W0
 .IR W1
 .RB ...\ | \ default \ ]
+.RB [ hfunc
+.IR FUNC ]
 .HP
 .B ethtool \-f|\-\-flash
 .I devname file
@@ -873,6 +875,10 @@ Configures the receive flow hash indirection table and/or RSS hash key.
 Sets RSS hash key of the specified network device. RSS hash key should be of device supported length.
 Hash key format must be in xx:yy:zz:aa:bb:cc format meaning both the nibbles of a byte should be mentioned
 even if a nibble is zero.
+.TP
+.BI hfunc
+Sets RSS hash function of the specified network device.
+List of RSS hash functions which kernel supports is shown as a part of the --show-rxfh command output.
 .TP
 .BI equal\  N
 Sets the receive flow hash indirection table to spread flows evenly
