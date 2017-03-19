@@ -137,9 +137,9 @@ static void sff8079_show_transceiver(const __u8 *id)
 	if (id[8] & (1 << 4))
 		printf("%s FC: Longwave laser (LL)\n", pfx);
 	if (id[8] & (1 << 3))
-		printf("%s FC: Copper Active\n", pfx);
+		printf("%s Active Cable\n", pfx);
 	if (id[8] & (1 << 2))
-		printf("%s FC: Copper Passive\n", pfx);
+		printf("%s Passive Cable\n", pfx);
 	if (id[8] & (1 << 1))
 		printf("%s FC: Copper FC-BaseT\n", pfx);
 	/* Fibre Channel transmission media */
