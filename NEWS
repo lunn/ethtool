@@ -1,3 +1,10 @@
+Version 4.10 - March 24, 2016
+
+	* Fix: Fix the "advertise" parameter logic.
+	* Feature: Implement ETHTOOL_PHY_GTUNABLE/ETHTOOL_PHY_STUNABLE and PHY downshift
+	* Feature: add register dump support for fjes driver (-d option)
+
+
 Version 4.8 - October 3, 2016
 
 	* Feature: QSFP Plus/QSFP28 Diagnostics Information Support
