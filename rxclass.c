@@ -247,11 +247,19 @@ static void rxclass_print_nfc_rule(struct ethtool_rx_flow_spec *fsp)
 
 	rxclass_print_nfc_spec_ext(fsp);
 
-	if (fsp->ring_cookie != RX_CLS_FLOW_DISC)
-		fprintf(stdout, "\tAction: Direct to queue %llu\n",
-			fsp->ring_cookie);
-	else
+	if (fsp->ring_cookie != RX_CLS_FLOW_DISC) {
+		u64 vf = ethtool_get_flow_spec_ring_vf(fsp->ring_cookie);
+		u64 queue = ethtool_get_flow_spec_ring(fsp->ring_cookie);
+
+		if (vf)
+			fprintf(stdout, "\tAction: Direct to queue %llu\n",
+				queue);
+		else
+			fprintf(stdout, "\tAction: Direct to VF %llu queue %llu\n",
+				vf, queue);
+	} else {
 		fprintf(stdout, "\tAction: Drop\n");
+	}
 
 	fprintf(stdout, "\n");
 }
@@ -600,6 +608,8 @@ typedef enum {
 	OPT_U16,
 	OPT_U32,
 	OPT_U64,
+	OPT_RING_VF,
+	OPT_RING_QUEUE,
 	OPT_BE16,
 	OPT_BE32,
 	OPT_BE64,
@@ -608,19 +618,21 @@ typedef enum {
 	OPT_MAC,
 } rule_opt_type_t;
 
-#define NFC_FLAG_RING		0x001
-#define NFC_FLAG_LOC		0x002
-#define NFC_FLAG_SADDR		0x004
-#define NFC_FLAG_DADDR		0x008
-#define NFC_FLAG_SPORT		0x010
-#define NFC_FLAG_DPORT		0x020
-#define NFC_FLAG_SPI		0x030
-#define NFC_FLAG_TOS		0x040
-#define NFC_FLAG_PROTO		0x080
-#define NTUPLE_FLAG_VLAN	0x100
-#define NTUPLE_FLAG_UDEF	0x200
-#define NTUPLE_FLAG_VETH	0x400
-#define NFC_FLAG_MAC_ADDR	0x800
+#define NFC_FLAG_RING		0x0001
+#define NFC_FLAG_LOC		0x0002
+#define NFC_FLAG_SADDR		0x0004
+#define NFC_FLAG_DADDR		0x0008
+#define NFC_FLAG_SPORT		0x0010
+#define NFC_FLAG_DPORT		0x0020
+#define NFC_FLAG_SPI		0x0030
+#define NFC_FLAG_TOS		0x0040
+#define NFC_FLAG_PROTO		0x0080
+#define NTUPLE_FLAG_VLAN	0x0100
+#define NTUPLE_FLAG_UDEF	0x0200
+#define NTUPLE_FLAG_VETH	0x0400
+#define NFC_FLAG_MAC_ADDR	0x0800
+#define NFC_FLAG_RING_VF	0x1000
+#define NFC_FLAG_RING_QUEUE	0x2000
 
 struct rule_opts {
 	const char	*name;
@@ -647,6 +659,10 @@ static const struct rule_opts rule_nfc_tcp_ip4[] = {
 	  offsetof(struct ethtool_rx_flow_spec, h_u.tcp_ip4_spec.pdst),
 	  offsetof(struct ethtool_rx_flow_spec, m_u.tcp_ip4_spec.pdst) },
 	{ "action", OPT_U64, NFC_FLAG_RING,
+	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
+	{ "vf", OPT_RING_VF, NFC_FLAG_RING_VF,
+	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
+	{ "queue", OPT_RING_QUEUE, NFC_FLAG_RING_QUEUE,
 	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
 	{ "loc", OPT_U32, NFC_FLAG_LOC,
 	  offsetof(struct ethtool_rx_flow_spec, location), -1 },
@@ -678,6 +694,10 @@ static const struct rule_opts rule_nfc_esp_ip4[] = {
 	  offsetof(struct ethtool_rx_flow_spec, h_u.esp_ip4_spec.spi),
 	  offsetof(struct ethtool_rx_flow_spec, m_u.esp_ip4_spec.spi) },
 	{ "action", OPT_U64, NFC_FLAG_RING,
+	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
+	{ "vf", OPT_RING_VF, NFC_FLAG_RING_VF,
+	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
+	{ "queue", OPT_RING_QUEUE, NFC_FLAG_RING_QUEUE,
 	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
 	{ "loc", OPT_U32, NFC_FLAG_LOC,
 	  offsetof(struct ethtool_rx_flow_spec, location), -1 },
@@ -722,6 +742,10 @@ static const struct rule_opts rule_nfc_usr_ip4[] = {
 	  offsetof(struct ethtool_rx_flow_spec, m_u.usr_ip4_spec.l4_4_bytes) + 2 },
 	{ "action", OPT_U64, NFC_FLAG_RING,
 	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
+	{ "vf", OPT_RING_VF, NFC_FLAG_RING_VF,
+	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
+	{ "queue", OPT_RING_QUEUE, NFC_FLAG_RING_QUEUE,
+	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
 	{ "loc", OPT_U32, NFC_FLAG_LOC,
 	  offsetof(struct ethtool_rx_flow_spec, location), -1 },
 	{ "vlan-etype", OPT_BE16, NTUPLE_FLAG_VETH,
@@ -756,6 +780,10 @@ static const struct rule_opts rule_nfc_tcp_ip6[] = {
 	  offsetof(struct ethtool_rx_flow_spec, m_u.tcp_ip6_spec.pdst) },
 	{ "action", OPT_U64, NFC_FLAG_RING,
 	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
+	{ "vf", OPT_RING_VF, NFC_FLAG_RING_VF,
+	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
+	{ "queue", OPT_RING_QUEUE, NFC_FLAG_RING_QUEUE,
+	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
 	{ "loc", OPT_U32, NFC_FLAG_LOC,
 	  offsetof(struct ethtool_rx_flow_spec, location), -1 },
 	{ "vlan-etype", OPT_BE16, NTUPLE_FLAG_VETH,
@@ -786,6 +814,10 @@ static const struct rule_opts rule_nfc_esp_ip6[] = {
 	  offsetof(struct ethtool_rx_flow_spec, h_u.esp_ip6_spec.spi),
 	  offsetof(struct ethtool_rx_flow_spec, m_u.esp_ip6_spec.spi) },
 	{ "action", OPT_U64, NFC_FLAG_RING,
+	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
+	{ "vf", OPT_RING_VF, NFC_FLAG_RING_VF,
+	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
+	{ "queue", OPT_RING_QUEUE, NFC_FLAG_RING_QUEUE,
 	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
 	{ "loc", OPT_U32, NFC_FLAG_LOC,
 	  offsetof(struct ethtool_rx_flow_spec, location), -1 },
@@ -830,6 +862,10 @@ static const struct rule_opts rule_nfc_usr_ip6[] = {
 	  offsetof(struct ethtool_rx_flow_spec, m_u.usr_ip6_spec.l4_4_bytes) + 2 },
 	{ "action", OPT_U64, NFC_FLAG_RING,
 	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
+	{ "vf", OPT_RING_VF, NFC_FLAG_RING_VF,
+	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
+	{ "queue", OPT_RING_QUEUE, NFC_FLAG_RING_QUEUE,
+	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
 	{ "loc", OPT_U32, NFC_FLAG_LOC,
 	  offsetof(struct ethtool_rx_flow_spec, location), -1 },
 	{ "vlan-etype", OPT_BE16, NTUPLE_FLAG_VETH,
@@ -857,6 +893,10 @@ static const struct rule_opts rule_nfc_ether[] = {
 	  offsetof(struct ethtool_rx_flow_spec, h_u.ether_spec.h_proto),
 	  offsetof(struct ethtool_rx_flow_spec, m_u.ether_spec.h_proto) },
 	{ "action", OPT_U64, NFC_FLAG_RING,
+	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
+	{ "vf", OPT_RING_VF, NFC_FLAG_RING_VF,
+	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
+	{ "queue", OPT_RING_QUEUE, NFC_FLAG_RING_QUEUE,
 	  offsetof(struct ethtool_rx_flow_spec, ring_cookie), -1 },
 	{ "loc", OPT_U32, NFC_FLAG_LOC,
 	  offsetof(struct ethtool_rx_flow_spec, location), -1 },
@@ -1000,6 +1040,24 @@ static int rxclass_get_val(char *str, unsigned char *p, u32 *flags,
 		*(u64 *)&p[opt->offset] = (u64)val;
 		if (opt->moffset >= 0)
 			*(u64 *)&p[opt->moffset] = (u64)mask;
+		break;
+	}
+	case OPT_RING_VF: {
+		unsigned long long val;
+		err = rxclass_get_ulong(str, &val, 8);
+		if (err)
+			return -1;
+		*(u64 *)&p[opt->offset] &= ~ETHTOOL_RX_FLOW_SPEC_RING_VF;
+		*(u64 *)&p[opt->offset] = (u64)val << ETHTOOL_RX_FLOW_SPEC_RING_VF_OFF;
+		break;
+	}
+	case OPT_RING_QUEUE: {
+		unsigned long long val;
+		err = rxclass_get_ulong(str, &val, 32);
+		if (err)
+			return -1;
+		*(u64 *)&p[opt->offset] &= ~ETHTOOL_RX_FLOW_SPEC_RING;
+		*(u64 *)&p[opt->offset] |= (u64)val;
 		break;
 	}
 	case OPT_BE16: {
@@ -1318,6 +1376,16 @@ int rxclass_parse_ruleopts(struct cmd_context *ctx,
 				argp[i]);
 			return -1;
 		}
+	}
+
+	if ((flags & NFC_FLAG_RING) && (flags & NFC_FLAG_RING_QUEUE)) {
+		fprintf(stderr, "action and queue are not compatible\n");
+			return -1;
+	}
+
+	if ((flags & NFC_FLAG_RING) && (flags & NFC_FLAG_RING_VF)) {
+		fprintf(stderr, "action and vf are not compatible\n");
+			return -1;
 	}
 
 	if (flow_type == IPV4_USER_FLOW)

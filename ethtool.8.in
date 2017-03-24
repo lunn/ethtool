@@ -833,6 +833,13 @@ lB	l.
 0 or higher	Rx queue to route the flow
 .TE
 .TP
+.BI vf \ N
+Specifies the Virtual Function the filter applies to. A value of 0 indicates
+the PF, and thus the VF index is offset by 1. Not compatible with action.
+.TP
+.BI queue \ N
+Specifies the Rx queue to send packets to. Not compatible with action.
+.TP
 .BI loc \ N
 Specify the location/ID to insert the rule. This will overwrite
 any rule present in that location and will not go through any
