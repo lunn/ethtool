@@ -863,8 +863,7 @@ Show the device's time stamping capabilities and associated PTP
 hardware clock.
 .TP
 .B \-x \-\-show\-rxfh\-indir \-\-show\-rxfh
-Retrieves the receive flow hash indirection table, hash function and RSS hash
-key.
+Retrieves the receive flow hash indirection table and/or RSS hash key.
 .TP
 .B \-X \-\-set\-rxfh\-indir \-\-rxfh
 Configures the receive flow hash indirection table and/or RSS hash key.
