@@ -1589,7 +1589,7 @@ static char *tx_type_labels[N_TX_TYPES] = {
 	"one-step-sync         (HWTSTAMP_TX_ONESTEP_SYNC)",
 };
 
-#define N_RX_FILTERS (HWTSTAMP_FILTER_PTP_V2_DELAY_REQ + 1)
+#define N_RX_FILTERS (HWTSTAMP_FILTER_NTP_ALL + 1)
 
 static char *rx_filter_labels[N_RX_FILTERS] = {
 	"none                  (HWTSTAMP_FILTER_NONE)",
@@ -1607,6 +1607,7 @@ static char *rx_filter_labels[N_RX_FILTERS] = {
 	"ptpv2-event           (HWTSTAMP_FILTER_PTP_V2_EVENT)",
 	"ptpv2-sync            (HWTSTAMP_FILTER_PTP_V2_SYNC)",
 	"ptpv2-delay-req       (HWTSTAMP_FILTER_PTP_V2_DELAY_REQ)",
+	"ntp-all               (HWTSTAMP_FILTER_NTP_ALL)",
 };
 
 static int dump_tsinfo(const struct ethtool_ts_info *info)
