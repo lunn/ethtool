@@ -1,4 +1,11 @@
-Version 4.10 - March 24, 2016
+Version 4.11 - June 2, 2017
+	* Feature: Support for configurable RSS hash function
+	* Feature: support queue and VF fields for rxclass filters
+	* Feature: Add support for 2500baseT/5000baseT link modes
+	* Fix: Fix SFF 8079 cable technology bit parsing
+	* Fix: sync help output for -x/-X with man page
+
+Version 4.10 - March 24, 2017
 
 	* Fix: Fix the "advertise" parameter logic.
 	* Feature: Implement ETHTOOL_PHY_GTUNABLE/ETHTOOL_PHY_STUNABLE and PHY downshift
