@@ -16,7 +16,7 @@
 
 #define MAC100_DMA_REG_NUM	9
 #define GMAC_REG_NUM		55
-#define GMAC_DMA_REG_NUM	22
+#define GMAC_DMA_REG_NUM	23
 
 int st_mac100_dump_regs(struct ethtool_drvinfo *info,
 			struct ethtool_regs *regs)
