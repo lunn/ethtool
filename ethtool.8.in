@@ -165,6 +165,7 @@ ethtool \- query or control network driver and hardware settings
 .BN tx\-usecs\-high
 .BN tx\-frames\-high
 .BN sample\-interval
+.BN dmac
 .HP
 .B ethtool \-g|\-\-show\-ring
 .I devname
