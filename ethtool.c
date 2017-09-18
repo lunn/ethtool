@@ -2192,6 +2192,10 @@ get_features(struct cmd_context *ctx, const struct feature_defs *defs)
 		eval.cmd = off_flag_def[i].get_cmd;
 		err = send_ioctl(ctx, &eval);
 		if (err) {
+			if (errno == EOPNOTSUPP &&
+			    off_flag_def[i].get_cmd == ETHTOOL_GUFO)
+				continue;
+
 			fprintf(stderr,
 				"Cannot get device %s settings: %m\n",
 				off_flag_def[i].long_name);
