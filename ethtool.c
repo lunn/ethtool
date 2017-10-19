@@ -1997,12 +1997,12 @@ static int do_schannels(struct cmd_context *ctx)
 			&changed);
 
 	if (!changed) {
-		fprintf(stderr, "no channel parameters changed, aborting\n");
+		fprintf(stderr, "no channel parameters changed.\n");
 		fprintf(stderr, "current values: rx %u tx %u other %u"
 			" combined %u\n", echannels.rx_count,
 			echannels.tx_count, echannels.other_count,
 			echannels.combined_count);
-		return 1;
+		return 0;
 	}
 
 	echannels.cmd = ETHTOOL_SCHANNELS;
