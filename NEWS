@@ -1,4 +1,17 @@
+Version 4.13 - October 27, 2017
+
+	* Fix: Do not return error code if no changes were attempted.
+	* Fix: Fix formatting of advertise bitmask
+	* Feature: Document 56000 advertise link modes
+	* Fix: fix the rx vs tx mixup in set channel message
+	* Feature: add support for HWTSTAMP_FILTER_NTP_ALL
+	* Feature: Add DMA Coalescing support
+	* Feature: Remove UDP Fragmentation Offload error prints
+	* Feature: stmmac: Add macros for number of registers
+	* Feature: stmmac: Add DMA HW Feature Register
+
 Version 4.11 - June 2, 2017
+
 	* Feature: Support for configurable RSS hash function
 	* Feature: support queue and VF fields for rxclass filters
 	* Feature: Add support for 2500baseT/5000baseT link modes
@@ -10,7 +23,6 @@ Version 4.10 - March 24, 2017
 	* Fix: Fix the "advertise" parameter logic.
 	* Feature: Implement ETHTOOL_PHY_GTUNABLE/ETHTOOL_PHY_STUNABLE and PHY downshift
 	* Feature: add register dump support for fjes driver (-d option)
-
 
 Version 4.8 - October 3, 2016
 
