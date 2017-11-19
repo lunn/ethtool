@@ -40,10 +40,10 @@ static void sff8079_show_transceiver(const __u8 *id)
 		"\tTransceiver type                          :";
 
 	printf("\t%-41s : 0x%02x 0x%02x 0x%02x " \
-	       "0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+	       "0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
 		   "Transceiver codes",
 	       id[3], id[4], id[5], id[6],
-	       id[7], id[8], id[9], id[10]);
+	       id[7], id[8], id[9], id[10], id[36]);
 	/* 10G Ethernet Compliance Codes */
 	if (id[3] & (1 << 7))
 		printf("%s 10G Ethernet: 10G Base-ER" \
@@ -168,6 +168,27 @@ static void sff8079_show_transceiver(const __u8 *id)
 		printf("%s FC: 200 MBytes/sec\n", pfx);
 	if (id[10] & (1 << 0))
 		printf("%s FC: 100 MBytes/sec\n", pfx);
+	/* Extended Specification Compliance Codes from SFF-8024 */
+	if (id[36] == 0x1)
+		printf("%s Extended: 100G AOC or 25GAUI C2M AOC with worst BER of 5x10^(-5)\n", pfx);
+	if (id[36] == 0x2)
+		printf("%s Extended: 100G Base-SR4 or 25GBase-SR\n", pfx);
+	if (id[36] == 0x3)
+		printf("%s Extended: 100G Base-LR4 or 25GBase-LR\n", pfx);
+	if (id[36] == 0x4)
+		printf("%s Extended: 100G Base-ER4 or 25GBase-ER\n", pfx);
+	if (id[36] == 0x8)
+		printf("%s Extended: 100G ACC or 25GAUI C2M ACC with worst BER of 5x10^(-5)\n", pfx);
+	if (id[36] == 0xb)
+		printf("%s Extended: 100G Base-CR4 or 25G Base-CR CA-L\n", pfx);
+	if (id[36] == 0xc)
+		printf("%s Extended: 25G Base-CR CA-S\n", pfx);
+	if (id[36] == 0xd)
+		printf("%s Extended: 25G Base-CR CA-N\n", pfx);
+	if (id[36] == 0x18)
+		printf("%s Extended: 100G AOC or 25GAUI C2M AOC with worst BER of 10^(-12)\n", pfx);
+	if (id[36] == 0x19)
+		printf("%s Extended: 100G ACC or 25GAUI C2M ACC with worst BER of 10^(-12)\n", pfx);
 }
 
 static void sff8079_show_encoding(const __u8 *id)
