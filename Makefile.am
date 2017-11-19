@@ -6,7 +6,9 @@ EXTRA_DIST = LICENSE ethtool.8 ethtool.spec.in aclocal.m4 ChangeLog autogen.sh
 
 sbin_PROGRAMS = ethtool
 ethtool_SOURCES = ethtool.c uapi/linux/ethtool.h internal.h \
-		  uapi/linux/net_tstamp.h rxclass.c
+		  uapi/linux/net_tstamp.h rxclass.c common.c common.h
+ethtool_CFLAGS = $(AM_CFLAGS)
+ethtool_LDADD = $(LDADD)
 if ETHTOOL_ENABLE_PRETTY_DUMP
 ethtool_SOURCES += \
 		  amd8111e.c de2104x.c dsa.c e100.c e1000.c et131x.c igb.c	\
@@ -22,12 +24,23 @@ bashcompletiondir = $(BASH_COMPLETION_DIR)
 dist_bashcompletion_DATA = shell-completion/bash/ethtool
 endif
 
+if ETHTOOL_ENABLE_NETLINK
+ethtool_SOURCES += \
+		  netlink/netlink.c netlink/netlink.h netlink/extapi.h \
+		  uapi/linux/ethtool_netlink.h \
+		  uapi/linux/netlink.h uapi/linux/genetlink.h
+ethtool_CFLAGS += @MNL_CFLAGS@
+ethtool_LDADD += @MNL_LIBS@
+endif
+
 TESTS = test-cmdline test-features
 check_PROGRAMS = test-cmdline test-features
 test_cmdline_SOURCES = test-cmdline.c test-common.c $(ethtool_SOURCES) 
-test_cmdline_CFLAGS = $(AM_FLAGS) -DTEST_ETHTOOL
+test_cmdline_CFLAGS = $(ethtool_CFLAGS) -DTEST_ETHTOOL
+test_cmdline_LDADD = $(ethtool_LDADD)
 test_features_SOURCES = test-features.c test-common.c $(ethtool_SOURCES) 
-test_features_CFLAGS = $(AM_FLAGS) -DTEST_ETHTOOL
+test_features_CFLAGS = $(ethtool_CFLAGS) -DTEST_ETHTOOL
+test_features_LDADD = $(ethtool_LDADD)
 
 dist-hook:
 	cp $(top_srcdir)/ethtool.spec $(distdir)

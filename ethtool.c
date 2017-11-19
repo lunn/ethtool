@@ -30,6 +30,7 @@
  */
 
 #include "internal.h"
+#include "common.h"
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -47,6 +48,10 @@
 
 #include <linux/sockios.h>
 #include <linux/netlink.h>
+
+#ifdef ETHTOOL_ENABLE_NETLINK
+#include "netlink/extapi.h"
+#endif
 
 #ifndef MAX_ADDR_LEN
 #define MAX_ADDR_LEN	32
@@ -75,8 +80,6 @@ enum {
 #ifndef NETLINK_GENERIC
 #define NETLINK_GENERIC	16
 #endif
-
-#define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
 
 static void exit_bad_args(void) __attribute__((noreturn));
 
@@ -5188,14 +5191,22 @@ int send_ioctl(struct cmd_context *ctx, void *cmd)
 
 static int show_usage(struct cmd_context *ctx);
 
+#ifndef ETHTOOL_ENABLE_NETLINK
+/* Just define all netlink handlers as null when building without netlink
+ * support so that we do not get unresolved symbols in args array below
+ */
+#endif
+
 static const struct option {
 	const char *opts;
 	int want_device;
 	int (*func)(struct cmd_context *);
+	int (*nl_func)(struct cmd_context *);
 	char *help;
 	char *opthelp;
 } args[] = {
-	{ "-s|--change", 1, do_sset, "Change generic options",
+	{ "-s|--change", 1, do_sset, NULL,
+	  "Change generic options",
 	  "		[ speed %d ]\n"
 	  "		[ duplex half|full ]\n"
 	  "		[ port tp|aui|bnc|mii|fibre ]\n"
@@ -5207,13 +5218,17 @@ static const struct option {
 	  "		[ wol p|u|m|b|a|g|s|f|d... ]\n"
 	  "		[ sopass %x:%x:%x:%x:%x:%x ]\n"
 	  "		[ msglvl %d | msglvl type on|off ... ]\n" },
-	{ "-a|--show-pause", 1, do_gpause, "Show pause options" },
-	{ "-A|--pause", 1, do_spause, "Set pause options",
+	{ "-a|--show-pause", 1, do_gpause, NULL,
+	  "Show pause options" },
+	{ "-A|--pause", 1, do_spause, NULL,
+	  "Set pause options",
 	  "		[ autoneg on|off ]\n"
 	  "		[ rx on|off ]\n"
 	  "		[ tx on|off ]\n" },
-	{ "-c|--show-coalesce", 1, do_gcoalesce, "Show coalesce options" },
-	{ "-C|--coalesce", 1, do_scoalesce, "Set coalesce options",
+	{ "-c|--show-coalesce", 1, do_gcoalesce, NULL,
+	  "Show coalesce options" },
+	{ "-C|--coalesce", 1, do_scoalesce, NULL,
+	  "Set coalesce options",
 	  "		[adaptive-rx on|off]\n"
 	  "		[adaptive-tx on|off]\n"
 	  "		[rx-usecs N]\n"
@@ -5236,46 +5251,54 @@ static const struct option {
 	  "		[tx-usecs-high N]\n"
 	  "		[tx-frames-high N]\n"
 	  "		[sample-interval N]\n" },
-	{ "-g|--show-ring", 1, do_gring, "Query RX/TX ring parameters" },
-	{ "-G|--set-ring", 1, do_sring, "Set RX/TX ring parameters",
+	{ "-g|--show-ring", 1, do_gring, NULL,
+	  "Query RX/TX ring parameters" },
+	{ "-G|--set-ring", 1, do_sring, NULL,
+	  "Set RX/TX ring parameters",
 	  "		[ rx N ]\n"
 	  "		[ rx-mini N ]\n"
 	  "		[ rx-jumbo N ]\n"
 	  "		[ tx N ]\n" },
-	{ "-k|--show-features|--show-offload", 1, do_gfeatures,
+	{ "-k|--show-features|--show-offload", 1, do_gfeatures, NULL,
 	  "Get state of protocol offload and other features" },
-	{ "-K|--features|--offload", 1, do_sfeatures,
+	{ "-K|--features|--offload", 1, do_sfeatures, NULL,
 	  "Set protocol offload and other features",
 	  "		FEATURE on|off ...\n" },
-	{ "-i|--driver", 1, do_gdrv, "Show driver information" },
-	{ "-d|--register-dump", 1, do_gregs, "Do a register dump",
+	{ "-i|--driver", 1, do_gdrv, NULL,
+	  "Show driver information" },
+	{ "-d|--register-dump", 1, do_gregs, NULL,
+	  "Do a register dump",
 	  "		[ raw on|off ]\n"
 	  "		[ file FILENAME ]\n" },
-	{ "-e|--eeprom-dump", 1, do_geeprom, "Do a EEPROM dump",
+	{ "-e|--eeprom-dump", 1, do_geeprom, NULL,
+	  "Do a EEPROM dump",
 	  "		[ raw on|off ]\n"
 	  "		[ offset N ]\n"
 	  "		[ length N ]\n" },
-	{ "-E|--change-eeprom", 1, do_seeprom,
+	{ "-E|--change-eeprom", 1, do_seeprom, NULL,
 	  "Change bytes in device EEPROM",
 	  "		[ magic N ]\n"
 	  "		[ offset N ]\n"
 	  "		[ length N ]\n"
 	  "		[ value N ]\n" },
-	{ "-r|--negotiate", 1, do_nway_rst, "Restart N-WAY negotiation" },
-	{ "-p|--identify", 1, do_phys_id,
+	{ "-r|--negotiate", 1, do_nway_rst, NULL,
+	  "Restart N-WAY negotiation" },
+	{ "-p|--identify", 1, do_phys_id, NULL,
 	  "Show visible port identification (e.g. blinking)",
 	  "               [ TIME-IN-SECONDS ]\n" },
-	{ "-t|--test", 1, do_test, "Execute adapter self test",
+	{ "-t|--test", 1, do_test, NULL,
+	  "Execute adapter self test",
 	  "               [ online | offline | external_lb ]\n" },
-	{ "-S|--statistics", 1, do_gnicstats, "Show adapter statistics" },
-	{ "--phy-statistics", 1, do_gphystats,
+	{ "-S|--statistics", 1, do_gnicstats, NULL,
+	  "Show adapter statistics" },
+	{ "--phy-statistics", 1, do_gphystats, NULL,
 	  "Show phy statistics" },
-	{ "-n|-u|--show-nfc|--show-ntuple", 1, do_grxclass,
+	{ "-n|-u|--show-nfc|--show-ntuple", 1, do_grxclass, NULL,
 	  "Show Rx network flow classification options or rules",
 	  "		[ rx-flow-hash tcp4|udp4|ah4|esp4|sctp4|"
 	  "tcp6|udp6|ah6|esp6|sctp6 [context %d] |\n"
 	  "		  rule %d ]\n" },
-	{ "-N|-U|--config-nfc|--config-ntuple", 1, do_srxclass,
+	{ "-N|-U|--config-nfc|--config-ntuple", 1, do_srxclass, NULL,
 	  "Configure Rx network flow classification options or rules",
 	  "		rx-flow-hash tcp4|udp4|ah4|esp4|sctp4|"
 	  "tcp6|udp6|ah6|esp6|sctp6 m|v|t|s|d|f|n|r... [context %d] |\n"
@@ -5300,57 +5323,66 @@ static const struct option {
 	  "			[ context %d ]\n"
 	  "			[ loc %d]] |\n"
 	  "		delete %d\n" },
-	{ "-T|--show-time-stamping", 1, do_tsinfo,
+	{ "-T|--show-time-stamping", 1, do_tsinfo, NULL,
 	  "Show time stamping capabilities" },
-	{ "-x|--show-rxfh-indir|--show-rxfh", 1, do_grxfh,
+	{ "-x|--show-rxfh-indir|--show-rxfh", 1, do_grxfh, NULL,
 	  "Show Rx flow hash indirection table and/or RSS hash key",
 	  "		[ context %d ]\n" },
-	{ "-X|--set-rxfh-indir|--rxfh", 1, do_srxfh,
+	{ "-X|--set-rxfh-indir|--rxfh", 1, do_srxfh, NULL,
 	  "Set Rx flow hash indirection table and/or RSS hash key",
 	  "		[ context %d|new ]\n"
 	  "		[ equal N | weight W0 W1 ... | default ]\n"
 	  "		[ hkey %x:%x:%x:%x:%x:.... ]\n"
 	  "		[ hfunc FUNC ]\n"
 	  "		[ delete ]\n" },
-	{ "-f|--flash", 1, do_flash,
+	{ "-f|--flash", 1, do_flash, NULL,
 	  "Flash firmware image from the specified file to a region on the device",
 	  "               FILENAME [ REGION-NUMBER-TO-FLASH ]\n" },
-	{ "-P|--show-permaddr", 1, do_permaddr,
+	{ "-P|--show-permaddr", 1, do_permaddr, NULL,
 	  "Show permanent hardware address" },
-	{ "-w|--get-dump", 1, do_getfwdump,
+	{ "-w|--get-dump", 1, do_getfwdump, NULL,
 	  "Get dump flag, data",
 	  "		[ data FILENAME ]\n" },
-	{ "-W|--set-dump", 1, do_setfwdump,
+	{ "-W|--set-dump", 1, do_setfwdump, NULL,
 	  "Set dump flag of the device",
 	  "		N\n"},
-	{ "-l|--show-channels", 1, do_gchannels, "Query Channels" },
-	{ "-L|--set-channels", 1, do_schannels, "Set Channels",
+	{ "-l|--show-channels", 1, do_gchannels, NULL,
+	  "Query Channels" },
+	{ "-L|--set-channels", 1, do_schannels, NULL,
+	  "Set Channels",
 	  "               [ rx N ]\n"
 	  "               [ tx N ]\n"
 	  "               [ other N ]\n"
 	  "               [ combined N ]\n" },
-	{ "--show-priv-flags", 1, do_gprivflags, "Query private flags" },
-	{ "--set-priv-flags", 1, do_sprivflags, "Set private flags",
+	{ "--show-priv-flags", 1, do_gprivflags, NULL,
+	  "Query private flags" },
+	{ "--set-priv-flags", 1, do_sprivflags, NULL,
+	  "Set private flags",
 	  "		FLAG on|off ...\n" },
-	{ "-m|--dump-module-eeprom|--module-info", 1, do_getmodule,
+	{ "-m|--dump-module-eeprom|--module-info", 1, do_getmodule, NULL,
 	  "Query/Decode Module EEPROM information and optical diagnostics if available",
 	  "		[ raw on|off ]\n"
 	  "		[ hex on|off ]\n"
 	  "		[ offset N ]\n"
 	  "		[ length N ]\n" },
-	{ "--show-eee", 1, do_geee, "Show EEE settings"},
-	{ "--set-eee", 1, do_seee, "Set EEE settings",
+	{ "--show-eee", 1, do_geee, NULL,
+	  "Show EEE settings"},
+	{ "--set-eee", 1, do_seee, NULL,
+	  "Set EEE settings",
 	  "		[ eee on|off ]\n"
 	  "		[ advertise %x ]\n"
 	  "		[ tx-lpi on|off ]\n"
 	  "		[ tx-timer %d ]\n"},
-	{ "--set-phy-tunable", 1, do_set_phy_tunable, "Set PHY tunable",
+	{ "--set-phy-tunable", 1, do_set_phy_tunable, NULL,
+	  "Set PHY tunable",
 	  "		[ downshift on|off [count N] ]\n"
 	  "		[ fast-link-down on|off [msecs N] ]\n"},
-	{ "--get-phy-tunable", 1, do_get_phy_tunable, "Get PHY tunable",
+	{ "--get-phy-tunable", 1, do_get_phy_tunable, NULL,
+	  "Get PHY tunable",
 	  "		[ downshift ]\n"
 	  "		[ fast-link-down ]\n"},
-	{ "--reset", 1, do_reset, "Reset components",
+	{ "--reset", 1, do_reset, NULL,
+	  "Reset components",
 	  "		[ flags %x ]\n"
 	  "		[ mgmt ]\n"
 	  "		[ mgmt-shared ]\n"
@@ -5372,14 +5404,19 @@ static const struct option {
 	  "		[ ap-shared ]\n"
 	  "		[ dedicated ]\n"
 	  "		[ all ]\n"},
-	{ "--show-fec", 1, do_gfec, "Show FEC settings"},
-	{ "--set-fec", 1, do_sfec, "Set FEC settings",
+	{ "--show-fec", 1, do_gfec, NULL,
+	  "Show FEC settings"},
+	{ "--set-fec", 1, do_sfec, NULL,
+	  "Set FEC settings",
 	  "		[ encoding auto|off|rs|baser [...]]\n"},
-	{ "-Q|--per-queue", 1, do_perqueue, "Apply per-queue command."
+	{ "-Q|--per-queue", 1, do_perqueue, NULL,
+	  "Apply per-queue command. "
 	  "The supported sub commands include --show-coalesce, --coalesce",
 	  "             [queue_mask %x] SUB_COMMAND\n"},
-	{ "-h|--help", 0, show_usage, "Show this help" },
-	{ "--version", 0, do_version, "Show version number" },
+	{ "-h|--help", 0, show_usage, NULL,
+	 "Show this help" },
+	{ "--version", 0, do_version, NULL,
+	  "Show version number" },
 	{}
 };
 
@@ -5598,14 +5635,39 @@ static int do_perqueue(struct cmd_context *ctx)
 	return 0;
 }
 
+static int ioctl_init(struct cmd_context *ctx, int want_device)
+{
+	if (want_device) {
+		/* Setup our control structures. */
+		memset(&ctx->ifr, 0, sizeof(ctx->ifr));
+		strcpy(ctx->ifr.ifr_name, ctx->devname);
+
+		/* Open control socket. */
+		ctx->fd = socket(AF_INET, SOCK_DGRAM, 0);
+		if (ctx->fd < 0)
+			ctx->fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_GENERIC);
+		if (ctx->fd < 0) {
+			perror("Cannot get control socket");
+			return 70;
+		}
+	} else {
+		ctx->fd = -1;
+	}
+
+	return 0;
+}
+
 int main(int argc, char **argp)
 {
 	int (*func)(struct cmd_context *);
+	int (*nl_func)(struct cmd_context *) = NULL;
 	int want_device;
 	struct cmd_context ctx;
+	int ret;
 	int k;
 
 	init_global_link_mode_masks();
+	ctx.nlctx = NULL;
 
 	/* Skip command name */
 	argp++;
@@ -5637,6 +5699,7 @@ int main(int argc, char **argp)
 		argp++;
 		argc--;
 		func = args[k].func;
+		nl_func = args[k].nl_func;
 		want_device = args[k].want_device;
 		goto opt_found;
 	}
@@ -5646,33 +5709,38 @@ int main(int argc, char **argp)
 	want_device = 1;
 
 opt_found:
+#ifdef ETHTOOL_ENABLE_NETLINK
+	if (nl_func) {
+		if (netlink_init(&ctx))
+			nl_func = NULL;		/* fallback to ioctl() */
+	}
+#else
+	nl_func = NULL;
+#endif
+
 	if (want_device) {
 		ctx.devname = *argp++;
 		argc--;
 
-		if (ctx.devname == NULL)
+		if (ctx.devname == NULL || strlen(ctx.devname) >= IFNAMSIZ) {
+			netlink_done(&ctx);
 			exit_bad_args();
-		if (strlen(ctx.devname) >= IFNAMSIZ)
-			exit_bad_args();
-
-		/* Setup our control structures. */
-		memset(&ctx.ifr, 0, sizeof(ctx.ifr));
-		strcpy(ctx.ifr.ifr_name, ctx.devname);
-
-		/* Open control socket. */
-		ctx.fd = socket(AF_INET, SOCK_DGRAM, 0);
-		if (ctx.fd < 0)
-			ctx.fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_GENERIC);
-		if (ctx.fd < 0) {
-			perror("Cannot get control socket");
-			return 70;
 		}
-	} else {
-		ctx.fd = -1;
 	}
 
 	ctx.argc = argc;
 	ctx.argp = argp;
+
+	if (nl_func) {
+		ret = nl_func(&ctx);
+		netlink_done(&ctx);
+		if ((ret != -EOPNOTSUPP) || !func)
+			return (ret >= 0) ? ret : 1;
+	}
+
+	ret = ioctl_init(&ctx, want_device);
+	if (ret)
+		return ret;
 
 	return func(&ctx);
 }

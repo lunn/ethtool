@@ -23,6 +23,11 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 
+/* internal for netlink interface */
+#ifdef ETHTOOL_ENABLE_NETLINK
+struct nl_context;
+#endif
+
 /* ethtool.h expects these to be defined by <linux/types.h> */
 #ifndef HAVE_BE_TYPES
 typedef uint16_t __be16;
@@ -108,6 +113,9 @@ static inline int test_bit(unsigned int nr, const unsigned long *addr)
 /* debugging flags */
 enum {
 	DEBUG_PARSE,
+	DEBUG_NL_MSGS,		/* incoming/outgoing netlink messages */
+	DEBUG_NL_DUMP_SND,	/* dump outgoing netlink messages */
+	DEBUG_NL_DUMP_RCV,	/* dump incoming netlink messages */
 };
 
 /* Internal values for old-style offload flags.  Values and names
@@ -201,6 +209,9 @@ struct cmd_context {
 	int argc;		/* number of arguments to the sub-command */
 	char **argp;		/* arguments to the sub-command */
 	unsigned long debug;	/* debugging mask */
+#ifdef ETHTOOL_ENABLE_NETLINK
+	struct nl_context *nlctx;	/* netlink context (opaque) */
+#endif
 };
 
 #ifdef TEST_ETHTOOL

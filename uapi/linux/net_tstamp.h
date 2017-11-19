@@ -30,6 +30,9 @@ enum {
 	SOF_TIMESTAMPING_OPT_STATS = (1<<12),
 	SOF_TIMESTAMPING_OPT_PKTINFO = (1<<13),
 	SOF_TIMESTAMPING_OPT_TX_SWHW = (1<<14),
+	/* when adding a flag, please update so_timestamping_labels array
+	 * in net/ethtool/info.c
+	 */
 
 	SOF_TIMESTAMPING_LAST = SOF_TIMESTAMPING_OPT_TX_SWHW,
 	SOF_TIMESTAMPING_MASK = (SOF_TIMESTAMPING_LAST - 1) |
@@ -90,6 +93,11 @@ enum hwtstamp_tx_types {
 	 * queue.
 	 */
 	HWTSTAMP_TX_ONESTEP_SYNC,
+	/* when adding a value, please update tstamp_tx_type_labels array
+	 * in net/ethtool/info.c
+	 */
+
+	HWTSTAMP_TX_LAST = HWTSTAMP_TX_ONESTEP_SYNC
 };
 
 /* possible values for hwtstamp_config->rx_filter */
@@ -132,6 +140,11 @@ enum hwtstamp_rx_filters {
 
 	/* NTP, UDP, all versions and packet modes */
 	HWTSTAMP_FILTER_NTP_ALL,
+	/* when adding a value, please update tstamp_rx_filter_labels array
+	 * in net/ethtool/info.c
+	 */
+
+	HWTSTAMP_FILTER_LAST = HWTSTAMP_FILTER_NTP_ALL
 };
 
 /* SCM_TIMESTAMPING_PKTINFO control message */
