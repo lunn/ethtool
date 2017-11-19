@@ -5195,6 +5195,7 @@ static int show_usage(struct cmd_context *ctx);
 /* Just define all netlink handlers as null when building without netlink
  * support so that we do not get unresolved symbols in args array below
  */
+#define nl_gdrv		NULL
 #endif
 
 static const struct option {
@@ -5264,7 +5265,7 @@ static const struct option {
 	{ "-K|--features|--offload", 1, do_sfeatures, NULL,
 	  "Set protocol offload and other features",
 	  "		FEATURE on|off ...\n" },
-	{ "-i|--driver", 1, do_gdrv, NULL,
+	{ "-i|--driver", 1, do_gdrv, nl_gdrv,
 	  "Show driver information" },
 	{ "-d|--register-dump", 1, do_gregs, NULL,
 	  "Do a register dump",
