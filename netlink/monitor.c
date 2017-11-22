@@ -95,6 +95,7 @@ static int monitor_event_cb(const struct nlmsghdr *nlhdr, void *data)
 }
 
 int info_reply_cb(const struct nlmsghdr *nlhdr, void *data);
+int settings_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 
 static struct {
 	uint8_t		cmd;
@@ -107,6 +108,10 @@ static struct {
 	{
 		.cmd	= ETHNL_CMD_SET_INFO,
 		.cb	= info_reply_cb,
+	},
+	{
+		.cmd	= ETHNL_CMD_SET_SETTINGS,
+		.cb	= settings_reply_cb,
 	},
 };
 
@@ -140,6 +145,15 @@ static struct monitor_option monitor_opts[] = {
 	{
 		.pattern	= "-i|--driver",
 		.cmd		= ETHNL_CMD_SET_INFO,
+	},
+	{
+		.pattern	= "-s|--change",
+		.cmd		= ETHNL_CMD_SET_SETTINGS,
+		.info_mask	= ETHTOOL_IM_SETTINGS_LINKINFO |
+				  ETHTOOL_IM_SETTINGS_LINKMODES |
+				  ETHTOOL_IM_SETTINGS_LINKSTATE |
+				  ETHTOOL_IM_SETTINGS_DEBUG |
+				  ETHTOOL_IM_SETTINGS_WOL,
 	},
 };
 

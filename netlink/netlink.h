@@ -66,6 +66,10 @@ typedef void (*bitset_walk_callback)(unsigned int, const char *, bool, void *);
 int walk_bitset(const struct nlattr *bitset, const struct stringset *label,
 		bitset_walk_callback cb, void *data);
 
+int dump_link_modes(const struct nlattr *bitset, bool mask, unsigned class,
+		    const char *before, const char *between, const char *after,
+		    const char *if_none);
+
 int msg_init(struct nl_context *nlctx, int cmd, unsigned int flags);
 int ethnl_process_reply(struct nl_context *nlctx, mnl_cb_t reply_cb);
 int attr_cb(const struct nlattr *attr, void *data);

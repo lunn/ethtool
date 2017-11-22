@@ -4,8 +4,10 @@
 #include <errno.h>
 
 #include "../internal.h"
+#include "../common.h"
 #include "netlink.h"
 #include "extapi.h"
+#include "strset.h"
 
 /* misc helpers */
 
@@ -541,6 +543,124 @@ int get_dev_info(const struct nlattr *nest, int *ifindex, char *ifname)
 		}
 	}
 	return 0;
+}
+
+int dump_link_modes(const struct nlattr *bitset, bool mask, unsigned class,
+		    const char *before, const char *between, const char *after,
+		    const char *if_none)
+{
+	const struct nlattr *bitset_tb[ETHTOOL_A_BITSET_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(bitset_tb);
+	const unsigned int before_len = strlen(before);
+	const struct nlattr *bits;
+	const struct nlattr *bit;
+	bool first = true;
+	int prev = -2;
+	int ret;
+
+	ret = mnl_attr_parse_nested(bitset, attr_cb, &bitset_tb_info);
+	bits = bitset_tb[ETHTOOL_A_BITSET_BITS];
+	if (ret < 0)
+		goto err_nonl;
+	if (!bits) {
+		const struct stringset *lm_strings =
+			global_stringset(ETH_SS_LINK_MODES);
+		unsigned int count;
+		unsigned int idx;
+		const char *name;
+
+		bits = mask ? bitset_tb[ETHTOOL_A_BITSET_MASK] :
+			      bitset_tb[ETHTOOL_A_BITSET_VALUE];
+		ret = -EFAULT;
+		if (!bits || !bitset_tb[ETHTOOL_A_BITSET_SIZE])
+			goto err_nonl;
+		count = mnl_attr_get_u32(bitset_tb[ETHTOOL_A_BITSET_SIZE]);
+		if (mnl_attr_get_payload_len(bits) / 4 < (count + 31) / 32)
+			goto err_nonl;
+
+		printf("\t%s", before);
+		for (idx = 0; idx < count; idx++) {
+			const uint32_t *raw_data = mnl_attr_get_payload(bits);
+			char buff[10];
+
+			if (!(raw_data[idx / 32] & (1U << (idx % 32))))
+				continue;
+			if (!lm_class_match(idx, class))
+				continue;
+			name = get_string(lm_strings, idx);
+			if (!name) {
+				snprintf(buff, sizeof(buff), "BIT%u", idx);
+				name = buff;
+			}
+			if (first)
+				first = false;
+			/* ugly hack to preserve old output format */
+			if ((class == LM_CLASS_REAL) && (prev == idx - 1) &&
+			    (prev < link_modes_count) &&
+			    (link_modes[prev].class == LM_CLASS_REAL) &&
+			    (link_modes[prev].duplex == DUPLEX_HALF))
+				putchar(' ');
+			else if (between)
+				printf("\t%s", between);
+			else
+				printf("\n\t%*s", before_len, "");
+			printf("%s", name);
+			prev = idx;
+		}
+		goto after;
+	}
+
+	printf("\t%s", before);
+	mnl_attr_for_each_nested(bit, bits) {
+		const struct nlattr *tb[ETHTOOL_A_BIT_MAX + 1] = {};
+		DECLARE_ATTR_TB_INFO(tb);
+		unsigned int idx;
+		const char *name;
+
+		if (mnl_attr_get_type(bit) != ETHTOOL_A_BITS_BIT)
+			continue;
+		ret = mnl_attr_parse_nested(bit, attr_cb, &tb_info);
+		if (ret < 0)
+			goto err;
+		ret = -EFAULT;
+		if (!tb[ETHTOOL_A_BIT_INDEX] || !tb[ETHTOOL_A_BIT_NAME])
+			goto err;
+		if (!mask && !tb[ETHTOOL_A_BIT_VALUE])
+			continue;
+
+		idx = mnl_attr_get_u32(tb[ETHTOOL_A_BIT_INDEX]);
+		name = mnl_attr_get_str(tb[ETHTOOL_A_BIT_NAME]);
+		if (!lm_class_match(idx, class))
+			continue;
+		if (first) {
+			first = false;
+		} else {
+			/* ugly hack to preserve old output format */
+			if ((class == LM_CLASS_REAL) && (prev == idx - 1) &&
+			    (prev < link_modes_count) &&
+			    (link_modes[prev].class == LM_CLASS_REAL) &&
+			    (link_modes[prev].duplex == DUPLEX_HALF))
+				putchar(' ');
+			else if (between)
+				printf("\t%s", between);
+			else
+				printf("\n\t%*s", before_len, "");
+		}
+		printf("%s", name);
+		prev = idx;
+	}
+after:
+	if (first && if_none)
+		printf("%s", if_none);
+	printf(after);
+
+	return 0;
+err:
+	putchar('\n');
+err_nonl:
+	fflush(stdout);
+	fprintf(stderr, "malformed netlink message (link_modes)\n");
+	return ret;
 }
 
 /* request helpers */
