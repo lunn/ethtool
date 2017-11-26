@@ -6,6 +6,7 @@
 #include "../common.h"
 #include "netlink.h"
 #include "strset.h"
+#include "parser.h"
 
 /* GET_SETTINGS */
 
@@ -390,4 +391,174 @@ int nl_gset(struct cmd_context *ctx)
 				    ETHTOOL_IM_SETTINGS_DEBUG |
 				    ETHTOOL_IM_SETTINGS_WOL);
 	return (ret < 0) ? 75 : 0;
+}
+
+/* SET_SETTINGS */
+
+enum {
+	WAKE_PHY_BIT		= 0,
+	WAKE_UCAST_BIT		= 1,
+	WAKE_MCAST_BIT		= 2,
+	WAKE_BCAST_BIT		= 3,
+	WAKE_ARP_BIT		= 4,
+	WAKE_MAGIC_BIT		= 5,
+	WAKE_MAGICSECURE_BIT	= 6,
+	WAKE_FILTER_BIT		= 7,
+};
+
+#define WAKE_ALL (WAKE_PHY | WAKE_UCAST | WAKE_MCAST | WAKE_BCAST | WAKE_ARP | \
+		  WAKE_MAGIC | WAKE_MAGICSECURE)
+
+const struct bitfield32_parser_special wol_parser_specials[] = {
+	{ 'd', 0U },
+	{}
+};
+const struct bitfield32_parser_data wol_parser_data = {
+	.bits = {
+		[WAKE_PHY_BIT]		= 'p',
+		[WAKE_UCAST_BIT]	= 'u',
+		[WAKE_MCAST_BIT]	= 'm',
+		[WAKE_BCAST_BIT]	= 'b',
+		[WAKE_ARP_BIT]		= 'a',
+		[WAKE_MAGIC_BIT]	= 'g',
+		[WAKE_MAGICSECURE_BIT]	= 's',
+		[WAKE_FILTER_BIT]	= 'f',
+	},
+	.specials = wol_parser_specials,
+};
+
+static const struct lookup_entry_u32 duplex_values[] = {
+	{ .arg = "half",	.val = DUPLEX_HALF },
+	{ .arg = "full",	.val = DUPLEX_FULL },
+	{}
+};
+
+static const struct lookup_entry_u8 port_values[] = {
+	{ .arg = "tp",		.val = PORT_TP },
+	{ .arg = "aui",		.val = PORT_AUI },
+	{ .arg = "bnc",		.val = PORT_BNC },
+	{ .arg = "mii",		.val = PORT_MII },
+	{ .arg = "fibre",	.val = PORT_FIBRE },
+	{}
+};
+
+static const struct lookup_entry_u8 mdix_values[] = {
+	{ .arg = "auto",	.val = ETH_TP_MDI_AUTO },
+	{ .arg = "on",		.val = ETH_TP_MDI_X },
+	{ .arg = "off",		.val = ETH_TP_MDI },
+	{}
+};
+
+static const struct lookup_entry_u8 autoneg_values[] = {
+	{ .arg = "off",		.val = AUTONEG_DISABLE },
+	{ .arg = "on",		.val = AUTONEG_ENABLE },
+	{}
+};
+
+static const struct param_parser sset_params[] = {
+	{
+		.arg		= "port",
+		.nest		= ETHTOOL_A_SETTINGS_LINK_INFO,
+		.type		= ETHTOOL_A_LINKINFO_PORT,
+		.handler	= nl_parse_lookup_u8,
+		.handler_data	= port_values,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "mdix",
+		.nest		= ETHTOOL_A_SETTINGS_LINK_INFO,
+		.type		= ETHTOOL_A_LINKINFO_TP_MDIX_CTRL,
+		.handler	= nl_parse_lookup_u8,
+		.handler_data	= mdix_values,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "phyad",
+		.nest		= ETHTOOL_A_SETTINGS_LINK_INFO,
+		.type		= ETHTOOL_A_LINKINFO_PHYADDR,
+		.handler	= nl_parse_direct_u8,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "autoneg",
+		.nest		= ETHTOOL_A_SETTINGS_LINK_MODES,
+		.type		= ETHTOOL_A_LINKMODES_AUTONEG,
+		.handler	= nl_parse_lookup_u8,
+		.handler_data	= autoneg_values,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "advertise",
+		.nest		= ETHTOOL_A_SETTINGS_LINK_MODES,
+		.type		= ETHTOOL_A_LINKMODES_OURS,
+		.handler	= nl_parse_bitset,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "speed",
+		.nest		= ETHTOOL_A_SETTINGS_LINK_MODES,
+		.type		= ETHTOOL_A_LINKMODES_SPEED,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "duplex",
+		.nest		= ETHTOOL_A_SETTINGS_LINK_MODES,
+		.type		= ETHTOOL_A_LINKMODES_DUPLEX,
+		.handler	= nl_parse_lookup_u8,
+		.handler_data	= duplex_values,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "wol",
+		.nest		= ETHTOOL_A_SETTINGS_WOL,
+		.type		= ETHTOOL_A_WOL_MODES,
+		.handler	= nl_parse_char_bitfield32,
+		.handler_data	= &wol_parser_data,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "sopass",
+		.nest		= ETHTOOL_A_SETTINGS_WOL,
+		.type		= ETHTOOL_A_WOL_SOPASS,
+		.handler	= nl_parse_mac_addr,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "msglvl",
+		.nest		= ETHTOOL_A_SETTINGS_DEBUG,
+		.type		= ETHTOOL_A_DEBUG_MSG_MASK,
+		.handler	= nl_parse_bitfield32,
+		.handler_data	= flags_msglvl,
+		.min_argc	= 1,
+	},
+	{}
+};
+
+int nl_sset(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	int ret;
+
+	nlctx->cmd = "-s";
+	nlctx->argp = ctx->argp;
+	nlctx->argc = ctx->argc;
+	ret = msg_init(nlctx, ETHNL_CMD_SET_SETTINGS,
+		       NLM_F_REQUEST | NLM_F_ACK);
+	if (ret < 0)
+		return 2;
+	if (ethnla_put_dev(nlctx, ETHTOOL_A_SETTINGS_DEV, ctx->devname))
+		return -EMSGSIZE;
+
+	ret = nl_parser(nlctx, sset_params, NULL);
+	if (ret < 0)
+		return 2;
+
+	ret = ethnl_sendmsg(nlctx);
+	if (ret < 0)
+		return 75;
+	ret = ethnl_process_reply(nlctx, nomsg_reply_cb);
+	if (ret == 0)
+		return 0;
+	return nlctx->exit_code ?: 75;
 }

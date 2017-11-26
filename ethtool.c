@@ -5019,6 +5019,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_gdrv		NULL
 #define nl_tsinfo	NULL
 #define nl_gset		NULL
+#define nl_sset		NULL
 #endif
 
 static const struct option {
@@ -5029,19 +5030,19 @@ static const struct option {
 	char *help;
 	char *opthelp;
 } args[] = {
-	{ "-s|--change", 1, do_sset, NULL,
+	{ "-s|--change", 1, do_sset, nl_sset,
 	  "Change generic options",
 	  "		[ speed %d ]\n"
 	  "		[ duplex half|full ]\n"
 	  "		[ port tp|aui|bnc|mii|fibre ]\n"
 	  "		[ mdix auto|on|off ]\n"
 	  "		[ autoneg on|off ]\n"
-	  "		[ advertise %x ]\n"
+	  "		[ advertise %x[/%x] | mode on|off ... [--] ]\n"
 	  "		[ phyad %d ]\n"
 	  "		[ xcvr internal|external ]\n"
-	  "		[ wol p|u|m|b|a|g|s|f|d... ]\n"
+	  "		[ wol %d[/%d] |  p|u|m|b|a|g|s|f|d...[/p|u|m|b|a|g|s|f|d...] ]\n"
 	  "		[ sopass %x:%x:%x:%x:%x:%x ]\n"
-	  "		[ msglvl %d | msglvl type on|off ... ]\n" },
+	  "		[ msglvl %d[/%d] | type on|off ... [--] ]\n" },
 	{ "-a|--show-pause", 1, do_gpause, NULL,
 	  "Show pause options" },
 	{ "-A|--pause", 1, do_spause, NULL,

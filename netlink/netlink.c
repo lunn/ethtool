@@ -776,6 +776,15 @@ static int get_ethnl_family(struct nl_context *nlctx)
 	return 0;
 }
 
+int nomsg_reply_cb(const struct nlmsghdr *nlhdr, void *data)
+{
+	const struct genlmsghdr *ghdr = (const struct genlmsghdr *)(nlhdr + 1);
+
+	fprintf(stderr, "received unexpected message: len=%u type=%u cmd=%u\n",
+	       nlhdr->nlmsg_len, nlhdr->nlmsg_type, ghdr->cmd);
+	return MNL_CB_OK;
+}
+
 /* initialization */
 
 static int nlctx_init(struct nl_context *nlctx, unsigned long debug)

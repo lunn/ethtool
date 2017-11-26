@@ -80,6 +80,7 @@ int attr_cb(const struct nlattr *attr, void *data);
 int ethnl_prep_get_request(struct cmd_context *ctx, unsigned int nlcmd,
 			   uint16_t dev_attrtype);
 int ethnl_send_get_request(struct nl_context *nlctx, mnl_cb_t cb);
+int nomsg_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int __init_aux_nlctx(struct nl_context *nlctx);
 
 /* put data wrappers */

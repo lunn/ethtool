@@ -81,6 +81,8 @@ int nl_parse_bitlist(struct nl_context *nlctx, uint16_t type, const void *data,
 		     void *dest);
 int nl_parse_byte_str(struct nl_context *nlctx, uint16_t type,
 		      const void *data, void *dest);
+int nl_parse_mac_addr(struct nl_context *nlctx, uint16_t type,
+		      const void *data, void *dest);
 
 int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
 	      void *dest);

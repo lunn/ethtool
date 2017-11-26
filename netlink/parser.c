@@ -832,6 +832,42 @@ err:
 	return -EINVAL;
 }
 
+/* parser handler for (6-byte) MAC address in the usual format */
+int nl_parse_mac_addr(struct nl_context *nlctx, uint16_t type, const void *data,
+		      void *dest)
+{
+	const char *arg = *nlctx->argp;
+	uint8_t val[ETH_ALEN];
+	unsigned int i;
+	const char *p;
+
+	nlctx->argp++;
+	nlctx->argc--;
+
+	p = arg;
+	i = 0;
+	while (i < ETH_ALEN && *p) {
+		char *endp;
+		unsigned long byte = strtoul(p, &endp, 16);
+
+		if ((endp - p > 2) || (*endp && *endp != ':'))
+			goto err;
+		val[i++] = (uint8_t) byte;
+		p = endp + (*endp ? 1 : 0);
+	}
+	if (i < ETH_ALEN)
+		goto err;
+
+	if (dest)
+		memcpy(dest, val, ETH_ALEN);
+	return type ? ethnla_put(nlctx, type, ETH_ALEN, val) : 0;
+
+err:
+	fprintf(stderr, "ethtool (%s): invalid value '%s' of parameter '%s'\n",
+		nlctx->cmd, arg, nlctx->param);
+	return -EINVAL;
+}
+
 static const struct param_parser *find_parser(const struct param_parser *params,
 				       const char *arg)
 {
