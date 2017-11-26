@@ -31,6 +31,10 @@ struct nl_context {
 	void *msg;
 	const char *devname;
 	bool is_dump;
+	const char *cmd;
+	const char *param;
+	char **argp;
+	int argc;
 	int exit_code;
 	bool suppress_nlerr;
 	bool is_monitor;
