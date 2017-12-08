@@ -4984,6 +4984,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_gpause	NULL
 #define nl_gchannels	NULL
 #define nl_geee		NULL
+#define nl_gfec		NULL
 #endif
 
 static const struct option {
@@ -5193,7 +5194,7 @@ static const struct option {
 	  "		[ ap-shared ]\n"
 	  "		[ dedicated ]\n"
 	  "		[ all ]\n"},
-	{ "--show-fec", 1, do_gfec, NULL,
+	{ "--show-fec", 1, do_gfec, nl_gfec,
 	  "Show FEC settings"},
 	{ "--set-fec", 1, do_sfec, NULL,
 	  "Set FEC settings",

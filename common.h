@@ -17,6 +17,8 @@ struct flag_info {
 
 extern const struct flag_info flags_msglvl[];
 extern const unsigned int n_flags_msglvl;
+extern const struct flag_info flags_fecenc[];
+extern const unsigned int n_flags_fecenc;
 
 
 enum link_mode_class {

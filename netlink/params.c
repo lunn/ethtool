@@ -190,6 +190,35 @@ static int show_eee(struct nl_context *nlctx, const struct nlattr *nest)
 	return 0;
 }
 
+static int show_fec(struct nl_context *nlctx, const struct nlattr *nest)
+{
+	const struct nlattr *tb[ETHTOOL_A_FEC_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	int ret;
+
+	if (!nest)
+		return -EOPNOTSUPP;
+	ret = mnl_attr_parse_nested(nest, attr_cb, &tb_info);
+	if (ret < 0)
+		return ret;
+
+	printf("FEC parameters for %s:\n", nlctx->devname);
+	if (tb[ETHTOOL_A_FEC_MODES]) {
+		const struct nla_bitfield32 *fec_encs =
+			mnl_attr_get_payload(tb[ETHTOOL_A_FEC_MODES]);
+
+		printf("Configured FEC encodings:\t");
+		print_flags(flags_fecenc, n_flags_fecenc, fec_encs->selector);
+		putchar('\n');
+		printf("Active FEC encoding:\t");
+		print_flags(flags_fecenc, n_flags_fecenc, fec_encs->value);
+		putchar('\n');
+	}
+	putchar('\n');
+
+	return 0;
+}
+
 int params_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 {
 	const struct nlattr *tb[ETHTOOL_A_PARAMS_MAX + 1] = {};
@@ -249,6 +278,15 @@ int params_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 			return MNL_CB_ERROR;
 		}
 	}
+	if (mask_ok(nlctx, ETHTOOL_IM_PARAMS_FEC)) {
+		ret = show_fec(nlctx, tb[ETHTOOL_A_PARAMS_FEC]);
+		if ((ret < 0) && show_only(nlctx, ETHTOOL_IM_PARAMS_FEC)) {
+			nlctx->exit_code = 1;
+			errno = -ret;
+			perror("Cannot get device FEC settings");
+			return MNL_CB_ERROR;
+		}
+	}
 
 	return MNL_CB_OK;
 }
@@ -289,4 +327,9 @@ int nl_gchannels(struct cmd_context *ctx)
 int nl_geee(struct cmd_context *ctx)
 {
 	return params_request(ctx, ETHTOOL_IM_PARAMS_EEE);
+}
+
+int nl_gfec(struct cmd_context *ctx)
+{
+	return params_request(ctx, ETHTOOL_IM_PARAMS_FEC);
 }

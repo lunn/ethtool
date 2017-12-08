@@ -76,6 +76,16 @@ const struct flag_info flags_msglvl[] = {
 };
 const unsigned int n_flags_msglvl = ARRAY_SIZE(flags_msglvl) - 1;
 
+const struct flag_info flags_fecenc[] = {
+	{ "none",	ETHTOOL_FEC_NONE },
+	{ "auto",	ETHTOOL_FEC_AUTO },
+	{ "off",	ETHTOOL_FEC_OFF },
+	{ "RS",		ETHTOOL_FEC_RS },
+	{ "baser",	ETHTOOL_FEC_BASER },
+	{}
+};
+const unsigned int n_flags_fecenc = ARRAY_SIZE(flags_fecenc) - 1;
+
 const char *names_duplex[] = {
 	[DUPLEX_HALF]		= "Half",
 	[DUPLEX_FULL]		= "Full",
