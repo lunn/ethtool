@@ -24,6 +24,7 @@ int nl_sprivflags(struct cmd_context *ctx);
 int nl_gcoalesce(struct cmd_context *ctx);
 int nl_gring(struct cmd_context *ctx);
 int nl_gpause(struct cmd_context *ctx);
+int nl_gchannels(struct cmd_context *ctx);
 int nl_monitor(struct cmd_context *ctx);
 
 void monitor_usage();

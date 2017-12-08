@@ -107,6 +107,34 @@ static int show_pause(struct nl_context *nlctx, const struct nlattr *nest)
 	return 0;
 }
 
+static int show_channels(struct nl_context *nlctx, const struct nlattr *nest)
+{
+	const struct nlattr *tb[ETHTOOL_A_CHANNELS_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	int ret;
+
+	if (!nest)
+		return -EOPNOTSUPP;
+	ret = mnl_attr_parse_nested(nest, attr_cb, &tb_info);
+	if (ret < 0)
+		return ret;
+
+	printf("Channel parameters for %s:\n", nlctx->devname);
+	printf("Pre-set maximums:\n");
+	show_u32(tb[ETHTOOL_A_CHANNELS_MAX_RX], "RX:\t\t");
+	show_u32(tb[ETHTOOL_A_CHANNELS_MAX_TX], "TX:\t\t");
+	show_u32(tb[ETHTOOL_A_CHANNELS_MAX_OTHER], "Other:\t\t");
+	show_u32(tb[ETHTOOL_A_CHANNELS_MAX_COMBINED], "Combined:\t");
+	printf("Current hardware settings:\n");
+	show_u32(tb[ETHTOOL_A_CHANNELS_RX_COUNT], "RX:\t\t");
+	show_u32(tb[ETHTOOL_A_CHANNELS_TX_COUNT], "TX:\t\t");
+	show_u32(tb[ETHTOOL_A_CHANNELS_OTHER_COUNT], "Other:\t\t");
+	show_u32(tb[ETHTOOL_A_CHANNELS_COMBINED_COUNT], "Combined:\t");
+	putchar('\n');
+
+	return 0;
+}
+
 int params_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 {
 	const struct nlattr *tb[ETHTOOL_A_PARAMS_MAX + 1] = {};
@@ -148,6 +176,15 @@ int params_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 			return MNL_CB_ERROR;
 		}
 	}
+	if (mask_ok(nlctx, ETHTOOL_IM_PARAMS_CHANNELS)) {
+		ret = show_channels(nlctx, tb[ETHTOOL_A_PARAMS_CHANNELS]);
+		if ((ret < 0) && show_only(nlctx, ETHTOOL_IM_PARAMS_CHANNELS)) {
+			nlctx->exit_code = 1;
+			errno = -ret;
+			perror("Cannot get device channel parameters");
+			return MNL_CB_ERROR;
+		}
+	}
 
 	return MNL_CB_OK;
 }
@@ -178,4 +215,9 @@ int nl_gring(struct cmd_context *ctx)
 int nl_gpause(struct cmd_context *ctx)
 {
 	return params_request(ctx, ETHTOOL_IM_PARAMS_PAUSE);
+}
+
+int nl_gchannels(struct cmd_context *ctx)
+{
+	return params_request(ctx, ETHTOOL_IM_PARAMS_CHANNELS);
 }

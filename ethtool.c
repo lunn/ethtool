@@ -4982,6 +4982,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_gcoalesce	NULL
 #define nl_gring	NULL
 #define nl_gpause	NULL
+#define nl_gchannels	NULL
 #endif
 
 static const struct option {
@@ -5133,7 +5134,7 @@ static const struct option {
 	{ "-W|--set-dump", 1, do_setfwdump, NULL,
 	  "Set dump flag of the device",
 	  "		N\n"},
-	{ "-l|--show-channels", 1, do_gchannels, NULL,
+	{ "-l|--show-channels", 1, do_gchannels, nl_gchannels,
 	  "Query Channels" },
 	{ "-L|--set-channels", 1, do_schannels, NULL,
 	  "Set Channels",
