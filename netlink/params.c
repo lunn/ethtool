@@ -135,6 +135,61 @@ static int show_channels(struct nl_context *nlctx, const struct nlattr *nest)
 	return 0;
 }
 
+static int show_eee(struct nl_context *nlctx, const struct nlattr *nest)
+{
+	const struct nlattr *tb[ETHTOOL_A_EEE_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	bool active, enabled, tx_lpi_enabled;
+	int ret;
+
+	if (!nest)
+		return -EOPNOTSUPP;
+	ret = mnl_attr_parse_nested(nest, attr_cb, &tb_info);
+	if (ret < 0)
+		return ret;
+	if (!tb[ETHTOOL_A_EEE_LINK_MODES] || !tb[ETHTOOL_A_EEE_PEER_MODES] ||
+	    !tb[ETHTOOL_A_EEE_ACTIVE] || !tb[ETHTOOL_A_EEE_ENABLED] ||
+	    !tb[ETHTOOL_A_EEE_TX_LPI_ENABLED] ||!tb[ETHTOOL_A_EEE_TX_LPI_TIMER])
+		return -EFAULT;
+
+
+	active = mnl_attr_get_u8(tb[ETHTOOL_A_EEE_ACTIVE]);
+	enabled = mnl_attr_get_u8(tb[ETHTOOL_A_EEE_ENABLED]);
+	tx_lpi_enabled = mnl_attr_get_u8(tb[ETHTOOL_A_EEE_TX_LPI_ENABLED]);
+
+	printf("EEE Settings for %s:\n", nlctx->devname);
+	printf("\tEEE status: ");
+	if (bitset_is_empty(tb[ETHTOOL_A_EEE_LINK_MODES], true, &ret)) {
+		printf("not supported\n");
+		return 0;
+	}
+	if (!enabled)
+		printf("disabled\n");
+	else
+		printf("enabled - %s\n", active ? "active" : "inactive");
+	printf("\tTx LPI: ");
+	if (tx_lpi_enabled)
+		printf("%u (us)\n",
+		       mnl_attr_get_u32(tb[ETHTOOL_A_EEE_TX_LPI_TIMER]));
+	else
+		printf("disabled\n");
+
+	ret = dump_link_modes(tb[ETHTOOL_A_EEE_LINK_MODES], true,
+			      LM_CLASS_REAL,
+			      "Supported EEE link modes:  ", NULL, "\n",
+			      "Not reported");
+	ret = dump_link_modes(tb[ETHTOOL_A_EEE_LINK_MODES], false,
+			      LM_CLASS_REAL,
+			      "Advertised EEE link modes:  ", NULL, "\n",
+			      "Not reported");
+	ret = dump_link_modes(tb[ETHTOOL_A_EEE_PEER_MODES], false,
+			      LM_CLASS_REAL,
+			      "Link partner advertised EEE link modes:  ", NULL,
+			      "\n", "Not reported");
+
+	return 0;
+}
+
 int params_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 {
 	const struct nlattr *tb[ETHTOOL_A_PARAMS_MAX + 1] = {};
@@ -185,6 +240,15 @@ int params_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 			return MNL_CB_ERROR;
 		}
 	}
+	if (mask_ok(nlctx, ETHTOOL_IM_PARAMS_EEE)) {
+		ret = show_eee(nlctx, tb[ETHTOOL_A_PARAMS_EEE]);
+		if ((ret < 0) && show_only(nlctx, ETHTOOL_IM_PARAMS_EEE)) {
+			nlctx->exit_code = 1;
+			errno = -ret;
+			perror("Cannot get device EEE settings");
+			return MNL_CB_ERROR;
+		}
+	}
 
 	return MNL_CB_OK;
 }
@@ -220,4 +284,9 @@ int nl_gpause(struct cmd_context *ctx)
 int nl_gchannels(struct cmd_context *ctx)
 {
 	return params_request(ctx, ETHTOOL_IM_PARAMS_CHANNELS);
+}
+
+int nl_geee(struct cmd_context *ctx)
+{
+	return params_request(ctx, ETHTOOL_IM_PARAMS_EEE);
 }

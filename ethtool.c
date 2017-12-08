@@ -4983,6 +4983,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_gring	NULL
 #define nl_gpause	NULL
 #define nl_gchannels	NULL
+#define nl_geee		NULL
 #endif
 
 static const struct option {
@@ -5153,7 +5154,7 @@ static const struct option {
 	  "		[ hex on|off ]\n"
 	  "		[ offset N ]\n"
 	  "		[ length N ]\n" },
-	{ "--show-eee", 1, do_geee, NULL,
+	{ "--show-eee", 1, do_geee, nl_geee,
 	  "Show EEE settings"},
 	{ "--set-eee", 1, do_seee, NULL,
 	  "Set EEE settings",
