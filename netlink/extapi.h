@@ -22,6 +22,7 @@ int nl_sfeatures(struct cmd_context *ctx);
 int nl_gprivflags(struct cmd_context *ctx);
 int nl_sprivflags(struct cmd_context *ctx);
 int nl_gcoalesce(struct cmd_context *ctx);
+int nl_gring(struct cmd_context *ctx);
 int nl_monitor(struct cmd_context *ctx);
 
 void monitor_usage();

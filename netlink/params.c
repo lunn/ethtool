@@ -57,6 +57,34 @@ static int show_coalesce(struct nl_context *nlctx, const struct nlattr *nest)
 	return 0;
 }
 
+static int show_ring(struct nl_context *nlctx, const struct nlattr *nest)
+{
+	const struct nlattr *tb[ETHTOOL_A_RING_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	int ret;
+
+	if (!nest)
+		return -EOPNOTSUPP;
+	ret = mnl_attr_parse_nested(nest, attr_cb, &tb_info);
+	if (ret < 0)
+		return ret;
+
+	printf("Ring parameters for %s:\n", nlctx->devname);
+	printf("Pre-set maximums:\n");
+	show_u32(tb[ETHTOOL_A_RING_RX_MAX_PENDING], "RX:\t\t");
+	show_u32(tb[ETHTOOL_A_RING_RX_MINI_MAX_PENDING], "RX Mini:\t");
+	show_u32(tb[ETHTOOL_A_RING_RX_JUMBO_MAX_PENDING], "RX Jumbo:\t");
+	show_u32(tb[ETHTOOL_A_RING_TX_MAX_PENDING], "TX:\t\t");
+	printf("Current hardware settings:\n");
+	show_u32(tb[ETHTOOL_A_RING_RX_PENDING], "RX:\t\t");
+	show_u32(tb[ETHTOOL_A_RING_RX_MINI_PENDING], "RX Mini:\t");
+	show_u32(tb[ETHTOOL_A_RING_RX_JUMBO_PENDING], "RX Jumbo:\t");
+	show_u32(tb[ETHTOOL_A_RING_TX_PENDING], "TX:\t\t");
+	putchar('\n');
+
+	return 0;
+}
+
 int params_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 {
 	const struct nlattr *tb[ETHTOOL_A_PARAMS_MAX + 1] = {};
@@ -80,6 +108,15 @@ int params_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 			return MNL_CB_ERROR;
 		}
 	}
+	if (mask_ok(nlctx, ETHTOOL_IM_PARAMS_RING)) {
+		ret = show_ring(nlctx, tb[ETHTOOL_A_PARAMS_RING]);
+		if ((ret < 0) && show_only(nlctx, ETHTOOL_IM_PARAMS_RING)) {
+			nlctx->exit_code = 76;
+			errno = -ret;
+			perror("Cannot get device ring settings");
+			return MNL_CB_ERROR;
+		}
+	}
 
 	return MNL_CB_OK;
 }
@@ -100,4 +137,9 @@ static int params_request(struct cmd_context *ctx, uint32_t info_mask)
 int nl_gcoalesce(struct cmd_context *ctx)
 {
 	return params_request(ctx, ETHTOOL_IM_PARAMS_COALESCE);
+}
+
+int nl_gring(struct cmd_context *ctx)
+{
+	return params_request(ctx, ETHTOOL_IM_PARAMS_RING);
 }

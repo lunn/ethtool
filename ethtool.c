@@ -4980,6 +4980,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_gprivflags	NULL
 #define nl_sprivflags	NULL
 #define nl_gcoalesce	NULL
+#define nl_gring	NULL
 #endif
 
 static const struct option {
@@ -5036,7 +5037,7 @@ static const struct option {
 	  "		[tx-usecs-high N]\n"
 	  "		[tx-frames-high N]\n"
 	  "		[sample-interval N]\n" },
-	{ "-g|--show-ring", 1, do_gring, NULL,
+	{ "-g|--show-ring", 1, do_gring, nl_gring,
 	  "Query RX/TX ring parameters" },
 	{ "-G|--set-ring", 1, do_sring, NULL,
 	  "Set RX/TX ring parameters",
