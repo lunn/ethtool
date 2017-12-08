@@ -181,6 +181,11 @@ static struct monitor_option monitor_opts[] = {
 		.cmd		= ETHNL_CMD_SET_PARAMS,
 		.info_mask	= ETHTOOL_IM_PARAMS_RING,
 	},
+	{
+		.pattern	= "-a|--show-pause|-A|--pause",
+		.cmd		= ETHNL_CMD_SET_PARAMS,
+		.info_mask	= ETHTOOL_IM_PARAMS_PAUSE,
+	},
 };
 
 static bool pattern_match(const char *s, const char *pattern)

@@ -4981,6 +4981,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_sprivflags	NULL
 #define nl_gcoalesce	NULL
 #define nl_gring	NULL
+#define nl_gpause	NULL
 #endif
 
 static const struct option {
@@ -5004,7 +5005,7 @@ static const struct option {
 	  "		[ wol %d[/%d] |  p|u|m|b|a|g|s|f|d...[/p|u|m|b|a|g|s|f|d...] ]\n"
 	  "		[ sopass %x:%x:%x:%x:%x:%x ]\n"
 	  "		[ msglvl %d[/%d] | type on|off ... [--] ]\n" },
-	{ "-a|--show-pause", 1, do_gpause, NULL,
+	{ "-a|--show-pause", 1, do_gpause, nl_gpause,
 	  "Show pause options" },
 	{ "-A|--pause", 1, do_spause, NULL,
 	  "Set pause options",
