@@ -4979,6 +4979,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_sfeatures	NULL
 #define nl_gprivflags	NULL
 #define nl_sprivflags	NULL
+#define nl_gcoalesce	NULL
 #endif
 
 static const struct option {
@@ -5009,7 +5010,7 @@ static const struct option {
 	  "		[ autoneg on|off ]\n"
 	  "		[ rx on|off ]\n"
 	  "		[ tx on|off ]\n" },
-	{ "-c|--show-coalesce", 1, do_gcoalesce, NULL,
+	{ "-c|--show-coalesce", 1, do_gcoalesce, nl_gcoalesce,
 	  "Show coalesce options" },
 	{ "-C|--coalesce", 1, do_scoalesce, NULL,
 	  "Set coalesce options",

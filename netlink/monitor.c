@@ -96,6 +96,7 @@ static int monitor_event_cb(const struct nlmsghdr *nlhdr, void *data)
 
 int info_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int settings_reply_cb(const struct nlmsghdr *nlhdr, void *data);
+int params_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 
 static struct {
 	uint8_t		cmd;
@@ -112,6 +113,10 @@ static struct {
 	{
 		.cmd	= ETHNL_CMD_SET_SETTINGS,
 		.cb	= settings_reply_cb,
+	},
+	{
+		.cmd	= ETHNL_CMD_SET_PARAMS,
+		.cb	= params_reply_cb,
 	},
 };
 
@@ -165,6 +170,11 @@ static struct monitor_option monitor_opts[] = {
 		.pattern	= "--show-priv-flags|--set-priv-flags",
 		.cmd		= ETHNL_CMD_SET_SETTINGS,
 		.info_mask	= ETHTOOL_IM_SETTINGS_PRIVFLAGS,
+	},
+	{
+		.pattern	= "-c|--show-coalesce|-C|--coalesce",
+		.cmd		= ETHNL_CMD_SET_PARAMS,
+		.info_mask	= ETHTOOL_IM_PARAMS_COALESCE,
 	},
 };
 
