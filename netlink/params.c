@@ -642,3 +642,20 @@ int nl_seee(struct cmd_context *ctx)
 	return nl_set_param(ctx, "--set-eee", seee_params,
 			    ETHTOOL_A_PARAMS_EEE);
 }
+
+static const struct param_parser sfec_params[] = {
+	{
+		.arg		= "encoding",
+		.type		= ETHTOOL_A_FEC_MODES,
+		.handler	= nl_parse_bitlist,
+		.handler_data	= flags_fecenc,
+		.min_argc	= 1,
+	},
+	{}
+};
+
+int nl_sfec(struct cmd_context *ctx)
+{
+	return nl_set_param(ctx, "--set-fec", sfec_params,
+			    ETHTOOL_A_PARAMS_FEC);
+}

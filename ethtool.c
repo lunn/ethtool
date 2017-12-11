@@ -4990,6 +4990,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_spause	NULL
 #define nl_schannels	NULL
 #define nl_seee		NULL
+#define nl_sfec		NULL
 #endif
 
 static const struct option {
@@ -5201,7 +5202,7 @@ static const struct option {
 	  "		[ all ]\n"},
 	{ "--show-fec", 1, do_gfec, nl_gfec,
 	  "Show FEC settings"},
-	{ "--set-fec", 1, do_sfec, NULL,
+	{ "--set-fec", 1, do_sfec, nl_sfec,
 	  "Set FEC settings",
 	  "		[ encoding auto|off|rs|baser [...]]\n"},
 	{ "-Q|--per-queue", 1, do_perqueue, NULL,
