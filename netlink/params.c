@@ -608,3 +608,37 @@ int nl_schannels(struct cmd_context *ctx)
 	return nl_set_param(ctx, "-L", schannels_params,
 			    ETHTOOL_A_PARAMS_CHANNELS);
 }
+
+static const struct param_parser seee_params[] = {
+	{
+		.arg		= "advertise",
+		.type		= ETHTOOL_A_EEE_LINK_MODES,
+		.handler	= nl_parse_bitset,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-lpi",
+		.type		= ETHTOOL_A_EEE_TX_LPI_ENABLED,
+		.handler	= nl_parse_u8bool,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-timer",
+		.type		= ETHTOOL_A_EEE_TX_LPI_TIMER,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "eee",
+		.type		= ETHTOOL_A_EEE_ENABLED,
+		.handler	= nl_parse_u8bool,
+		.min_argc	= 1,
+	},
+	{}
+};
+
+int nl_seee(struct cmd_context *ctx)
+{
+	return nl_set_param(ctx, "--set-eee", seee_params,
+			    ETHTOOL_A_PARAMS_EEE);
+}

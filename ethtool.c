@@ -4989,6 +4989,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_sring	NULL
 #define nl_spause	NULL
 #define nl_schannels	NULL
+#define nl_seee		NULL
 #endif
 
 static const struct option {
@@ -5161,10 +5162,10 @@ static const struct option {
 	  "		[ length N ]\n" },
 	{ "--show-eee", 1, do_geee, nl_geee,
 	  "Show EEE settings"},
-	{ "--set-eee", 1, do_seee, NULL,
+	{ "--set-eee", 1, do_seee, nl_seee,
 	  "Set EEE settings",
 	  "		[ eee on|off ]\n"
-	  "		[ advertise %x ]\n"
+	  "		[ advertise %x[/%x] | mode on|off ... ]\n"
 	  "		[ tx-lpi on|off ]\n"
 	  "		[ tx-timer %d ]\n"},
 	{ "--set-phy-tunable", 1, do_set_phy_tunable, NULL,
