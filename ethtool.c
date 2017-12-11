@@ -4988,6 +4988,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_scoalesce	NULL
 #define nl_sring	NULL
 #define nl_spause	NULL
+#define nl_schannels	NULL
 #endif
 
 static const struct option {
@@ -5141,7 +5142,7 @@ static const struct option {
 	  "		N\n"},
 	{ "-l|--show-channels", 1, do_gchannels, nl_gchannels,
 	  "Query Channels" },
-	{ "-L|--set-channels", 1, do_schannels, NULL,
+	{ "-L|--set-channels", 1, do_schannels, nl_schannels,
 	  "Set Channels",
 	  "               [ rx N ]\n"
 	  "               [ tx N ]\n"

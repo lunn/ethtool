@@ -574,3 +574,37 @@ int nl_spause(struct cmd_context *ctx)
 {
 	return nl_set_param(ctx, "-A", spause_params, ETHTOOL_A_PARAMS_PAUSE);
 }
+
+static const struct param_parser schannels_params[] = {
+	{
+		.arg		= "rx",
+		.type		= ETHTOOL_A_CHANNELS_RX_COUNT,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx",
+		.type		= ETHTOOL_A_CHANNELS_TX_COUNT,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "other",
+		.type		= ETHTOOL_A_CHANNELS_OTHER_COUNT,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "combined",
+		.type		= ETHTOOL_A_CHANNELS_COMBINED_COUNT,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{}
+};
+
+int nl_schannels(struct cmd_context *ctx)
+{
+	return nl_set_param(ctx, "-L", schannels_params,
+			    ETHTOOL_A_PARAMS_CHANNELS);
+}
