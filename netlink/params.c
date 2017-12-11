@@ -333,3 +333,184 @@ int nl_gfec(struct cmd_context *ctx)
 {
 	return params_request(ctx, ETHTOOL_IM_PARAMS_FEC);
 }
+
+/* SET_PARAMS */
+
+static int nl_set_param(struct cmd_context *ctx, const char *opt,
+			const struct param_parser *params, uint16_t nest_type)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	struct nlattr *nest;
+	int ret;
+
+	nlctx->cmd = opt;
+	nlctx->argp = ctx->argp;
+	nlctx->argc = ctx->argc;
+	ret = msg_init(nlctx, ETHNL_CMD_SET_PARAMS, NLM_F_REQUEST | NLM_F_ACK);
+	if (ret < 0)
+		return 2;
+	if (ethnla_put_dev(nlctx, ETHTOOL_A_PARAMS_DEV, ctx->devname))
+		return -EMSGSIZE;
+
+	nest = ethnla_nest_start(nlctx, nest_type);
+	if (!nest) {
+		fprintf(stderr, "ethtool(%s): failed to allocate message\n",
+			opt);
+		return 76;
+	}
+
+	ret = nl_parser(nlctx, params, NULL);
+	if (ret < 0)
+		return 2;
+	mnl_attr_nest_end(nlctx->nlhdr, nest);
+
+	ret = ethnl_sendmsg(nlctx);
+	if (ret < 0)
+		return 75;
+	ret = ethnl_process_reply(nlctx, nomsg_reply_cb);
+	if (ret == 0)
+		return 0;
+	return nlctx->exit_code ?: 81;
+}
+
+static const struct param_parser scoalesce_params[] = {
+	{
+		.arg		= "adaptive-rx",
+		.type		= ETHTOOL_A_COALESCE_RX_USE_ADAPTIVE,
+		.handler	= nl_parse_u8bool,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "adaptive-tx",
+		.type		= ETHTOOL_A_COALESCE_TX_USE_ADAPTIVE,
+		.handler	= nl_parse_u8bool,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "sample-interval",
+		.type		= ETHTOOL_A_COALESCE_RATE_SAMPLE_INTERVAL,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "stats-block-usecs",
+		.type		= ETHTOOL_A_COALESCE_STATS_BLOCK_USECS,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "pkt-rate-low",
+		.type		= ETHTOOL_A_COALESCE_PKT_RATE_LOW,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "pkt-rate-high",
+		.type		= ETHTOOL_A_COALESCE_PKT_RATE_HIGH,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-usecs",
+		.type		= ETHTOOL_A_COALESCE_RX_USECS,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-frames",
+		.type		= ETHTOOL_A_COALESCE_RX_MAXFRM,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-usecs-irq",
+		.type		= ETHTOOL_A_COALESCE_RX_USECS_IRQ,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-frames-irq",
+		.type		= ETHTOOL_A_COALESCE_RX_MAXFRM_IRQ,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-usecs",
+		.type		= ETHTOOL_A_COALESCE_TX_USECS,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-frames",
+		.type		= ETHTOOL_A_COALESCE_TX_MAXFRM,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-usecs-irq",
+		.type		= ETHTOOL_A_COALESCE_TX_USECS_IRQ,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-frames-irq",
+		.type		= ETHTOOL_A_COALESCE_TX_MAXFRM_IRQ,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-usecs-low",
+		.type		= ETHTOOL_A_COALESCE_RX_USECS_LOW,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-frames-low",
+		.type		= ETHTOOL_A_COALESCE_RX_MAXFRM_LOW,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-usecs-low",
+		.type		= ETHTOOL_A_COALESCE_TX_USECS_LOW,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-frames-low",
+		.type		= ETHTOOL_A_COALESCE_TX_MAXFRM_LOW,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-usecs-high",
+		.type		= ETHTOOL_A_COALESCE_RX_USECS_HIGH,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-frames-high",
+		.type		= ETHTOOL_A_COALESCE_RX_MAXFRM_HIGH,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-usecs-high",
+		.type		= ETHTOOL_A_COALESCE_TX_USECS_HIGH,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-frames-high",
+		.type		= ETHTOOL_A_COALESCE_TX_MAXFRM_HIGH,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{}
+};
+
+int nl_scoalesce(struct cmd_context *ctx)
+{
+	return nl_set_param(ctx, "-C", scoalesce_params,
+			    ETHTOOL_A_PARAMS_COALESCE);
+}
