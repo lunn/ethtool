@@ -514,3 +514,36 @@ int nl_scoalesce(struct cmd_context *ctx)
 	return nl_set_param(ctx, "-C", scoalesce_params,
 			    ETHTOOL_A_PARAMS_COALESCE);
 }
+
+static const struct param_parser sring_params[] = {
+	{
+		.arg		= "rx",
+		.type		= ETHTOOL_A_RING_RX_PENDING,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-mini",
+		.type		= ETHTOOL_A_RING_RX_MINI_PENDING,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-jumbo",
+		.type		= ETHTOOL_A_RING_RX_JUMBO_PENDING,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx",
+		.type		= ETHTOOL_A_RING_TX_PENDING,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{}
+};
+
+int nl_sring(struct cmd_context *ctx)
+{
+	return nl_set_param(ctx, "-G", sring_params, ETHTOOL_A_PARAMS_RING);
+}

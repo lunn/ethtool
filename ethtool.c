@@ -4986,6 +4986,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_geee		NULL
 #define nl_gfec		NULL
 #define nl_scoalesce	NULL
+#define nl_sring	NULL
 #endif
 
 static const struct option {
@@ -5044,7 +5045,7 @@ static const struct option {
 	  "		[sample-interval N]\n" },
 	{ "-g|--show-ring", 1, do_gring, nl_gring,
 	  "Query RX/TX ring parameters" },
-	{ "-G|--set-ring", 1, do_sring, NULL,
+	{ "-G|--set-ring", 1, do_sring, nl_sring,
 	  "Set RX/TX ring parameters",
 	  "		[ rx N ]\n"
 	  "		[ rx-mini N ]\n"
