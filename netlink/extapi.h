@@ -29,6 +29,7 @@ int nl_geee(struct cmd_context *ctx);
 int nl_gfec(struct cmd_context *ctx);
 int nl_scoalesce(struct cmd_context *ctx);
 int nl_sring(struct cmd_context *ctx);
+int nl_spause(struct cmd_context *ctx);
 int nl_monitor(struct cmd_context *ctx);
 
 void monitor_usage();

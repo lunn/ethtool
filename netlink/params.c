@@ -547,3 +547,30 @@ int nl_sring(struct cmd_context *ctx)
 {
 	return nl_set_param(ctx, "-G", sring_params, ETHTOOL_A_PARAMS_RING);
 }
+
+static const struct param_parser spause_params[] = {
+	{
+		.arg		= "autoneg",
+		.type		= ETHTOOL_A_PAUSE_AUTONEG,
+		.handler	= nl_parse_u8bool,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx",
+		.type		= ETHTOOL_A_PAUSE_RX,
+		.handler	= nl_parse_u8bool,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx",
+		.type		= ETHTOOL_A_PAUSE_TX,
+		.handler	= nl_parse_u8bool,
+		.min_argc	= 1,
+	},
+	{}
+};
+
+int nl_spause(struct cmd_context *ctx)
+{
+	return nl_set_param(ctx, "-A", spause_params, ETHTOOL_A_PARAMS_PAUSE);
+}

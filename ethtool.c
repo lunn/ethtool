@@ -4987,6 +4987,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_gfec		NULL
 #define nl_scoalesce	NULL
 #define nl_sring	NULL
+#define nl_spause	NULL
 #endif
 
 static const struct option {
@@ -5012,7 +5013,7 @@ static const struct option {
 	  "		[ msglvl %d[/%d] | type on|off ... [--] ]\n" },
 	{ "-a|--show-pause", 1, do_gpause, nl_gpause,
 	  "Show pause options" },
-	{ "-A|--pause", 1, do_spause, NULL,
+	{ "-A|--pause", 1, do_spause, nl_spause,
 	  "Set pause options",
 	  "		[ autoneg on|off ]\n"
 	  "		[ rx on|off ]\n"
