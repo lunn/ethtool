@@ -354,6 +354,30 @@ ethtool \- query or control network driver and hardware settings
 .B ethtool \-\-get\-phy\-tunable
 .I devname
 .RB [ downshift ]
+.HP
+.B ethtool \-\-reset
+.I devname
+.BN flags
+.RB [ mgmt ]
+.RB [ mgmt-shared ]
+.RB [ irq ]
+.RB [ irq-shared ]
+.RB [ dma ]
+.RB [ dma-shared ]
+.RB [ filter ]
+.RB [ filter-shared ]
+.RB [ offload ]
+.RB [ offload-shared ]
+.RB [ mac ]
+.RB [ mac-shared ]
+.RB [ phy ]
+.RB [ phy-shared ]
+.RB [ ram ]
+.RB [ ram-shared ]
+.RB [ ap ]
+.RB [ ap-shared ]
+.RB [ dedicated ]
+.RB [ all ]
 .
 .\" Adjust lines (i.e. full justification) and hyphenate.
 .ad
@@ -1006,6 +1030,46 @@ Downshift is useful where cable does not have the 4 pairs instance.
 
 Gets the PHY downshift count/status.
 .RE
+.TP
+.B \-\-reset
+Reset hardware components specified by flags and components listed below
+.RS 4
+.TP
+.BI flags \ N
+Resets the components based on direct flags mask
+.TP
+.B mgmt
+Management processor
+.TP
+.B irq
+Interrupt requester
+.TP
+.B dma
+DMA engine
+.TP
+.B filter
+Filtering/flow direction
+.TP
+.B offload
+Protocol offload
+.TP
+.B mac
+Media access controller
+.TP
+.B phy
+Transceiver/PHY
+.TP
+.B ram
+RAM shared between multiple components
+.B ap
+Application Processor
+.TP
+.B dedicated
+All components dedicated to this interface
+.TP
+.B all
+All components used by this interface, even if shared
+.RE
 .SH BUGS
 Not supported (in part or whole) on all network drivers.
 .SH AUTHOR
@@ -1023,7 +1087,8 @@ Andi Kleen,
 Alexander Duyck,
 Sucheta Chakraborty,
 Jesse Brandeburg,
-Ben Hutchings.
+Ben Hutchings,
+Scott Branden.
 .SH AVAILABILITY
 .B ethtool
 is available from

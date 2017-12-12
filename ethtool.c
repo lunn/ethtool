@@ -4625,6 +4625,97 @@ static int do_get_phy_tunable(struct cmd_context *ctx)
 	return err;
 }
 
+static __u32 parse_reset(char *val, __u32 bitset, char *arg, __u32 *data)
+{
+	__u32 bitval = 0;
+	int i;
+
+	/* Check for component match */
+	for (i = 0; val[i] != '\0'; i++)
+		if (arg[i] != val[i])
+			return 0;
+
+	/* Check if component has -shared specified or not */
+	if (arg[i] == '\0')
+		bitval = bitset;
+	else if (!strcmp(arg+i, "-shared"))
+		bitval = bitset << ETH_RESET_SHARED_SHIFT;
+
+	if (bitval) {
+		*data |= bitval;
+		return 1;
+	}
+	return 0;
+}
+
+static int do_reset(struct cmd_context *ctx)
+{
+	struct ethtool_value resetinfo;
+	__u32 data;
+	int argc = ctx->argc;
+	char **argp = ctx->argp;
+	int i;
+
+	if (argc == 0)
+		exit_bad_args();
+
+	data = 0;
+
+	for (i = 0; i < argc; i++) {
+		if (!strcmp(argp[i], "flags")) {
+			__u32 flags;
+
+			i++;
+			if (i >= argc)
+				exit_bad_args();
+			flags = strtoul(argp[i], NULL, 0);
+			if (flags == 0)
+				exit_bad_args();
+			else
+				data |= flags;
+		} else if (parse_reset("mgmt", ETH_RESET_MGMT,
+				      argp[i], &data)) {
+		} else if (parse_reset("irq",  ETH_RESET_IRQ,
+				    argp[i], &data)) {
+		} else if (parse_reset("dma", ETH_RESET_DMA,
+				    argp[i], &data)) {
+		} else if (parse_reset("filter", ETH_RESET_FILTER,
+				    argp[i], &data)) {
+		} else if (parse_reset("offload", ETH_RESET_OFFLOAD,
+				    argp[i], &data)) {
+		} else if (parse_reset("mac", ETH_RESET_MAC,
+				    argp[i], &data)) {
+		} else if (parse_reset("phy", ETH_RESET_PHY,
+				    argp[i], &data)) {
+		} else if (parse_reset("ram", ETH_RESET_RAM,
+				    argp[i], &data)) {
+		} else if (parse_reset("ap", ETH_RESET_AP,
+				    argp[i], &data)) {
+		} else if (!strcmp(argp[i], "dedicated")) {
+			data |= ETH_RESET_DEDICATED;
+		} else if (!strcmp(argp[i], "all")) {
+			data |= ETH_RESET_ALL;
+		} else {
+			exit_bad_args();
+		}
+	}
+
+	resetinfo.cmd = ETHTOOL_RESET;
+	resetinfo.data = data;
+	fprintf(stdout, "ETHTOOL_RESET 0x%x\n", resetinfo.data);
+
+	if (send_ioctl(ctx, &resetinfo)) {
+		perror("Cannot issue ETHTOOL_RESET");
+		return 1;
+	}
+
+	fprintf(stdout, "Components reset:     0x%x\n", data & ~resetinfo.data);
+	if (resetinfo.data)
+		fprintf(stdout, "Components not reset: 0x%x\n", resetinfo.data);
+
+	return 0;
+}
+
 static int parse_named_bool(struct cmd_context *ctx, const char *name, u8 *on)
 {
 	if (ctx->argc < 2)
@@ -4887,6 +4978,28 @@ static const struct option {
 	  "		[ downshift on|off [count N] ]\n"},
 	{ "--get-phy-tunable", 1, do_get_phy_tunable, "Get PHY tunable",
 	  "		[ downshift ]\n"},
+	{ "--reset", 1, do_reset, "Reset components",
+	  "		[ flags %x ]\n"
+	  "		[ mgmt ]\n"
+	  "		[ mgmt-shared ]\n"
+	  "		[ irq ]\n"
+	  "		[ irq-shared ]\n"
+	  "		[ dma ]\n"
+	  "		[ dma-shared ]\n"
+	  "		[ filter ]\n"
+	  "		[ filter-shared ]\n"
+	  "		[ offload ]\n"
+	  "		[ offload-shared ]\n"
+	  "		[ mac ]\n"
+	  "		[ mac-shared ]\n"
+	  "		[ phy ]\n"
+	  "		[ phy-shared ]\n"
+	  "		[ ram ]\n"
+	  "		[ ram-shared ]\n"
+	  "		[ ap ]\n"
+	  "		[ ap-shared ]\n"
+	  "		[ dedicated ]\n"
+	  "		[ all ]\n"},
 	{ "-h|--help", 0, show_usage, "Show this help" },
 	{ "--version", 0, do_version, "Show version number" },
 	{}
