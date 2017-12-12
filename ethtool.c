@@ -1330,7 +1330,6 @@ static int dump_coalesce(const struct ethtool_coalesce *ecoal)
 		"sample-interval: %u\n"
 		"pkt-rate-low: %u\n"
 		"pkt-rate-high: %u\n"
-		"dmac: %u\n"
 		"\n"
 		"rx-usecs: %u\n"
 		"rx-frames: %u\n"
@@ -1356,7 +1355,6 @@ static int dump_coalesce(const struct ethtool_coalesce *ecoal)
 		ecoal->rate_sample_interval,
 		ecoal->pkt_rate_low,
 		ecoal->pkt_rate_high,
-		ecoal->dmac,
 
 		ecoal->rx_coalesce_usecs,
 		ecoal->rx_max_coalesced_frames,
@@ -2064,7 +2062,6 @@ static int do_scoalesce(struct cmd_context *ctx)
 	int coal_adaptive_rx_wanted = -1;
 	int coal_adaptive_tx_wanted = -1;
 	s32 coal_sample_rate_wanted = -1;
-	s32 coal_dmac_wanted = -1;
 	s32 coal_pkt_rate_low_wanted = -1;
 	s32 coal_pkt_rate_high_wanted = -1;
 	s32 coal_rx_usec_wanted = -1;
@@ -2090,8 +2087,6 @@ static int do_scoalesce(struct cmd_context *ctx)
 		  &ecoal.use_adaptive_tx_coalesce },
 		{ "sample-interval", CMDL_S32, &coal_sample_rate_wanted,
 		  &ecoal.rate_sample_interval },
-		{ "dmac", CMDL_S32, &coal_dmac_wanted,
-		  &ecoal.dmac },
 		{ "stats-block-usecs", CMDL_S32, &coal_stats_wanted,
 		  &ecoal.stats_block_coalesce_usecs },
 		{ "pkt-rate-low", CMDL_S32, &coal_pkt_rate_low_wanted,
@@ -4783,8 +4778,7 @@ static const struct option {
 	  "		[rx-frames-high N]\n"
 	  "		[tx-usecs-high N]\n"
 	  "		[tx-frames-high N]\n"
-	  "		[sample-interval N]\n"
-	  "		[dmac N]\n" },
+	  "		[sample-interval N]\n" },
 	{ "-g|--show-ring", 1, do_gring, "Query RX/TX ring parameters" },
 	{ "-G|--set-ring", 1, do_sring, "Set RX/TX ring parameters",
 	  "		[ rx N ]\n"
