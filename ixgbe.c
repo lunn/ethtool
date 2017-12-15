@@ -232,9 +232,9 @@ ixgbe_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs)
 		"       Receive Priority Flow Control Packets:         %s\n",
 		reg,
 		reg & IXGBE_MFLCN_RFCE    ? "enabled"  : "disabled",
-		reg & IXGBE_FCTRL_DPF     ? "enabled"  : "disabled",
-		reg & IXGBE_FCTRL_PMCF    ? "enabled"  : "disabled",
-		reg & IXGBE_FCTRL_RPFCE   ? "enabled"  : "disabled");
+		reg & IXGBE_MFLCN_DPF     ? "enabled"  : "disabled",
+		reg & IXGBE_MFLCN_PMCF    ? "enabled"  : "disabled",
+		reg & IXGBE_MFLCN_RPFCE   ? "enabled"  : "disabled");
 	}
 
 	reg = regs_buff[516];
