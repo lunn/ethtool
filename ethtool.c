@@ -542,6 +542,9 @@ static void init_global_link_mode_masks(void)
 		ETHTOOL_LINK_MODE_Pause_BIT,
 		ETHTOOL_LINK_MODE_Asym_Pause_BIT,
 		ETHTOOL_LINK_MODE_Backplane_BIT,
+		ETHTOOL_LINK_MODE_FEC_NONE_BIT,
+		ETHTOOL_LINK_MODE_FEC_RS_BIT,
+		ETHTOOL_LINK_MODE_FEC_BASER_BIT,
 	};
 	unsigned int i;
 
@@ -689,6 +692,7 @@ static void dump_link_caps(const char *prefix, const char *an_prefix,
 	};
 	int indent;
 	int did1, new_line_pend, i;
+	int fecreported = 0;
 
 	/* Indent just like the separate functions used to */
 	indent = strlen(prefix) + 14;
@@ -740,6 +744,26 @@ static void dump_link_caps(const char *prefix, const char *an_prefix,
 			fprintf(stdout, "Yes\n");
 		else
 			fprintf(stdout, "No\n");
+
+		fprintf(stdout, "	%s FEC modes:", prefix);
+		if (ethtool_link_mode_test_bit(ETHTOOL_LINK_MODE_FEC_NONE_BIT,
+					       mask)) {
+			fprintf(stdout, " None");
+			fecreported = 1;
+		}
+		if (ethtool_link_mode_test_bit(ETHTOOL_LINK_MODE_FEC_BASER_BIT,
+					       mask)) {
+			fprintf(stdout, " BaseR");
+			fecreported = 1;
+		}
+		if (ethtool_link_mode_test_bit(ETHTOOL_LINK_MODE_FEC_RS_BIT,
+					       mask)) {
+			fprintf(stdout, " RS");
+			fecreported = 1;
+		}
+		if (!fecreported)
+			fprintf(stdout, " Not reported");
+		fprintf(stdout, "\n");
 	}
 }
 
@@ -1560,6 +1584,20 @@ static void dump_eeecmd(struct ethtool_eee *ep)
 
 	link_mode[0] = ep->lp_advertised;
 	dump_link_caps("Link partner advertised EEE", "", link_mode, 1);
+}
+
+static void dump_fec(u32 fec)
+{
+	if (fec & ETHTOOL_FEC_NONE)
+		fprintf(stdout, " None");
+	if (fec & ETHTOOL_FEC_AUTO)
+		fprintf(stdout, " Auto");
+	if (fec & ETHTOOL_FEC_OFF)
+		fprintf(stdout, " Off");
+	if (fec & ETHTOOL_FEC_BASER)
+		fprintf(stdout, " BaseR");
+	if (fec & ETHTOOL_FEC_RS)
+		fprintf(stdout, " RS");
 }
 
 #define N_SOTS 7
@@ -4812,6 +4850,84 @@ static int do_set_phy_tunable(struct cmd_context *ctx)
 	return err;
 }
 
+static int fecmode_str_to_type(const char *str)
+{
+	int fecmode = 0;
+
+	if (!str)
+		return fecmode;
+
+	if (!strcasecmp(str, "auto"))
+		fecmode |= ETHTOOL_FEC_AUTO;
+	else if (!strcasecmp(str, "off"))
+		fecmode |= ETHTOOL_FEC_OFF;
+	else if (!strcasecmp(str, "rs"))
+		fecmode |= ETHTOOL_FEC_RS;
+	else if (!strcasecmp(str, "baser"))
+		fecmode |= ETHTOOL_FEC_BASER;
+
+	return fecmode;
+}
+
+static int do_gfec(struct cmd_context *ctx)
+{
+	struct ethtool_fecparam feccmd = { 0 };
+	int rv;
+
+	if (ctx->argc != 0)
+		exit_bad_args();
+
+	feccmd.cmd = ETHTOOL_GFECPARAM;
+	rv = send_ioctl(ctx, &feccmd);
+	if (rv != 0) {
+		perror("Cannot get FEC settings");
+		return rv;
+	}
+
+	fprintf(stdout, "FEC parameters for %s:\n", ctx->devname);
+	fprintf(stdout, "Configured FEC encodings:");
+	dump_fec(feccmd.fec);
+	fprintf(stdout, "\n");
+
+	fprintf(stdout, "Active FEC encoding:");
+	dump_fec(feccmd.active_fec);
+	fprintf(stdout, "\n");
+
+	return 0;
+}
+
+static int do_sfec(struct cmd_context *ctx)
+{
+	char *fecmode_str = NULL;
+	struct ethtool_fecparam feccmd;
+	struct cmdline_info cmdline_fec[] = {
+		{ "encoding", CMDL_STR,  &fecmode_str,  &feccmd.fec},
+	};
+	int changed;
+	int fecmode;
+	int rv;
+
+	parse_generic_cmdline(ctx, &changed, cmdline_fec,
+			      ARRAY_SIZE(cmdline_fec));
+
+	if (!fecmode_str)
+		exit_bad_args();
+
+	fecmode = fecmode_str_to_type(fecmode_str);
+	if (!fecmode)
+		exit_bad_args();
+
+	feccmd.cmd = ETHTOOL_SFECPARAM;
+	feccmd.fec = fecmode;
+	rv = send_ioctl(ctx, &feccmd);
+	if (rv != 0) {
+		perror("Cannot set FEC settings");
+		return rv;
+	}
+
+	return 0;
+}
+
 #ifndef TEST_ETHTOOL
 int send_ioctl(struct cmd_context *ctx, void *cmd)
 {
@@ -5000,6 +5116,9 @@ static const struct option {
 	  "		[ ap-shared ]\n"
 	  "		[ dedicated ]\n"
 	  "		[ all ]\n"},
+	{ "--show-fec", 1, do_gfec, "Show FEC settings"},
+	{ "--set-fec", 1, do_sfec, "Set FEC settings",
+	  "		[ encoding auto|off|rs|baser ]\n"},
 	{ "-h|--help", 0, show_usage, "Show this help" },
 	{ "--version", 0, do_version, "Show version number" },
 	{}

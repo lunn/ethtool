@@ -378,6 +378,13 @@ ethtool \- query or control network driver and hardware settings
 .RB [ ap-shared ]
 .RB [ dedicated ]
 .RB [ all ]
+.HP
+.B ethtool \-\-show\-fec
+.I devname
+.HP
+.B ethtool \-\-set\-fec
+.I devname
+.B4 encoding auto off rs baser
 .
 .\" Adjust lines (i.e. full justification) and hyphenate.
 .ad
@@ -1069,6 +1076,30 @@ All components dedicated to this interface
 .TP
 .B all
 All components used by this interface, even if shared
+.RE
+.TP
+.B \-\-show\-fec
+Queries the specified network device for its support of Forward Error Correction.
+.TP
+.B \-\-set\-fec
+Configures Forward Error Correction for the specified network device.
+
+Forward Error Correction modes selected by a user are expected to be persisted
+after any hotplug events. If a module is swapped that does not support the
+current FEC mode, the driver or firmware must take the link down
+administratively and report the problem in the system logs for users to correct.
+.RS 4
+.TP
+.A4 encoding auto off rs baser
+Sets the FEC encoding for the device.
+.TS
+nokeep;
+lB	l.
+auto	Use the driver's default encoding
+off	Turn off FEC
+RS	Force RS-FEC encoding
+BaseR	Force BaseR encoding
+.TE
 .RE
 .SH BUGS
 Not supported (in part or whole) on all network drivers.
