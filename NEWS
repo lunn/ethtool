@@ -1,3 +1,13 @@
+Version 4.15 - February 1, 2018
+
+	* Feature: Support for FEC encoding control
+	* Fix: Fix coding style warnings and errors reported by checkpatch
+	* Feature: Add extended compliance codes parsing to sfp modules
+	* Fix: Revert "ethtool: Add DMA Coalescing support"
+	* Feature: Add ETHTOOL_RESET support via --reset command
+	* Fix: fix MFLCN register dump for 82599 and newer
+
+
 Version 4.13 - October 27, 2017
 
 	* Fix: Do not return error code if no changes were attempted.
