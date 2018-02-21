@@ -782,6 +782,8 @@ void sff8636_show_all(const __u8 *id, __u32 eeprom_len)
 			       SFF8636_VENDOR_REV_END_OFFSET, "Vendor rev");
 		sff_show_ascii(id, SFF8636_VENDOR_SN_START_OFFSET,
 			       SFF8636_VENDOR_SN_END_OFFSET, "Vendor SN");
+		sff_show_ascii(id, SFF8636_DATE_YEAR_OFFSET,
+			       SFF8636_DATE_VENDOR_LOT_OFFSET + 1, "Date code");
 		sff8636_show_revision_compliance(id);
 		sff8636_show_dom(id, eeprom_len);
 	}
