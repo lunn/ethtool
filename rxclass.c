@@ -251,9 +251,14 @@ static void rxclass_print_nfc_rule(struct ethtool_rx_flow_spec *fsp)
 		u64 vf = ethtool_get_flow_spec_ring_vf(fsp->ring_cookie);
 		u64 queue = ethtool_get_flow_spec_ring(fsp->ring_cookie);
 
+		/* A value of zero indicates that this rule targeted the main
+		 * function. A positive value indicates which virtual function
+		 * was targeted, so we'll subtract 1 in order to show the
+		 * correct VF index
+		 */
 		if (vf)
 			fprintf(stdout, "\tAction: Direct to VF %llu queue %llu\n",
-				vf, queue);
+				vf - 1, queue);
 		else
 			fprintf(stdout, "\tAction: Direct to queue %llu\n",
 				queue);
@@ -1047,6 +1052,13 @@ static int rxclass_get_val(char *str, unsigned char *p, u32 *flags,
 		err = rxclass_get_ulong(str, &val, 8);
 		if (err)
 			return -1;
+
+		/* The ring_cookie uses 0 to indicate the rule targets the
+		 * main function, so add 1 to the value in order to target the
+		 * correct virtual function.
+		 */
+		val++;
+
 		*(u64 *)&p[opt->offset] &= ~ETHTOOL_RX_FLOW_SPEC_RING_VF;
 		*(u64 *)&p[opt->offset] = (u64)val << ETHTOOL_RX_FLOW_SPEC_RING_VF_OFF;
 		break;

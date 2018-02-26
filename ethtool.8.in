@@ -869,8 +869,7 @@ lB	l.
 .TE
 .TP
 .BI vf \ N
-Specifies the Virtual Function the filter applies to. A value of 0 indicates
-the PF, and thus the VF index is offset by 1. Not compatible with action.
+Specifies the Virtual Function the filter applies to. Not compatible with action.
 .TP
 .BI queue \ N
 Specifies the Rx queue to send packets to. Not compatible with action.
