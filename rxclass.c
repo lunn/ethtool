@@ -252,11 +252,11 @@ static void rxclass_print_nfc_rule(struct ethtool_rx_flow_spec *fsp)
 		u64 queue = ethtool_get_flow_spec_ring(fsp->ring_cookie);
 
 		if (vf)
-			fprintf(stdout, "\tAction: Direct to queue %llu\n",
-				queue);
-		else
 			fprintf(stdout, "\tAction: Direct to VF %llu queue %llu\n",
 				vf, queue);
+		else
+			fprintf(stdout, "\tAction: Direct to queue %llu\n",
+				queue);
 	} else {
 		fprintf(stdout, "\tAction: Drop\n");
 	}
