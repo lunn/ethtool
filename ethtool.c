@@ -5046,7 +5046,7 @@ static const struct option {
 	  "			[ vlan %x [m %x] ]\n"
 	  "			[ user-def %x [m %x] ]\n"
 	  "			[ dst-mac %x:%x:%x:%x:%x:%x [m %x:%x:%x:%x:%x:%x] ]\n"
-	  "			[ action %d ]\n"
+	  "			[ action %d ] | [ vf %d queue %d ]\n"
 	  "			[ loc %d]] |\n"
 	  "		delete %d\n" },
 	{ "-T|--show-time-stamping", 1, do_tsinfo,
