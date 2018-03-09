@@ -1506,7 +1506,7 @@ static void dump_features(const struct feature_defs *defs,
 
 static int dump_rxfhash(int fhash, u64 val)
 {
-	switch (fhash) {
+	switch (fhash & ~FLOW_RSS) {
 	case TCP_V4_FLOW:
 		fprintf(stdout, "TCP over IPV4 flows");
 		break;
@@ -3517,11 +3517,20 @@ static int do_srxclass(struct cmd_context *ctx)
 	if (ctx->argc < 2)
 		exit_bad_args();
 
-	if (ctx->argc == 3 && !strcmp(ctx->argp[0], "rx-flow-hash")) {
+	if (!strcmp(ctx->argp[0], "rx-flow-hash")) {
 		int rx_fhash_set;
 		u32 rx_fhash_val;
 		struct ethtool_rxnfc nfccmd;
+		bool flow_rss = false;
 
+		if (ctx->argc == 5) {
+			if (strcmp(ctx->argp[3], "context"))
+				exit_bad_args();
+			flow_rss = true;
+			nfccmd.rss_context = get_u32(ctx->argp[4], 0);
+		} else if (ctx->argc != 3) {
+			exit_bad_args();
+		}
 		rx_fhash_set = rxflow_str_to_type(ctx->argp[1]);
 		if (!rx_fhash_set)
 			exit_bad_args();
@@ -3531,16 +3540,19 @@ static int do_srxclass(struct cmd_context *ctx)
 		nfccmd.cmd = ETHTOOL_SRXFH;
 		nfccmd.flow_type = rx_fhash_set;
 		nfccmd.data = rx_fhash_val;
+		if (flow_rss)
+			nfccmd.flow_type |= FLOW_RSS;
 
 		err = send_ioctl(ctx, &nfccmd);
 		if (err < 0)
 			perror("Cannot change RX network flow hashing options");
 	} else if (!strcmp(ctx->argp[0], "flow-type")) {
 		struct ethtool_rx_flow_spec rx_rule_fs;
+		__u32 rss_context = 0;
 
 		ctx->argc--;
 		ctx->argp++;
-		if (rxclass_parse_ruleopts(ctx, &rx_rule_fs) < 0)
+		if (rxclass_parse_ruleopts(ctx, &rx_rule_fs, &rss_context) < 0)
 			exit_bad_args();
 
 		/* attempt to add rule via N-tuple specifier */
@@ -3549,7 +3561,7 @@ static int do_srxclass(struct cmd_context *ctx)
 			return 0;
 
 		/* attempt to add rule via network flow classifier */
-		err = rxclass_rule_ins(ctx, &rx_rule_fs);
+		err = rxclass_rule_ins(ctx, &rx_rule_fs, rss_context);
 		if (err < 0) {
 			fprintf(stderr, "Cannot insert"
 				" classification rule\n");
@@ -3578,8 +3590,18 @@ static int do_grxclass(struct cmd_context *ctx)
 	struct ethtool_rxnfc nfccmd;
 	int err;
 
-	if (ctx->argc == 2 && !strcmp(ctx->argp[0], "rx-flow-hash")) {
+	if (ctx->argc > 0 && !strcmp(ctx->argp[0], "rx-flow-hash")) {
 		int rx_fhash_get;
+		bool flow_rss = false;
+
+		if (ctx->argc == 4) {
+			if (strcmp(ctx->argp[2], "context"))
+				exit_bad_args();
+			flow_rss = true;
+			nfccmd.rss_context = get_u32(ctx->argp[3], 0);
+		} else if (ctx->argc != 2) {
+			exit_bad_args();
+		}
 
 		rx_fhash_get = rxflow_str_to_type(ctx->argp[1]);
 		if (!rx_fhash_get)
@@ -3587,11 +3609,17 @@ static int do_grxclass(struct cmd_context *ctx)
 
 		nfccmd.cmd = ETHTOOL_GRXFH;
 		nfccmd.flow_type = rx_fhash_get;
+		if (flow_rss)
+			nfccmd.flow_type |= FLOW_RSS;
 		err = send_ioctl(ctx, &nfccmd);
-		if (err < 0)
+		if (err < 0) {
 			perror("Cannot get RX network flow hashing options");
-		else
+		} else {
+			if (flow_rss)
+				fprintf(stdout, "For RSS context %u:\n",
+					nfccmd.rss_context);
 			dump_rxfhash(rx_fhash_get, nfccmd.data);
+		}
 	} else if (ctx->argc == 2 && !strcmp(ctx->argp[0], "rule")) {
 		int rx_class_rule_get =
 			get_uint_range(ctx->argp[1], 0, INT_MAX);
@@ -3683,9 +3711,22 @@ static int do_grxfh(struct cmd_context *ctx)
 	struct ethtool_rxfh rss_head = {0};
 	struct ethtool_rxnfc ring_count;
 	struct ethtool_rxfh *rss;
+	u32 rss_context = 0;
 	u32 i, indir_bytes;
+	int arg_num = 0;
 	char *hkey;
 	int err;
+
+	while (arg_num < ctx->argc) {
+		if (!strcmp(ctx->argp[arg_num], "context")) {
+			++arg_num;
+			rss_context = get_int_range(ctx->argp[arg_num], 0, 1,
+						    ETH_RXFH_CONTEXT_ALLOC - 1);
+			++arg_num;
+		} else {
+			exit_bad_args();
+		}
+	}
 
 	ring_count.cmd = ETHTOOL_GRXRINGS;
 	err = send_ioctl(ctx, &ring_count);
@@ -3695,6 +3736,7 @@ static int do_grxfh(struct cmd_context *ctx)
 	}
 
 	rss_head.cmd = ETHTOOL_GRSSH;
+	rss_head.rss_context = rss_context;
 	err = send_ioctl(ctx, &rss_head);
 	if (err < 0 && errno == EOPNOTSUPP) {
 		return do_grxfhindir(ctx, &ring_count);
@@ -3712,6 +3754,7 @@ static int do_grxfh(struct cmd_context *ctx)
 	}
 
 	rss->cmd = ETHTOOL_GRSSH;
+	rss->rss_context = rss_context;
 	rss->indir_size = rss_head.indir_size;
 	rss->key_size = rss_head.key_size;
 	err = send_ioctl(ctx, rss);
@@ -3872,6 +3915,8 @@ static int do_srxfh(struct cmd_context *ctx)
 	u32 req_hfunc = 0;
 	u32 entry_size = sizeof(rss_head.rss_config[0]);
 	u32 num_weights = 0;
+	u32 rss_context = 0;
+	int delete = 0;
 
 	if (ctx->argc < 1)
 		exit_bad_args();
@@ -3907,6 +3952,18 @@ static int do_srxfh(struct cmd_context *ctx)
 			if (!req_hfunc_name)
 				exit_bad_args();
 			++arg_num;
+		} else if (!strcmp(ctx->argp[arg_num], "context")) {
+			++arg_num;
+			if(!strcmp(ctx->argp[arg_num], "new"))
+				rss_context = ETH_RXFH_CONTEXT_ALLOC;
+			else
+				rss_context = get_int_range(
+						ctx->argp[arg_num], 0, 1,
+						ETH_RXFH_CONTEXT_ALLOC - 1);
+			++arg_num;
+		} else if (!strcmp(ctx->argp[arg_num], "delete")) {
+			++arg_num;
+			delete = 1;
 		} else {
 			exit_bad_args();
 		}
@@ -3930,6 +3987,41 @@ static int do_srxfh(struct cmd_context *ctx)
 		return 1;
 	}
 
+	if (rxfhindir_default && rss_context) {
+		fprintf(stderr,
+			"Default and context options are mutually exclusive\n");
+		return 1;
+	}
+
+	if (delete && !rss_context) {
+		fprintf(stderr, "Delete option requires context option\n");
+		return 1;
+	}
+
+	if (delete && rxfhindir_weight) {
+		fprintf(stderr,
+			"Delete and weight options are mutually exclusive\n");
+		return 1;
+	}
+
+	if (delete && rxfhindir_equal) {
+		fprintf(stderr,
+			"Delete and equal options are mutually exclusive\n");
+		return 1;
+	}
+
+	if (delete && rxfhindir_default) {
+		fprintf(stderr,
+			"Delete and default options are mutually exclusive\n");
+		return 1;
+	}
+
+	if (delete && rxfhindir_key) {
+		fprintf(stderr,
+			"Delete and hkey options are mutually exclusive\n");
+		return 1;
+	}
+
 	ring_count.cmd = ETHTOOL_GRXRINGS;
 	err = send_ioctl(ctx, &ring_count);
 	if (err < 0) {
@@ -3940,7 +4032,7 @@ static int do_srxfh(struct cmd_context *ctx)
 	rss_head.cmd = ETHTOOL_GRSSH;
 	err = send_ioctl(ctx, &rss_head);
 	if (err < 0 && errno == EOPNOTSUPP && !rxfhindir_key &&
-	    !req_hfunc_name) {
+	    !req_hfunc_name && !rss_context) {
 		return do_srxfhindir(ctx, rxfhindir_default, rxfhindir_equal,
 				     rxfhindir_weight, num_weights);
 	} else if (err < 0) {
@@ -3988,14 +4080,19 @@ static int do_srxfh(struct cmd_context *ctx)
 		goto free;
 	}
 	rss->cmd = ETHTOOL_SRSSH;
-	rss->indir_size = rss_head.indir_size;
-	rss->key_size = rss_head.key_size;
+	rss->rss_context = rss_context;
 	rss->hfunc = req_hfunc;
-
-	if (fill_indir_table(&rss->indir_size, rss->rss_config, rxfhindir_default,
-			     rxfhindir_equal, rxfhindir_weight, num_weights)) {
-		err = 1;
-		goto free;
+	if (delete) {
+		rss->indir_size = rss->key_size = 0;
+	} else {
+		rss->indir_size = rss_head.indir_size;
+		rss->key_size = rss_head.key_size;
+		if (fill_indir_table(&rss->indir_size, rss->rss_config,
+				     rxfhindir_default, rxfhindir_equal,
+				     rxfhindir_weight, num_weights)) {
+			err = 1;
+			goto free;
+		}
 	}
 
 	if (hkey)
@@ -4008,6 +4105,8 @@ static int do_srxfh(struct cmd_context *ctx)
 	if (err < 0) {
 		perror("Cannot set RX flow hash configuration");
 		err = 1;
+	} else if (rss_context == ETH_RXFH_CONTEXT_ALLOC) {
+		printf("New RSS context is %d\n", rss->rss_context);
 	}
 
 free:
@@ -5023,12 +5122,12 @@ static const struct option {
 	{ "-n|-u|--show-nfc|--show-ntuple", 1, do_grxclass,
 	  "Show Rx network flow classification options or rules",
 	  "		[ rx-flow-hash tcp4|udp4|ah4|esp4|sctp4|"
-	  "tcp6|udp6|ah6|esp6|sctp6 |\n"
+	  "tcp6|udp6|ah6|esp6|sctp6 [context %d] |\n"
 	  "		  rule %d ]\n" },
 	{ "-N|-U|--config-nfc|--config-ntuple", 1, do_srxclass,
 	  "Configure Rx network flow classification options or rules",
 	  "		rx-flow-hash tcp4|udp4|ah4|esp4|sctp4|"
-	  "tcp6|udp6|ah6|esp6|sctp6 m|v|t|s|d|f|n|r... |\n"
+	  "tcp6|udp6|ah6|esp6|sctp6 m|v|t|s|d|f|n|r... [context %d] |\n"
 	  "		flow-type ether|ip4|tcp4|udp4|sctp4|ah4|esp4|"
 	  "ip6|tcp6|udp6|ah6|esp6|sctp6\n"
 	  "			[ src %x:%x:%x:%x:%x:%x [m %x:%x:%x:%x:%x:%x] ]\n"
@@ -5047,17 +5146,21 @@ static const struct option {
 	  "			[ user-def %x [m %x] ]\n"
 	  "			[ dst-mac %x:%x:%x:%x:%x:%x [m %x:%x:%x:%x:%x:%x] ]\n"
 	  "			[ action %d ] | [ vf %d queue %d ]\n"
+	  "			[ context %d ]\n"
 	  "			[ loc %d]] |\n"
 	  "		delete %d\n" },
 	{ "-T|--show-time-stamping", 1, do_tsinfo,
 	  "Show time stamping capabilities" },
 	{ "-x|--show-rxfh-indir|--show-rxfh", 1, do_grxfh,
-	  "Show Rx flow hash indirection table and/or RSS hash key" },
+	  "Show Rx flow hash indirection table and/or RSS hash key",
+	  "		[ context %d ]\n" },
 	{ "-X|--set-rxfh-indir|--rxfh", 1, do_srxfh,
 	  "Set Rx flow hash indirection table and/or RSS hash key",
+	  "		[ context %d|new ]\n"
 	  "		[ equal N | weight W0 W1 ... | default ]\n"
 	  "		[ hkey %x:%x:%x:%x:%x:.... ]\n"
-	  "		[ hfunc FUNC ]\n" },
+	  "		[ hfunc FUNC ]\n"
+	  "		[ delete ]\n" },
 	{ "-f|--flash", 1, do_flash,
 	  "Flash firmware image from the specified file to a region on the device",
 	  "               FILENAME [ REGION-NUMBER-TO-FLASH ]\n" },

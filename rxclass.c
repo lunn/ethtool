@@ -94,14 +94,15 @@ static void rxclass_print_nfc_spec_ext(struct ethtool_rx_flow_spec *fsp)
 	}
 }
 
-static void rxclass_print_nfc_rule(struct ethtool_rx_flow_spec *fsp)
+static void rxclass_print_nfc_rule(struct ethtool_rx_flow_spec *fsp,
+				   __u32 rss_context)
 {
 	unsigned char	*smac, *smacm, *dmac, *dmacm;
 	__u32		flow_type;
 
 	fprintf(stdout,	"Filter: %d\n", fsp->location);
 
-	flow_type = fsp->flow_type & ~(FLOW_EXT | FLOW_MAC_EXT);
+	flow_type = fsp->flow_type & ~(FLOW_EXT | FLOW_MAC_EXT | FLOW_RSS);
 
 	invert_flow_mask(fsp);
 
@@ -247,6 +248,9 @@ static void rxclass_print_nfc_rule(struct ethtool_rx_flow_spec *fsp)
 
 	rxclass_print_nfc_spec_ext(fsp);
 
+	if (fsp->flow_type & FLOW_RSS)
+		fprintf(stdout, "\tRSS Context ID: %u\n", rss_context);
+
 	if (fsp->ring_cookie != RX_CLS_FLOW_DISC) {
 		u64 vf = ethtool_get_flow_spec_ring_vf(fsp->ring_cookie);
 		u64 queue = ethtool_get_flow_spec_ring(fsp->ring_cookie);
@@ -269,10 +273,11 @@ static void rxclass_print_nfc_rule(struct ethtool_rx_flow_spec *fsp)
 	fprintf(stdout, "\n");
 }
 
-static void rxclass_print_rule(struct ethtool_rx_flow_spec *fsp)
+static void rxclass_print_rule(struct ethtool_rx_flow_spec *fsp,
+			       __u32 rss_context)
 {
 	/* print the rule in this location */
-	switch (fsp->flow_type & ~(FLOW_EXT | FLOW_MAC_EXT)) {
+	switch (fsp->flow_type & ~(FLOW_EXT | FLOW_MAC_EXT | FLOW_RSS)) {
 	case TCP_V4_FLOW:
 	case UDP_V4_FLOW:
 	case SCTP_V4_FLOW:
@@ -285,11 +290,11 @@ static void rxclass_print_rule(struct ethtool_rx_flow_spec *fsp)
 	case ESP_V6_FLOW:
 	case IPV6_USER_FLOW:
 	case ETHER_FLOW:
-		rxclass_print_nfc_rule(fsp);
+		rxclass_print_nfc_rule(fsp, rss_context);
 		break;
 	case IPV4_USER_FLOW:
 		if (fsp->h_u.usr_ip4_spec.ip_ver == ETH_RX_NFC_IP4)
-			rxclass_print_nfc_rule(fsp);
+			rxclass_print_nfc_rule(fsp, rss_context);
 		else /* IPv6 uses IPV6_USER_FLOW */
 			fprintf(stderr, "IPV4_USER_FLOW with wrong ip_ver\n");
 		break;
@@ -333,7 +338,7 @@ int rxclass_rule_get(struct cmd_context *ctx, __u32 loc)
 	}
 
 	/* display rule */
-	rxclass_print_rule(&nfccmd.fs);
+	rxclass_print_rule(&nfccmd.fs, (__u32)nfccmd.rss_context);
 	return err;
 }
 
@@ -563,7 +568,7 @@ out:
 }
 
 int rxclass_rule_ins(struct cmd_context *ctx,
-		     struct ethtool_rx_flow_spec *fsp)
+		     struct ethtool_rx_flow_spec *fsp, __u32 rss_context)
 {
 	struct ethtool_rxnfc nfccmd;
 	__u32 loc = fsp->location;
@@ -581,6 +586,7 @@ int rxclass_rule_ins(struct cmd_context *ctx,
 
 	/* notify netdev of new rule */
 	nfccmd.cmd = ETHTOOL_SRXCLSRLINS;
+	nfccmd.rss_context = rss_context;
 	nfccmd.fs = *fsp;
 	err = send_ioctl(ctx, &nfccmd);
 	if (err < 0)
@@ -1254,7 +1260,7 @@ static int rxclass_get_mask(char *str, unsigned char *p,
 }
 
 int rxclass_parse_ruleopts(struct cmd_context *ctx,
-			   struct ethtool_rx_flow_spec *fsp)
+			   struct ethtool_rx_flow_spec *fsp, __u32 *rss_context)
 {
 	const struct rule_opts *options;
 	unsigned char *p = (unsigned char *)fsp;
@@ -1343,6 +1349,40 @@ int rxclass_parse_ruleopts(struct cmd_context *ctx,
 	for (i = 1; i < argc;) {
 		const struct rule_opts *opt;
 		int idx;
+
+		/* special handling for 'context %d' as it doesn't go in
+		 * the struct ethtool_rx_flow_spec
+		 */
+		if (!strcmp(argp[i], "context")) {
+			unsigned long long val;
+
+			i++;
+			if (i >= argc) {
+				fprintf(stderr, "'context' missing value\n");
+				return -1;
+			}
+
+			if (rxclass_get_ulong(argp[i], &val, 32)) {
+				fprintf(stderr, "Invalid context value[%s]\n",
+					argp[i]);
+				return -1;
+			}
+
+			/* Can't use the ALLOC special value as the context ID
+			 * of a filter to insert
+			 */
+			if ((__u32)val == ETH_RXFH_CONTEXT_ALLOC) {
+				fprintf(stderr, "Bad context value %x\n",
+					(__u32)val);
+				return -1;
+			}
+
+			*rss_context = (__u32)val;
+			fsp->flow_type |= FLOW_RSS;
+			i++;
+			continue;
+		}
+
 		for (opt = options, idx = 0; idx < n_opts; idx++, opt++) {
 			char mask_name[16];
 
