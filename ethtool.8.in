@@ -274,6 +274,7 @@ ethtool \- query or control network driver and hardware settings
 .BM user\-def
 .RB [ dst-mac \ \*(MA\ [ m \ \*(MA]]
 .BN action
+.BN context
 .BN loc
 .RB |
 .br
@@ -303,6 +304,10 @@ ethtool \- query or control network driver and hardware settings
 .RB ...\ | \ default \ ]
 .RB [ hfunc
 .IR FUNC ]
+.RB [ context
+.I CTX
+.RB |\  new ]
+.RB [ delete ]
 .HP
 .B ethtool \-f|\-\-flash
 .I devname file
@@ -868,6 +873,13 @@ lB	l.
 0 or higher	Rx queue to route the flow
 .TE
 .TP
+.BI context \ N
+Specifies the RSS context to spread packets over multiple queues; either
+.B 0
+for the default RSS context, or a value returned by
+.BI ethtool\ -X\  ... \ context
+.BR new .
+.TP
 .BI vf \ N
 Specifies the Virtual Function the filter applies to. Not compatible with action.
 .TP
@@ -925,6 +937,22 @@ must be non-zero and must not exceed the size of the indirection table.
 .TP
 .BI default
 Sets the receive flow hash indirection table to its default value.
+.TP
+\fBcontext \fICTX\fR | \fBnew\fR
+Specifies an RSS context to act on; either
+.B new
+to allocate a new RSS context, or
+.IR CTX ,
+a value returned by a previous
+.IB ... \ context
+.BR new .
+.TP
+.B delete
+Delete the specified RSS context.  May only be used in conjunction with
+.B context
+and a non-zero
+.I CTX
+value.
 .RE
 .TP
 .B \-f \-\-flash
