@@ -3738,7 +3738,7 @@ static int do_grxfh(struct cmd_context *ctx)
 	rss_head.cmd = ETHTOOL_GRSSH;
 	rss_head.rss_context = rss_context;
 	err = send_ioctl(ctx, &rss_head);
-	if (err < 0 && errno == EOPNOTSUPP) {
+	if (err < 0 && errno == EOPNOTSUPP && !rss_context) {
 		return do_grxfhindir(ctx, &ring_count);
 	} else if (err < 0) {
 		perror("Cannot get RX flow hash indir size and/or key size");
