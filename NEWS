@@ -1,3 +1,13 @@
+Version 4.16 - April 13, 2018
+
+	* Feature: add support for extra RSS contexts and RSS steering filters
+	* Feature: Document RSS context control and RSS filters
+	* Fix: don't fall back to grxfhindir when context was specified
+	* Fix: correct display of VF when showing vf/queue filters
+	* Fix: show VF and queue in the help for -N
+	* Fix: correct VF index values for the ring_cookie parameter
+	* Feature: Add SFF 8636 date code parsing support
+
 Version 4.15 - February 1, 2018
 
 	* Feature: Support for FEC encoding control
@@ -6,7 +16,6 @@ Version 4.15 - February 1, 2018
 	* Fix: Revert "ethtool: Add DMA Coalescing support"
 	* Feature: Add ETHTOOL_RESET support via --reset command
 	* Fix: fix MFLCN register dump for 82599 and newer
-
 
 Version 4.13 - October 27, 2017
 
