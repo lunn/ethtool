@@ -4740,20 +4740,22 @@ static int do_get_phy_tunable(struct cmd_context *ctx)
 	}
 
 	if (downshift_changed) {
-		struct ethtool_tunable ds;
+		struct {
+			struct ethtool_tunable ds;
+			u8 __count;
+		} cont;
 		u8 count = 0;
 
-		ds.cmd = ETHTOOL_PHY_GTUNABLE;
-		ds.id = ETHTOOL_PHY_DOWNSHIFT;
-		ds.type_id = ETHTOOL_TUNABLE_U8;
-		ds.len = 1;
-		ds.data[0] = &count;
-		err = send_ioctl(ctx, &ds);
+		cont.ds.cmd = ETHTOOL_PHY_GTUNABLE;
+		cont.ds.id = ETHTOOL_PHY_DOWNSHIFT;
+		cont.ds.type_id = ETHTOOL_TUNABLE_U8;
+		cont.ds.len = 1;
+		err = send_ioctl(ctx, &cont.ds);
 		if (err < 0) {
 			perror("Cannot Get PHY downshift count");
 			return 87;
 		}
-		count = *((u8 *)&ds.data[0]);
+		count = *((u8 *)&cont.ds.data[0]);
 		if (count)
 			fprintf(stdout, "Downshift count: %d\n", count);
 		else
@@ -4931,16 +4933,17 @@ static int do_set_phy_tunable(struct cmd_context *ctx)
 
 	/* Do it */
 	if (ds_changed) {
-		struct ethtool_tunable ds;
-		u8 count;
+		struct {
+			struct ethtool_tunable ds;
+			u8 __count;
+		} cont;
 
-		ds.cmd = ETHTOOL_PHY_STUNABLE;
-		ds.id = ETHTOOL_PHY_DOWNSHIFT;
-		ds.type_id = ETHTOOL_TUNABLE_U8;
-		ds.len = 1;
-		ds.data[0] = &count;
-		*((u8 *)&ds.data[0]) = ds_cnt;
-		err = send_ioctl(ctx, &ds);
+		cont.ds.cmd = ETHTOOL_PHY_STUNABLE;
+		cont.ds.id = ETHTOOL_PHY_DOWNSHIFT;
+		cont.ds.type_id = ETHTOOL_TUNABLE_U8;
+		cont.ds.len = 1;
+		*((u8 *)&cont.ds.data[0]) = ds_cnt;
+		err = send_ioctl(ctx, &cont.ds);
 		if (err < 0) {
 			perror("Cannot Set PHY downshift count");
 			err = 87;
