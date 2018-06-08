@@ -3083,9 +3083,6 @@ static const struct efx_nic_reg_field efx_nic_reg_fields_TX_PACE[] = {
 	REGISTER_FIELD_BZ(TX_PACE_SB_AF),
 	REGISTER_FIELD_BZ(TX_PACE_SB_NOT_AF),
 };
-static const struct efx_nic_reg_field efx_nic_reg_fields_TX_PACE_DROP_QID[] = {
-	REGISTER_FIELD_BZ(TX_PACE_QID_DRP_CNT),
-};
 static const struct efx_nic_reg_field efx_nic_reg_fields_TX_VLAN[] = {
 	REGISTER_FIELD_BB(TX_VLAN0),
 	REGISTER_FIELD_BB(TX_VLAN0_PORT0_EN),
