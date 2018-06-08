@@ -661,9 +661,6 @@ static void sff8636_dom_parse(const __u8 *id, struct sff_diags *sd)
 			tx_power_offset = SFF8636_TX_PWR_4_OFFSET;
 			tx_bias_offset = SFF8636_TX_BIAS_4_OFFSET;
 			break;
-		default:
-			printf(" Invalid channel: %d\n", i);
-			break;
 		}
 		sd->scd[i].bias_cur = OFFSET_TO_U16(tx_bias_offset);
 		sd->scd[i].rx_power = OFFSET_TO_U16(rx_power_offset);
