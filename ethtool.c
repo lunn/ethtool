@@ -4723,8 +4723,8 @@ static int do_get_phy_tunable(struct cmd_context *ctx)
 {
 	int argc = ctx->argc;
 	char **argp = ctx->argp;
-	int err, i;
 	u8 downshift_changed = 0;
+	int i;
 
 	if (argc < 1)
 		exit_bad_args();
@@ -4750,8 +4750,7 @@ static int do_get_phy_tunable(struct cmd_context *ctx)
 		cont.ds.id = ETHTOOL_PHY_DOWNSHIFT;
 		cont.ds.type_id = ETHTOOL_TUNABLE_U8;
 		cont.ds.len = 1;
-		err = send_ioctl(ctx, &cont.ds);
-		if (err < 0) {
+		if (send_ioctl(ctx, &cont.ds) < 0) {
 			perror("Cannot Get PHY downshift count");
 			return 87;
 		}
@@ -4762,7 +4761,7 @@ static int do_get_phy_tunable(struct cmd_context *ctx)
 			fprintf(stdout, "Downshift disabled\n");
 	}
 
-	return err;
+	return 0;
 }
 
 static __u32 parse_reset(char *val, __u32 bitset, char *arg, __u32 *data)
