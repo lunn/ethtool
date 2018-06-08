@@ -1066,7 +1066,7 @@ static int rxclass_get_val(char *str, unsigned char *p, u32 *flags,
 		val++;
 
 		*(u64 *)&p[opt->offset] &= ~ETHTOOL_RX_FLOW_SPEC_RING_VF;
-		*(u64 *)&p[opt->offset] = (u64)val << ETHTOOL_RX_FLOW_SPEC_RING_VF_OFF;
+		*(u64 *)&p[opt->offset] |= (u64)val << ETHTOOL_RX_FLOW_SPEC_RING_VF_OFF;
 		break;
 	}
 	case OPT_RING_QUEUE: {
