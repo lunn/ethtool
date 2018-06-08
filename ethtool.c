@@ -3910,7 +3910,7 @@ static int do_srxfhindir(struct cmd_context *ctx, int rxfhindir_default,
 static int do_srxfh(struct cmd_context *ctx)
 {
 	struct ethtool_rxfh rss_head = {0};
-	struct ethtool_rxfh *rss;
+	struct ethtool_rxfh *rss = NULL;
 	struct ethtool_rxnfc ring_count;
 	int rxfhindir_equal = 0, rxfhindir_default = 0;
 	struct ethtool_gstrings *hfuncs = NULL;
@@ -4064,7 +4064,8 @@ static int do_srxfh(struct cmd_context *ctx)
 		hfuncs = get_stringset(ctx, ETH_SS_RSS_HASH_FUNCS, 0, 1);
 		if (!hfuncs) {
 			perror("Cannot get hash functions names");
-			return 1;
+			err = 1;
+			goto free;
 		}
 
 		for (i = 0; i < hfuncs->len && !req_hfunc ; i++) {
@@ -4078,8 +4079,8 @@ static int do_srxfh(struct cmd_context *ctx)
 		if (!req_hfunc) {
 			fprintf(stderr,
 				"Unknown hash function: %s\n", req_hfunc_name);
-			free(hfuncs);
-			return 1;
+			err = 1;
+			goto free;
 		}
 	}
 
@@ -4120,9 +4121,7 @@ static int do_srxfh(struct cmd_context *ctx)
 	}
 
 free:
-	if (hkey)
-		free(hkey);
-
+	free(hkey);
 	free(rss);
 	free(hfuncs);
 	return err;
