@@ -3179,17 +3179,26 @@ static int do_gregs(struct cmd_context *ctx)
 	if (!gregs_dump_raw && gregs_dump_file != NULL) {
 		/* overwrite reg values from file dump */
 		FILE *f = fopen(gregs_dump_file, "r");
+		struct ethtool_regs *nregs;
 		struct stat st;
 		size_t nread;
 
 		if (!f || fstat(fileno(f), &st) < 0) {
 			fprintf(stderr, "Can't open '%s': %s\n",
 				gregs_dump_file, strerror(errno));
+			if (f)
+				fclose(f);
 			free(regs);
 			return 75;
 		}
 
-		regs = realloc(regs, sizeof(*regs) + st.st_size);
+		nregs = realloc(regs, sizeof(*regs) + st.st_size);
+		if (!nregs) {
+			perror("Cannot allocate memory for register dump");
+			free(regs); /* was not freed by realloc */
+			return 73;
+		}
+		regs = nregs;
 		regs->len = st.st_size;
 		nread = fread(regs->data, regs->len, 1, f);
 		fclose(f);
