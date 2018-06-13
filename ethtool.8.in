@@ -684,7 +684,7 @@ Disable (wake on nothing).  This option clears all previous options.
 T}
 .TE
 .TP
-.B sopass \*(MA\c
+.B sopass \*(MA
 Sets the SecureOn\[tm] password.  The argument to this option must be 6
 bytes in Ethernet MAC hex format (\*(MA).
 .PP
