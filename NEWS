@@ -1,3 +1,15 @@
+Version 4.17 - June 15, 2018
+
+	* Fix: In ethtool.8, remove superfluous and incorrect \c.
+	* Fix: fix uninitialized return value
+	* Fix: fix RING_VF assignment
+	* Fix: remove unused global variable
+	* Fix: several fixes in do_gregs()
+	* Fix: correctly free hkey when get_stringset() fails
+	* Fix: remove unreachable code
+	* Fix: fix stack clash in do_get_phy_tunable and do_set_phy_tunable
+	* Feature: Add register dump support for MICROCHIP LAN78xx
+
 Version 4.16 - April 13, 2018
 
 	* Feature: add support for extra RSS contexts and RSS steering filters
