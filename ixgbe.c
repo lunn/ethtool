@@ -1265,5 +1265,31 @@ ixgbe_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs)
 			regs_buff[1127]);
 	}
 
+	if (regs_buff_len > 1139 && mac_type != ixgbe_mac_82598EB) {
+		fprintf(stdout,
+			"0x08800: SECTXCTRL   (Security Tx Control)            0x%08X\n",
+			regs_buff[1139]);
+
+		fprintf(stdout,
+			"0x08804: SECTXSTAT   (Security Tx Status)             0x%08X\n",
+			regs_buff[1140]);
+
+		fprintf(stdout,
+			"0x08808: SECTXBUFFAF (Security Tx Buffer Almost Full) 0x%08X\n",
+			regs_buff[1141]);
+
+		fprintf(stdout,
+			"0x08800: SECTXMINIFG (Security Tx Buffer Minimum IFG) 0x%08X\n",
+			regs_buff[1142]);
+
+		fprintf(stdout,
+			"0x08800: SECRXCTRL   (Security Rx Control)            0x%08X\n",
+			regs_buff[1143]);
+
+		fprintf(stdout,
+			"0x08800: SECRXSTAT   (Security Rx Status)             0x%08X\n",
+			regs_buff[1144]);
+	}
+
 	return 0;
 }
