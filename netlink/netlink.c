@@ -590,6 +590,31 @@ err:
 
 /* get ethtool family id */
 
+static void ethnl_find_monitor_group(struct nl_context *nlctx,
+				     struct nlattr *nest)
+{
+	const struct nlattr *grp_tb[CTRL_ATTR_MCAST_GRP_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(grp_tb);
+	struct nlattr *grp_attr;
+	int ret;
+
+	nlctx->mon_mcgrp_id = 0;
+	mnl_attr_for_each_nested(grp_attr, nest) {
+		ret = mnl_attr_parse_nested(grp_attr, attr_cb, &grp_tb_info);
+		if (ret < 0)
+			return;
+		if (!grp_tb[CTRL_ATTR_MCAST_GRP_NAME] ||
+		    !grp_tb[CTRL_ATTR_MCAST_GRP_ID])
+			continue;
+		if (strcmp(mnl_attr_get_str(grp_tb[CTRL_ATTR_MCAST_GRP_NAME]),
+			   ETHTOOL_MCGRP_MONITOR_NAME))
+			continue;
+		nlctx->mon_mcgrp_id =
+			mnl_attr_get_u32(grp_tb[CTRL_ATTR_MCAST_GRP_ID]);
+		return;
+	}
+}
+
 static int ethnl_family_cb(const struct nlmsghdr *nlhdr, void *data)
 {
 	struct nl_context *nlctx = data;
@@ -597,8 +622,12 @@ static int ethnl_family_cb(const struct nlmsghdr *nlhdr, void *data)
 
 	nlctx->ethnl_fam = 0;
 	mnl_attr_for_each(attr, nlhdr, GENL_HDRLEN) {
-		if (mnl_attr_get_type(attr) == CTRL_ATTR_FAMILY_ID) {
+		switch(mnl_attr_get_type(attr)) {
+		case CTRL_ATTR_FAMILY_ID:
 			nlctx->ethnl_fam = mnl_attr_get_u16(attr);
+			break;
+		case CTRL_ATTR_MCAST_GROUPS:
+			ethnl_find_monitor_group(nlctx, attr);
 			break;
 		}
 	}
@@ -682,6 +711,7 @@ int __init_aux_nlctx(struct nl_context *nlctx)
 	}
 
 	aux->ethnl_fam = nlctx->ethnl_fam;
+	aux->mon_mcgrp_id = nlctx->mon_mcgrp_id;
 	nlctx->aux_nlctx = aux;
 
 	return 0;

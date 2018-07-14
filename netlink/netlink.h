@@ -18,6 +18,7 @@
 struct nl_context {
 	unsigned long debug;
 	int ethnl_fam;
+	uint32_t mon_mcgrp_id;
 	struct mnl_socket *sk;
 	struct nl_context *aux_nlctx;
 	void *cmd_private;
@@ -32,6 +33,10 @@ struct nl_context {
 	bool is_dump;
 	int exit_code;
 	bool suppress_nlerr;
+	bool is_monitor;
+	uint8_t filter_cmd;
+	uint32_t filter_mask;
+	const char *filter_devname;
 };
 
 struct attr_tb_info {
@@ -138,6 +143,27 @@ static inline void show_string(const struct nlattr **tb, unsigned int idx,
 			       const char *label)
 {
 	printf("%s: %s\n", label, tb[idx] ? mnl_attr_get_str(tb[idx]) : "");
+}
+
+/* reply content filtering */
+
+static inline bool mask_ok(const struct nl_context *nlctx, uint32_t bits)
+{
+	return !nlctx->filter_mask || (nlctx->filter_mask & bits);
+}
+
+static inline bool dev_ok(const struct nl_context *nlctx)
+{
+	return !nlctx->filter_devname ||
+	       (nlctx->devname &&
+		!strcmp(nlctx->devname, nlctx->filter_devname));
+}
+
+static inline bool show_only(const struct nl_context *nlctx, uint32_t bits)
+{
+	if (nlctx->is_monitor || !nlctx->filter_mask)
+		return false;
+	return nlctx->filter_mask & ~bits;
 }
 
 /* misc */
