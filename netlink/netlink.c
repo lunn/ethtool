@@ -162,7 +162,7 @@ err:
 	return true;
 }
 
-int walk_bitset(const struct nlattr *bitset, int ss_index,
+int walk_bitset(const struct nlattr *bitset, const struct stringset *labels,
 		bitset_walk_callback cb, void *data)
 {
 	const struct nlattr *bitset_tb[ETHTOOL_A_BITSET_MAX + 1] = {};
@@ -180,7 +180,6 @@ int walk_bitset(const struct nlattr *bitset, int ss_index,
 	bits = bitset_tb[ETHTOOL_A_BITSET_VALUE];
 	if (bits) {
 		const struct nlattr *mask = bitset_tb[ETHTOOL_A_BITSET_MASK];
-		const struct stringset *labels = global_stringset(ss_index);
 		unsigned int count, nwords, idx;
 		uint32_t *val_bm;
 		uint32_t *mask_bm;

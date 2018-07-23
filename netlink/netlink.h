@@ -41,6 +41,8 @@ struct attr_tb_info {
 #define DECLARE_ATTR_TB_INFO(tbl) \
 	struct attr_tb_info tbl ## _info = { (tbl), (MNL_ARRAY_SIZE(tbl) - 1) }
 
+struct stringset;
+
 unsigned int nl_copy_payload(void *buff, unsigned int maxlen,
 			     const struct nlattr *attr);
 bool ethnla_put(struct nl_context *nlctx, uint16_t type, size_t len,
@@ -56,7 +58,7 @@ bool bitset_get_bit(const struct nlattr *bitset, bool mask, unsigned int idx,
 		    int *retptr);
 bool bitset_is_empty(const struct nlattr *bitset, bool mask, int *retptr);
 typedef void (*bitset_walk_callback)(unsigned int, const char *, bool, void *);
-int walk_bitset(const struct nlattr *bitset, int ss_index,
+int walk_bitset(const struct nlattr *bitset, const struct stringset *label,
 		bitset_walk_callback cb, void *data);
 
 int msg_init(struct nl_context *nlctx, int cmd, unsigned int flags);

@@ -27,6 +27,7 @@ endif
 if ETHTOOL_ENABLE_NETLINK
 ethtool_SOURCES += \
 		  netlink/netlink.c netlink/netlink.h netlink/extapi.h \
+		  netlink/strset.c netlink/strset.h \
 		  uapi/linux/ethtool_netlink.h \
 		  uapi/linux/netlink.h uapi/linux/genetlink.h
 ethtool_CFLAGS += @MNL_CFLAGS@
