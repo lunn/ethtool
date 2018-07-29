@@ -4976,6 +4976,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_gset		NULL
 #define nl_sset		NULL
 #define nl_gfeatures	NULL
+#define nl_sfeatures	NULL
 #endif
 
 static const struct option {
@@ -5042,7 +5043,7 @@ static const struct option {
 	  "		[ tx N ]\n" },
 	{ "-k|--show-features|--show-offload", 1, do_gfeatures, nl_gfeatures,
 	  "Get state of protocol offload and other features" },
-	{ "-K|--features|--offload", 1, do_sfeatures, NULL,
+	{ "-K|--features|--offload", 1, do_sfeatures, nl_sfeatures,
 	  "Set protocol offload and other features",
 	  "		FEATURE on|off ...\n" },
 	{ "-i|--driver", 1, do_gdrv, nl_gdrv,
