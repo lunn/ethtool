@@ -320,3 +320,33 @@ void dump_mdix(u8 mdix, u8 mdix_ctrl)
 		fprintf(stdout, "\n");
 	}
 }
+
+const struct off_flag_def off_flag_def[OFF_FLAG_DEF_SIZE] = {
+	{ "rx",     "rx-checksumming",		    "rx-checksum",
+	  ETHTOOL_GRXCSUM, ETHTOOL_SRXCSUM, ETH_FLAG_RXCSUM,	0 },
+	{ "tx",     "tx-checksumming",		    "tx-checksum-*",
+	  ETHTOOL_GTXCSUM, ETHTOOL_STXCSUM, ETH_FLAG_TXCSUM,	0 },
+	{ "sg",     "scatter-gather",		    "tx-scatter-gather*",
+	  ETHTOOL_GSG,	   ETHTOOL_SSG,     ETH_FLAG_SG,	0 },
+	{ "tso",    "tcp-segmentation-offload",	    "tx-tcp*-segmentation",
+	  ETHTOOL_GTSO,	   ETHTOOL_STSO,    ETH_FLAG_TSO,	0 },
+	{ "ufo",    "udp-fragmentation-offload",    "tx-udp-fragmentation",
+	  ETHTOOL_GUFO,	   ETHTOOL_SUFO,    ETH_FLAG_UFO,	0 },
+	{ "gso",    "generic-segmentation-offload", "tx-generic-segmentation",
+	  ETHTOOL_GGSO,	   ETHTOOL_SGSO,    ETH_FLAG_GSO,	0 },
+	{ "gro",    "generic-receive-offload",	    "rx-gro",
+	  ETHTOOL_GGRO,	   ETHTOOL_SGRO,    ETH_FLAG_GRO,	0 },
+	{ "lro",    "large-receive-offload",	    "rx-lro",
+	  0,		   0,		    ETH_FLAG_LRO,
+	  KERNEL_VERSION(2,6,24) },
+	{ "rxvlan", "rx-vlan-offload",		    "rx-vlan-hw-parse",
+	  0,		   0,		    ETH_FLAG_RXVLAN,
+	  KERNEL_VERSION(2,6,37) },
+	{ "txvlan", "tx-vlan-offload",		    "tx-vlan-hw-insert",
+	  0,		   0,		    ETH_FLAG_TXVLAN,
+	  KERNEL_VERSION(2,6,37) },
+	{ "ntuple", "ntuple-filters",		    "rx-ntuple-filter",
+	  0,		   0,		    ETH_FLAG_NTUPLE,	0 },
+	{ "rxhash", "receive-hashing",		    "rx-hashing",
+	  0,		   0,		    ETH_FLAG_RXHASH,	0 },
+};

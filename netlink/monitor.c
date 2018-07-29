@@ -155,6 +155,12 @@ static struct monitor_option monitor_opts[] = {
 				  ETHTOOL_IM_SETTINGS_DEBUG |
 				  ETHTOOL_IM_SETTINGS_WOL,
 	},
+	{
+		.pattern	= "-k|--show-features|--show-offload|"
+				  "-K|--features|--offload",
+		.cmd		= ETHNL_CMD_SET_SETTINGS,
+		.info_mask	= ETHTOOL_IM_SETTINGS_FEATURES,
+	},
 };
 
 static bool pattern_match(const char *s, const char *pattern)

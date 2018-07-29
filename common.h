@@ -34,6 +34,25 @@ struct link_mode_info {
 	u8			duplex;
 };
 
+struct off_flag_def {
+	const char *short_name;
+	const char *long_name;
+	const char *kernel_name;
+	u32 get_cmd, set_cmd;
+	u32 value;
+	/* For features exposed through ETHTOOL_GFLAGS, the oldest
+	 * kernel version for which we can trust the result.  Where
+	 * the flag was added at the same time the kernel started
+	 * supporting the feature, this is 0 (to allow for backports).
+	 * Where the feature was supported before the flag was added,
+	 * it is the version that introduced the flag.
+	 */
+	u32 min_kernel_ver;
+};
+
+#define OFF_FLAG_DEF_SIZE 12
+extern const struct off_flag_def off_flag_def[OFF_FLAG_DEF_SIZE];
+
 extern const struct link_mode_info link_modes[];
 extern const unsigned int link_modes_count;
 
