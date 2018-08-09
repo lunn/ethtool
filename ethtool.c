@@ -931,6 +931,9 @@ static int parse_wolopts(char *optstr, u32 *data)
 		case 's':
 			*data |= WAKE_MAGICSECURE;
 			break;
+		case 'f':
+			*data |= WAKE_FILTER;
+			break;
 		case 'd':
 			*data = 0;
 			break;
@@ -964,6 +967,8 @@ static char *unparse_wolopts(int wolopts)
 			*p++ = 'g';
 		if (wolopts & WAKE_MAGICSECURE)
 			*p++ = 's';
+		if (wolopts & WAKE_FILTER)
+			*p++ = 'f';
 	} else {
 		*p = 'd';
 	}
