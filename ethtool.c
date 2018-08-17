@@ -5069,7 +5069,7 @@ static const struct option {
 	  "		[ advertise %x ]\n"
 	  "		[ phyad %d ]\n"
 	  "		[ xcvr internal|external ]\n"
-	  "		[ wol p|u|m|b|a|g|s|d... ]\n"
+	  "		[ wol p|u|m|b|a|g|s|f|d... ]\n"
 	  "		[ sopass %x:%x:%x:%x:%x:%x ]\n"
 	  "		[ msglvl %d | msglvl type on|off ... ]\n" },
 	{ "-a|--show-pause", 1, do_gpause, "Show pause options" },
