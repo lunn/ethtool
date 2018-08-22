@@ -2,6 +2,8 @@
 
 #include "../internal.h"
 #include "netlink.h"
+#include "common.h"
+#include "strset.h"
 
 static const uint32_t drvinfo_strsets[] = {
 	ETH_SS_STATS,
@@ -118,6 +120,95 @@ static int show_drvinfo(struct nl_context *nlctx, const struct nlattr *nest)
 	return MNL_CB_OK;
 }
 
+static void show_one_ts_flag(unsigned int idx, const char *name, bool val,
+			     void *data)
+{
+	if (val)
+		printf("\t%s\n",
+		       idx < N_SOTS ? so_timestamping_labels[idx] : name);
+}
+
+static void show_one_tx_type(unsigned int idx, const char *name, bool val,
+			     void *data)
+{
+	if (val)
+		printf("\t%s\n",
+		       idx < N_TX_TYPES ? tx_type_labels[idx] : name);
+}
+
+static void show_one_rx_filter(unsigned int idx, const char *name, bool val,
+			       void *data)
+{
+	if (val)
+		printf("\t%s\n",
+		       idx < N_RX_FILTERS ? rx_filter_labels[idx] : name);
+}
+
+static int show_tsinfo(struct nl_context *nlctx, const struct nlattr *nest)
+{
+	const struct nlattr *tb[ETHTOOL_A_TSINFO_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	int ret;
+
+	if (!nest)
+		return -EOPNOTSUPP;
+	ret = mnl_attr_parse_nested(nest, attr_cb, &tb_info);
+	if (ret < 0)
+		return ret;
+
+	if (nlctx->is_dump || nlctx->is_monitor)
+		putchar('\n');
+	printf("\nTime stamping parameters for %s:\n", nlctx->devname);
+
+	if (tb[ETHTOOL_A_TSINFO_TIMESTAMPING]) {
+		printf("Capabilities:");
+		if (bitset_is_empty(tb[ETHTOOL_A_TSINFO_TIMESTAMPING], false,
+				    &ret)) {
+			fputs(" none\n", stdout);
+		} else {
+			fputc('\n', stdout);
+			walk_bitset(tb[ETHTOOL_A_TSINFO_TIMESTAMPING],
+				    global_stringset(ETH_SS_TSTAMP_SOF),
+				    show_one_ts_flag, NULL);
+		}
+	}
+
+	printf("PTP Hardware Clock: ");
+	if (tb[ETHTOOL_A_TSINFO_PHC_INDEX])
+		printf("%u\n",
+		       mnl_attr_get_u32(tb[ETHTOOL_A_TSINFO_PHC_INDEX]));
+	else
+		printf("none\n");
+
+	if (tb[ETHTOOL_A_TSINFO_TX_TYPES]) {
+		printf("Hardware Transmit Timestamp Modes:");
+		if (bitset_is_empty(tb[ETHTOOL_A_TSINFO_TX_TYPES], false,
+				    &ret)) {
+			fputs(" none\n", stdout);
+		} else {
+			fputc('\n', stdout);
+			walk_bitset(tb[ETHTOOL_A_TSINFO_TX_TYPES],
+				    global_stringset(ETH_SS_TSTAMP_TX_TYPE),
+				    show_one_tx_type, NULL);
+		}
+	}
+
+	if (tb[ETHTOOL_A_TSINFO_RX_FILTERS]) {
+		printf("Hardware Receive Filter Modes:");
+		if (bitset_is_empty(tb[ETHTOOL_A_TSINFO_TX_TYPES], false,
+				    &ret)) {
+			fputs(" none\n", stdout);
+		} else {
+			fputc('\n', stdout);
+			walk_bitset(tb[ETHTOOL_A_TSINFO_RX_FILTERS],
+				    global_stringset(ETH_SS_TSTAMP_RX_FILTER),
+				    show_one_rx_filter, NULL);
+		}
+	}
+
+	return MNL_CB_OK;
+}
+
 int info_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 {
 	const struct nlattr *tb[ETHTOOL_A_INFO_MAX + 1] = {};
@@ -138,6 +229,15 @@ int info_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 			nlctx->exit_code = 1;
 			errno = -ret;
 			perror("Cannot get device driver info");
+			return MNL_CB_ERROR;
+		}
+	}
+	if (mask_ok(nlctx, ETHTOOL_IM_INFO_TSINFO)) {
+		ret = show_tsinfo(nlctx, tb[ETHTOOL_A_INFO_TSINFO]);
+		if ((ret < 0) && show_only(nlctx, ETHTOOL_IM_INFO_TSINFO)) {
+			nlctx->exit_code = 1;
+			errno = -ret;
+			perror("Cannot get device time stamping settings");
 			return MNL_CB_ERROR;
 		}
 	}
@@ -167,4 +267,9 @@ static int info_request(struct cmd_context *ctx, uint32_t info_mask)
 int nl_gdrv(struct cmd_context *ctx)
 {
 	return info_request(ctx, ETHTOOL_IM_INFO_DRVINFO);
+}
+
+int nl_tsinfo(struct cmd_context *ctx)
+{
+	return info_request(ctx, ETHTOOL_IM_INFO_TSINFO);
 }

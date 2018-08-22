@@ -1685,47 +1685,6 @@ static void dump_fec(u32 fec)
 		fprintf(stdout, " RS");
 }
 
-#define N_SOTS 7
-
-static char *so_timestamping_labels[N_SOTS] = {
-	"hardware-transmit     (SOF_TIMESTAMPING_TX_HARDWARE)",
-	"software-transmit     (SOF_TIMESTAMPING_TX_SOFTWARE)",
-	"hardware-receive      (SOF_TIMESTAMPING_RX_HARDWARE)",
-	"software-receive      (SOF_TIMESTAMPING_RX_SOFTWARE)",
-	"software-system-clock (SOF_TIMESTAMPING_SOFTWARE)",
-	"hardware-legacy-clock (SOF_TIMESTAMPING_SYS_HARDWARE)",
-	"hardware-raw-clock    (SOF_TIMESTAMPING_RAW_HARDWARE)",
-};
-
-#define N_TX_TYPES (HWTSTAMP_TX_ONESTEP_SYNC + 1)
-
-static char *tx_type_labels[N_TX_TYPES] = {
-	"off                   (HWTSTAMP_TX_OFF)",
-	"on                    (HWTSTAMP_TX_ON)",
-	"one-step-sync         (HWTSTAMP_TX_ONESTEP_SYNC)",
-};
-
-#define N_RX_FILTERS (HWTSTAMP_FILTER_NTP_ALL + 1)
-
-static char *rx_filter_labels[N_RX_FILTERS] = {
-	"none                  (HWTSTAMP_FILTER_NONE)",
-	"all                   (HWTSTAMP_FILTER_ALL)",
-	"some                  (HWTSTAMP_FILTER_SOME)",
-	"ptpv1-l4-event        (HWTSTAMP_FILTER_PTP_V1_L4_EVENT)",
-	"ptpv1-l4-sync         (HWTSTAMP_FILTER_PTP_V1_L4_SYNC)",
-	"ptpv1-l4-delay-req    (HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ)",
-	"ptpv2-l4-event        (HWTSTAMP_FILTER_PTP_V2_L4_EVENT)",
-	"ptpv2-l4-sync         (HWTSTAMP_FILTER_PTP_V2_L4_SYNC)",
-	"ptpv2-l4-delay-req    (HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ)",
-	"ptpv2-l2-event        (HWTSTAMP_FILTER_PTP_V2_L2_EVENT)",
-	"ptpv2-l2-sync         (HWTSTAMP_FILTER_PTP_V2_L2_SYNC)",
-	"ptpv2-l2-delay-req    (HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ)",
-	"ptpv2-event           (HWTSTAMP_FILTER_PTP_V2_EVENT)",
-	"ptpv2-sync            (HWTSTAMP_FILTER_PTP_V2_SYNC)",
-	"ptpv2-delay-req       (HWTSTAMP_FILTER_PTP_V2_DELAY_REQ)",
-	"ntp-all               (HWTSTAMP_FILTER_NTP_ALL)",
-};
-
 static int dump_tsinfo(const struct ethtool_ts_info *info)
 {
 	int i;
@@ -5196,6 +5155,7 @@ static int show_usage(struct cmd_context *ctx);
  * support so that we do not get unresolved symbols in args array below
  */
 #define nl_gdrv		NULL
+#define nl_tsinfo	NULL
 #endif
 
 static const struct option {
@@ -5324,7 +5284,7 @@ static const struct option {
 	  "			[ context %d ]\n"
 	  "			[ loc %d]] |\n"
 	  "		delete %d\n" },
-	{ "-T|--show-time-stamping", 1, do_tsinfo, NULL,
+	{ "-T|--show-time-stamping", 1, do_tsinfo, nl_tsinfo,
 	  "Show time stamping capabilities" },
 	{ "-x|--show-rxfh-indir|--show-rxfh", 1, do_grxfh, NULL,
 	  "Show Rx flow hash indirection table and/or RSS hash key",
