@@ -1,3 +1,9 @@
+Version 4.18 - August 24, 2018
+	* Feature: Add support for WAKE_FILTER (WoL using filters)
+	* Feature: Add support for action value -2 (wake-up filter)
+	* Fix: document WoL filters option also in help message
+	* Feature: ixgbe dump strings for security registers
+
 Version 4.17 - June 15, 2018
 
 	* Fix: In ethtool.8, remove superfluous and incorrect \c.
