@@ -5391,10 +5391,10 @@ static int show_usage(struct cmd_context *ctx)
 	fprintf(stdout, PACKAGE " version " VERSION "\n");
 	fprintf(stdout,
 		"Usage:\n"
-		"        ethtool DEVNAME\t"
+		"        ethtool [ --debug MASK ] DEVNAME\t"
 		"Display standard information about device\n");
 	for (i = 0; args[i].opts; i++) {
-		fputs("        ethtool ", stdout);
+		fputs("        ethtool [ --debug MASK ] ", stdout);
 		fprintf(stdout, "%s %s\t%s\n",
 			args[i].opts,
 			args[i].want_device ? "DEVNAME" : "\t",
@@ -5610,6 +5610,20 @@ int main(int argc, char **argp)
 	/* Skip command name */
 	argp++;
 	argc--;
+
+	ctx.debug = 0;
+	if (*argp && !strcmp(*argp, "--debug")) {
+		char *eptr;
+
+		if (argc < 2)
+			exit_bad_args();
+		ctx.debug = strtoul(argp[1], &eptr, 0);
+		if (!argp[1][0] || *eptr)
+			exit_bad_args();
+
+		argp += 2;
+		argc -= 2;
+	}
 
 	/* First argument must be either a valid option or a device
 	 * name to get settings for (which we don't expect to begin
