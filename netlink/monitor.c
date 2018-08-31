@@ -97,6 +97,7 @@ static int monitor_event_cb(const struct nlmsghdr *nlhdr, void *data)
 int info_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int settings_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int params_reply_cb(const struct nlmsghdr *nlhdr, void *data);
+int nwayrst_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 
 static struct {
 	uint8_t		cmd;
@@ -117,6 +118,10 @@ static struct {
 	{
 		.cmd	= ETHNL_CMD_SET_PARAMS,
 		.cb	= params_reply_cb,
+	},
+	{
+		.cmd	= ETHNL_CMD_ACT_NWAY_RST,
+		.cb	= nwayrst_reply_cb,
 	},
 };
 
@@ -200,6 +205,10 @@ static struct monitor_option monitor_opts[] = {
 		.pattern	= "--show-fec|--set-fec",
 		.cmd		= ETHNL_CMD_SET_PARAMS,
 		.info_mask	= ETHTOOL_IM_PARAMS_FEC,
+	},
+	{
+		.pattern	= "-r|--negotiate",
+		.cmd		= ETHNL_CMD_ACT_NWAY_RST,
 	},
 };
 

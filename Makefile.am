@@ -30,6 +30,7 @@ ethtool_SOURCES += \
 		  netlink/strset.c netlink/strset.h netlink/monitor.c \
 		  netlink/parser.c netlink/parser.h \
 		  netlink/info.c netlink/settings.c netlink/params.c \
+		  netlink/actions.c \
 		  uapi/linux/ethtool_netlink.h \
 		  uapi/linux/netlink.h uapi/linux/genetlink.h
 ethtool_CFLAGS += @MNL_CFLAGS@
