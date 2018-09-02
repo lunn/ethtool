@@ -4992,6 +4992,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_seee		NULL
 #define nl_sfec		NULL
 #define nl_nway_rst	NULL
+#define nl_phys_id	NULL
 #endif
 
 static const struct option {
@@ -5080,7 +5081,7 @@ static const struct option {
 	  "		[ value N ]\n" },
 	{ "-r|--negotiate", 1, do_nway_rst, nl_nway_rst,
 	  "Restart N-WAY negotiation" },
-	{ "-p|--identify", 1, do_phys_id, NULL,
+	{ "-p|--identify", 1, do_phys_id, nl_phys_id,
 	  "Show visible port identification (e.g. blinking)",
 	  "               [ TIME-IN-SECONDS ]\n" },
 	{ "-t|--test", 1, do_test, NULL,

@@ -34,6 +34,7 @@ int nl_schannels(struct cmd_context *ctx);
 int nl_seee(struct cmd_context *ctx);
 int nl_sfec(struct cmd_context *ctx);
 int nl_nway_rst(struct cmd_context *ctx);
+int nl_phys_id(struct cmd_context *ctx);
 int nl_monitor(struct cmd_context *ctx);
 
 void monitor_usage();
