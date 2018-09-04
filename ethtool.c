@@ -4993,6 +4993,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_sfec		NULL
 #define nl_nway_rst	NULL
 #define nl_phys_id	NULL
+#define nl_reset	NULL
 #endif
 
 static const struct option {
@@ -5179,7 +5180,7 @@ static const struct option {
 	  "Get PHY tunable",
 	  "		[ downshift ]\n"
 	  "		[ fast-link-down ]\n"},
-	{ "--reset", 1, do_reset, NULL,
+	{ "--reset", 1, do_reset, nl_reset,
 	  "Reset components",
 	  "		[ flags %x ]\n"
 	  "		[ mgmt ]\n"

@@ -99,6 +99,7 @@ int settings_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int params_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int nwayrst_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int physid_reply_cb(const struct nlmsghdr *nlhdr, void *data);
+int reset_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 
 static struct {
 	uint8_t		cmd;
@@ -127,6 +128,10 @@ static struct {
 	{
 		.cmd	= ETHNL_CMD_ACT_PHYS_ID,
 		.cb	= physid_reply_cb,
+	},
+	{
+		.cmd	= ETHNL_CMD_ACT_RESET,
+		.cb	= reset_reply_cb,
 	},
 };
 
@@ -218,6 +223,10 @@ static struct monitor_option monitor_opts[] = {
 	{
 		.pattern	= "-p|--identify",
 		.cmd		= ETHNL_CMD_ACT_PHYS_ID,
+	},
+	{
+		.pattern	= "--reset",
+		.cmd		= ETHNL_CMD_ACT_RESET,
 	},
 };
 
