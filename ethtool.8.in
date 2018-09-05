@@ -389,7 +389,8 @@ ethtool \- query or control network driver and hardware settings
 .HP
 .B ethtool \-\-set\-fec
 .I devname
-.B4 encoding auto off rs baser
+.B encoding
+.BR auto | off | rs | baser [ , ...]
 .
 .\" Adjust lines (i.e. full justification) and hyphenate.
 .ad
@@ -1119,8 +1120,12 @@ current FEC mode, the driver or firmware must take the link down
 administratively and report the problem in the system logs for users to correct.
 .RS 4
 .TP
-.A4 encoding auto off rs baser
-Sets the FEC encoding for the device.
+.BR encoding\ auto | off | rs | baser [ , ...]
+
+Sets the FEC encoding for the device.  Combinations of options are specified as
+e.g.
+.B auto,rs
+; the semantics of such combinations vary between drivers.
 .TS
 nokeep;
 lB	l.

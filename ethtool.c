@@ -4967,20 +4967,48 @@ static int do_set_phy_tunable(struct cmd_context *ctx)
 
 static int fecmode_str_to_type(const char *str)
 {
+	if (!strcasecmp(str, "auto"))
+		return ETHTOOL_FEC_AUTO;
+	if (!strcasecmp(str, "off"))
+		return ETHTOOL_FEC_OFF;
+	if (!strcasecmp(str, "rs"))
+		return ETHTOOL_FEC_RS;
+	if (!strcasecmp(str, "baser"))
+		return ETHTOOL_FEC_BASER;
+
+	return 0;
+}
+
+/* Takes a comma-separated list of FEC modes, returns the bitwise OR of their
+ * corresponding ETHTOOL_FEC_* constants.
+ * Accepts repetitions (e.g. 'auto,auto') and trailing comma (e.g. 'off,').
+ */
+static int parse_fecmode(const char *str)
+{
 	int fecmode = 0;
+	char buf[6];
 
 	if (!str)
-		return fecmode;
+		return 0;
+	while (*str) {
+		size_t next;
+		int mode;
 
-	if (!strcasecmp(str, "auto"))
-		fecmode |= ETHTOOL_FEC_AUTO;
-	else if (!strcasecmp(str, "off"))
-		fecmode |= ETHTOOL_FEC_OFF;
-	else if (!strcasecmp(str, "rs"))
-		fecmode |= ETHTOOL_FEC_RS;
-	else if (!strcasecmp(str, "baser"))
-		fecmode |= ETHTOOL_FEC_BASER;
-
+		next = strcspn(str, ",");
+		if (next >= 6) /* Bad mode, longest name is 5 chars */
+			return 0;
+		/* Copy into temp buffer and nul-terminate */
+		memcpy(buf, str, next);
+		buf[next] = 0;
+		mode = fecmode_str_to_type(buf);
+		if (!mode) /* Bad mode encountered */
+			return 0;
+		fecmode |= mode;
+		str += next;
+		/* Skip over ',' (but not nul) */
+		if (*str)
+			str++;
+	}
 	return fecmode;
 }
 
@@ -5028,7 +5056,7 @@ static int do_sfec(struct cmd_context *ctx)
 	if (!fecmode_str)
 		exit_bad_args();
 
-	fecmode = fecmode_str_to_type(fecmode_str);
+	fecmode = parse_fecmode(fecmode_str);
 	if (!fecmode)
 		exit_bad_args();
 
