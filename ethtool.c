@@ -4978,6 +4978,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_gfeatures	NULL
 #define nl_sfeatures	NULL
 #define nl_gprivflags	NULL
+#define nl_sprivflags	NULL
 #endif
 
 static const struct option {
@@ -5139,7 +5140,7 @@ static const struct option {
 	  "               [ combined N ]\n" },
 	{ "--show-priv-flags", 1, do_gprivflags, nl_gprivflags,
 	  "Query private flags" },
-	{ "--set-priv-flags", 1, do_sprivflags, NULL,
+	{ "--set-priv-flags", 1, do_sprivflags, nl_sprivflags,
 	  "Set private flags",
 	  "		FLAG on|off ...\n" },
 	{ "-m|--dump-module-eeprom|--module-info", 1, do_getmodule, NULL,

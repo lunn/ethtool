@@ -1146,3 +1146,37 @@ int nl_sfeatures(struct cmd_context *ctx)
 		return 0;
 	return nlctx->exit_code ?: 92;
 }
+
+/* private flags */
+
+int nl_sprivflags(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	int ret;
+
+	nlctx->cmd = "--set-priv-flags";
+	nlctx->argp = ctx->argp;
+	nlctx->argc = ctx->argc;
+	nlctx->devname = ctx->devname;
+
+	ret = msg_init(nlctx, ETHNL_CMD_SET_SETTINGS,
+		       NLM_F_REQUEST | NLM_F_ACK);
+	if (ret < 0)
+		return 2;
+	if (ethnla_put_dev(nlctx, ETHTOOL_A_SETTINGS_DEV, ctx->devname))
+		return -EMSGSIZE;
+
+	ret = nl_parse_bitset(nlctx, ETHTOOL_A_SETTINGS_PRIV_FLAGS, NULL,
+		              NULL);
+	if (ret < 0)
+		return -EINVAL;
+
+	ret = ethnl_sendmsg(nlctx);
+	if (ret < 0)
+		return 2;
+	ret = ethnl_process_reply(nlctx, nomsg_reply_cb);
+	if (ret == 0)
+		return 0;
+	else
+		return nlctx->exit_code ?: 1;
+}
