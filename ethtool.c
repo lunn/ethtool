@@ -4977,6 +4977,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_sset		NULL
 #define nl_gfeatures	NULL
 #define nl_sfeatures	NULL
+#define nl_gprivflags	NULL
 #endif
 
 static const struct option {
@@ -5136,7 +5137,7 @@ static const struct option {
 	  "               [ tx N ]\n"
 	  "               [ other N ]\n"
 	  "               [ combined N ]\n" },
-	{ "--show-priv-flags", 1, do_gprivflags, NULL,
+	{ "--show-priv-flags", 1, do_gprivflags, nl_gprivflags,
 	  "Query private flags" },
 	{ "--set-priv-flags", 1, do_sprivflags, NULL,
 	  "Set private flags",

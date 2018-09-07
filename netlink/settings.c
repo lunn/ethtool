@@ -519,6 +519,53 @@ out_free:
 	return 0;
 }
 
+void priv_flags_strlen_walk_cb(unsigned int idx, const char *name, bool val,
+			       void *data)
+{
+	unsigned int *maxlen = data;
+	unsigned int len;
+
+	if (name)
+		len = strlen(name);
+	else {
+		len = 3; /* strlen("bit") */
+		for (idx = idx ?: 1; idx; idx /= 10)
+			len++; /* plus number of ditigs */
+	}
+	if (len > *maxlen)
+		*maxlen = len;
+}
+
+void dump_priv_flags_walk_cb(unsigned int idx, const char *name, bool val,
+			      void *data)
+{
+	unsigned int *maxlen = data;
+	char buff[16];
+
+	if (!name) {
+		snprintf(buff, sizeof(buff) - 1, "bit%u", idx);
+		name = buff;
+	}
+	printf("%-*s: %s\n", *maxlen, name, val ? "on" : "off");
+}
+
+int dump_priv_flags(struct nl_context *nlctx, const struct nlattr *bitset)
+{
+	const struct stringset *labels;
+	unsigned int maxlen = 0;
+	int ret;
+
+	labels = perdev_stringset(nlctx->devname, ETH_SS_PRIV_FLAGS);
+	ret = walk_bitset(bitset, labels, priv_flags_strlen_walk_cb, &maxlen);
+	if (ret < 0)
+		return ret;
+
+	if (nlctx->is_monitor || nlctx->is_dump)
+		putchar('\n');
+	printf("Private flags for %s:\n", nlctx->devname);
+	return walk_bitset(bitset, labels, dump_priv_flags_walk_cb, &maxlen);
+}
+
 int settings_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 {
 	const struct nlattr *tb[ETHTOOL_A_SETTINGS_MAX + 1] = {};
@@ -578,6 +625,13 @@ int settings_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 		if (ret == 0)
 			allfail = false;
 	}
+	if (tb[ETHTOOL_A_SETTINGS_PRIV_FLAGS] &&
+	    mask_ok(nlctx, ETHTOOL_IM_SETTINGS_PRIVFLAGS)) {
+		ret = dump_priv_flags(nlctx,
+				      tb[ETHTOOL_A_SETTINGS_PRIV_FLAGS]);
+		if (ret == 0)
+			allfail = false;
+	}
 
 	if (allfail && !nlctx->is_monitor && !nlctx->is_dump) {
 		fputs("No data available\n", stdout);
@@ -589,12 +643,15 @@ int settings_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 
 int settings_request(struct cmd_context *ctx, uint32_t info_mask)
 {
+	bool is_dev = ctx->devname && strcmp(ctx->devname, WILDCARD_DEVNAME);
 	bool compact = info_mask & ETHTOOL_IM_SETTINGS_FEATURES;
 	struct nl_context *nlctx = ctx->nlctx;
 	int ret;
 
-	if (compact)
+	if (compact) {
 		load_global_strings(nlctx);
+		load_perdev_strings(nlctx, is_dev ? ctx->devname : NULL);
+	}
 
 	ret = ethnl_prep_get_request(ctx, ETHNL_CMD_GET_SETTINGS,
 				     ETHTOOL_A_SETTINGS_DEV);
@@ -621,6 +678,11 @@ int nl_gset(struct cmd_context *ctx)
 int nl_gfeatures(struct cmd_context *ctx)
 {
 	return settings_request(ctx, ETHTOOL_IM_SETTINGS_FEATURES);
+}
+
+int nl_gprivflags(struct cmd_context *ctx)
+{
+	return settings_request(ctx, ETHTOOL_IM_SETTINGS_PRIVFLAGS);
 }
 
 /* SET_SETTINGS */

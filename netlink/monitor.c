@@ -161,6 +161,11 @@ static struct monitor_option monitor_opts[] = {
 		.cmd		= ETHNL_CMD_SET_SETTINGS,
 		.info_mask	= ETHTOOL_IM_SETTINGS_FEATURES,
 	},
+	{
+		.pattern	= "--show-priv-flags|--set-priv-flags",
+		.cmd		= ETHNL_CMD_SET_SETTINGS,
+		.info_mask	= ETHTOOL_IM_SETTINGS_PRIVFLAGS,
+	},
 };
 
 static bool pattern_match(const char *s, const char *pattern)
