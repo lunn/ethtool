@@ -4994,6 +4994,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_nway_rst	NULL
 #define nl_phys_id	NULL
 #define nl_reset	NULL
+#define nl_grxfh	NULL
 #endif
 
 static const struct option {
@@ -5124,7 +5125,7 @@ static const struct option {
 	  "		delete %d\n" },
 	{ "-T|--show-time-stamping", 1, do_tsinfo, nl_tsinfo,
 	  "Show time stamping capabilities" },
-	{ "-x|--show-rxfh-indir|--show-rxfh", 1, do_grxfh, NULL,
+	{ "-x|--show-rxfh-indir|--show-rxfh", 1, do_grxfh, nl_grxfh,
 	  "Show Rx flow hash indirection table and/or RSS hash key",
 	  "		[ context %d ]\n" },
 	{ "-X|--set-rxfh-indir|--rxfh", 1, do_srxfh, NULL,
