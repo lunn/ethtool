@@ -4995,6 +4995,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_phys_id	NULL
 #define nl_reset	NULL
 #define nl_grxfh	NULL
+#define nl_srxfh	NULL
 #endif
 
 static const struct option {
@@ -5128,7 +5129,7 @@ static const struct option {
 	{ "-x|--show-rxfh-indir|--show-rxfh", 1, do_grxfh, nl_grxfh,
 	  "Show Rx flow hash indirection table and/or RSS hash key",
 	  "		[ context %d ]\n" },
-	{ "-X|--set-rxfh-indir|--rxfh", 1, do_srxfh, NULL,
+	{ "-X|--set-rxfh-indir|--rxfh", 1, do_srxfh, nl_srxfh,
 	  "Set Rx flow hash indirection table and/or RSS hash key",
 	  "		[ context %d|new ]\n"
 	  "		[ equal N | weight W0 W1 ... | default ]\n"

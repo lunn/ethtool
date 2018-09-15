@@ -285,3 +285,331 @@ int nl_grxfh(struct cmd_context *ctx)
 	return ethnl_send_get_request(nlctx, rxflow_reply_cb);
 }
 
+/* SET_RXFLOW */
+
+struct indtbl_weights {
+	uint32_t	count;
+	uint32_t	sum;
+	uint32_t	*weights;
+};
+
+struct srxfh_data {
+	uint32_t		context;
+	struct byte_str_value	hkey;
+	const char		*hfunc;
+	uint32_t		equal;
+	struct indtbl_weights	weight;
+	bool			it_default;
+	bool			ctx_delete;
+};
+
+static int srxfh_parse_context(struct nl_context *nlctx, uint16_t type,
+			       const void *data, void *dest)
+{
+	const char *arg = nlctx->argp[0];
+	uint32_t val;
+
+	nlctx->argp++;
+	nlctx->argc--;
+
+	if (!strcmp(arg, "new")) {
+		val = ETH_RXFH_CONTEXT_ALLOC;
+	} else {
+		int ret = parse_u32(arg, &val);
+
+		if (ret < 0) {
+			fprintf(stderr, "invalid RSS context id '%s'\n", arg);
+			return -EINVAL;
+		}
+		if (val == ETH_RXFH_CONTEXT_ALLOC) {
+			fprintf(stderr, "RSS context id 0x%08x is reserved\n",
+				val);
+			return -EINVAL;
+		}
+	}
+
+	if (dest)
+		*(uint32_t *)dest = val;
+	return type ? ethnla_put_u32(nlctx, type, val) : 0;
+}
+
+static int srxfh_parse_weight(struct nl_context *nlctx, uint16_t type,
+			      const void *parser_data, void *dest)
+{
+	struct indtbl_weights *data = dest;
+	unsigned int i;
+	char **argp;
+	int ret;
+
+	for (i = 0; i < nlctx->argc && strcmp(nlctx->argp[i], "--"); i++)
+		;
+	data->count = i;
+	argp = nlctx->argp;
+	nlctx->argp += i;
+	nlctx->argc -= i;
+	if (nlctx->argc && !strcmp(nlctx->argp[0], "--")) {
+		nlctx->argp++;
+		nlctx->argc--;
+	}
+
+	data->weights = calloc(data->count, sizeof(data->weights[0]));
+	if (!data->weights)
+		return -ENOMEM;
+
+	for (i = 0; i < data->count; i++) {
+		ret = parse_u32(argp[i], &data->weights[i]);
+		if (ret < 0)
+			goto err_free;
+		data->sum += data->weights[i];
+	}
+	if (!data->sum) {
+		fprintf(stderr, "At least one weight must be non-zero\n");
+		ret = -EINVAL;
+		goto err_free;
+	}
+
+	return 0;
+err_free:
+	free(data->weights);
+	memset(data, '\0', sizeof(*data));
+	return ret;
+}
+
+static const struct byte_str_params hkey_parser_data = {
+	.min_len	= 1,
+	.delim		= ':',
+};
+
+static const struct param_parser srxfh_params[] = {
+	{
+		.arg		= "context",
+		.handler	= srxfh_parse_context,
+		.min_argc	= 1,
+		.dest_offset	= offsetof(struct srxfh_data, context),
+	},
+	{
+		.arg		= "hkey",
+		.handler	= nl_parse_byte_str,
+		.handler_data	= &hkey_parser_data,
+		.min_argc	= 1,
+		.dest_offset	= offsetof(struct srxfh_data, hkey),
+	},
+	{
+		.arg		= "hfunc",
+		.handler	= nl_parse_string,
+		.min_argc	= 1,
+		.dest_offset	= offsetof(struct srxfh_data, hfunc),
+	},
+	{
+		.arg		= "equal",
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+		.dest_offset	= offsetof(struct srxfh_data, equal),
+	},
+	{
+		.arg		= "weight",
+		.handler	= srxfh_parse_weight,
+		.min_argc	= 1,
+		.dest_offset	= offsetof(struct srxfh_data, weight),
+	},
+	{
+		.arg		= "default",
+		.handler	= nl_parse_flag,
+		.dest_offset	= offsetof(struct srxfh_data, it_default),
+	},
+	{
+		.arg		= "delete",
+		.handler	= nl_parse_flag,
+		.dest_offset	= offsetof(struct srxfh_data, ctx_delete),
+	},
+	{}
+};
+
+int srxfh_sanity_checks(const struct srxfh_data *data)
+{
+	if (data->ctx_delete &&
+	    (!data->context || data->context == ETH_RXFH_CONTEXT_ALLOC)) {
+		fprintf(stderr, "ethtool -X: 'delete' requires context id\n");
+		return -EINVAL;
+	}
+	if (data->ctx_delete &&
+	    (data->hkey.data || data->hfunc || data->equal ||
+	     data->weight.count || data->it_default)) {
+		fprintf(stderr, "ethtool -X: 'delete' cannot be combined with"
+				" other arguments except 'context'\n");
+		return -EINVAL;
+	}
+	if ((data->equal && (data->weight.count || data->it_default)) ||
+	    (data->weight.count && data->it_default)) {
+		fprintf(stderr, "ethtool -X: 'equal', 'weight' and 'default'"
+				" are mutually exclusive\n");
+		return -EINVAL;
+	}
+	if (data->context && data->it_default) {
+		fprintf(stderr, "ethtool -X: 'default' is only allowed without"
+				"context id\n");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int fill_indtbl_equal(struct nl_context *nlctx, uint32_t num)
+{
+	struct nlattr *patch;
+
+	patch = ethnla_nest_start(nlctx, ETHTOOL_A_INDTBL_PATTERN);
+	if (!patch)
+		return -EMSGSIZE;
+
+	if (ethnla_put_u32(nlctx, ETHTOOL_A_ITPAT_MIN_RING, 0) ||
+	    ethnla_put_u32(nlctx, ETHTOOL_A_ITPAT_MAX_RING, num - 1)) {
+		mnl_attr_nest_cancel(nlctx->nlhdr, patch);
+		return -EMSGSIZE;
+	}
+
+	mnl_attr_nest_end(nlctx->nlhdr, patch);
+	return 0;
+}
+
+static int fill_indtbl_weight(struct nl_context *nlctx,
+			      const struct indtbl_weights *data)
+{
+	struct nlattr *patch;
+
+	patch = ethnla_nest_start(nlctx, ETHTOOL_A_INDTBL_WEIGHTS);
+	if (!patch)
+		return -EMSGSIZE;
+
+	if (ethnla_put(nlctx, ETHTOOL_A_ITWGHT_WEIGHTS,
+		       data->count * sizeof(data->weights[0]),
+		       data->weights)) {
+		mnl_attr_nest_cancel(nlctx->nlhdr, patch);
+		return -EMSGSIZE;
+	}
+
+	mnl_attr_nest_end(nlctx->nlhdr, patch);
+	return 0;
+}
+
+static int fill_indtbl(struct nl_context *nlctx, const struct srxfh_data *data)
+{
+	struct nlattr *table;
+	int ret;
+
+	if (!data->equal && !data->weight.count && !data->it_default)
+		return 0;
+	table = ethnla_nest_start(nlctx, ETHTOOL_A_RXFLOW_INDIR_TBL);
+	if (!table)
+		return -EMSGSIZE;
+
+	ret = 0;
+	if (data->equal)
+		ret = fill_indtbl_equal(nlctx, data->equal);
+	if (data->weight.count)
+		ret = fill_indtbl_weight(nlctx, &data->weight);
+	if (ret < 0)
+		goto err;
+
+	/* if neither equal nor weight was used, it's default so sending
+	 * an empty nested attribute is what we want
+	 */
+	mnl_attr_nest_end(nlctx->nlhdr, table);
+	return 0;
+err:
+	mnl_attr_nest_cancel(nlctx->nlhdr, table);
+	return ret;
+}
+
+static int fill_hfunc(struct nl_context *nlctx, const char *hashfn)
+{
+	struct nlmsghdr *nlhdr = nlctx->nlhdr;
+	struct nlattr *bitset_attr;
+	struct nlattr *bits_attr;
+	struct nlattr *bit_attr;
+
+	if (!hashfn)
+		return 0;
+	bitset_attr = ethnla_nest_start(nlctx, ETHTOOL_A_RXFLOW_HASH_FN);
+	if (!bitset_attr)
+		return -EMSGSIZE;
+	if (ethnla_put_flag(nlctx, ETHTOOL_A_BITSET_LIST, true))
+		return -EMSGSIZE;
+	bits_attr = ethnla_nest_start(nlctx, ETHTOOL_A_BITSET_BITS);
+	if (!bits_attr)
+		goto err;
+	bit_attr = ethnla_nest_start(nlctx, ETHTOOL_A_BITS_BIT);
+	if (!bits_attr)
+		goto err;
+
+	if (ethnla_put_strz(nlctx, ETHTOOL_A_BIT_NAME, hashfn))
+		goto err;
+
+	mnl_attr_nest_end(nlhdr, bit_attr);
+	mnl_attr_nest_end(nlhdr, bits_attr);
+	mnl_attr_nest_end(nlhdr, bitset_attr);
+	return 0;
+err:
+	mnl_attr_nest_cancel(nlhdr, bitset_attr);
+	return -EMSGSIZE;
+}
+
+static int fill_srxfh(struct nl_context *nlctx, const struct srxfh_data *data)
+{
+	uint32_t op = ETHTOOL_RXFLOW_CTXOP_SET;
+	uint32_t context = data->context;
+
+	/* context delete request is special, handle it separately */
+	if (data->ctx_delete) {
+		if (ethnla_put_u32(nlctx, ETHTOOL_A_RXFLOW_CTXOP,
+				   ETHTOOL_RXFLOW_CTXOP_DEL))
+			return -EMSGSIZE;
+		if (ethnla_put_u32(nlctx, ETHTOOL_A_RXFLOW_CONTEXT, context))
+			return -EMSGSIZE;
+		return 0;
+	}
+
+	if (context == ETH_RXFH_CONTEXT_ALLOC) {
+		op = ETHTOOL_RXFLOW_CTXOP_NEW;
+		context = 0;
+	}
+	if (ethnla_put_u32(nlctx, ETHTOOL_A_RXFLOW_CTXOP, op))
+		return -EMSGSIZE;
+	if (fill_hfunc(nlctx, data->hfunc))
+		return -EMSGSIZE;
+	if (data->hkey.data && ethnla_put(nlctx, ETHTOOL_A_RXFLOW_HASH_KEY,
+					  data->hkey.len, data->hkey.data))
+		return -EMSGSIZE;
+	return fill_indtbl(nlctx, data);
+}
+
+int nl_srxfh(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	struct srxfh_data data = {};
+	int ret;
+
+	nlctx->cmd = "-X";
+	nlctx->argp = ctx->argp;
+	nlctx->argc = ctx->argc;
+	ret = nl_parser(nlctx, srxfh_params, &data);
+	if (ret < 0)
+		return 2;
+	ret = srxfh_sanity_checks(&data);
+	if (ret < 0)
+		return 2;
+
+	ret = ethnl_prep_get_request(ctx, ETHNL_CMD_SET_RXFLOW,
+				     ETHTOOL_A_RXFLOW_DEV);
+	if (ret < 0)
+		goto out_free;
+	ret = fill_srxfh(nlctx, &data);
+	if (ret < 0)
+		goto out_free;
+
+	ret = ethnl_send_get_request(nlctx, nomsg_reply_cb);
+out_free:
+	free(data.hkey.data);
+	free(data.weight.weights);
+	return ret;
+}

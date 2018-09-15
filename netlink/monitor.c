@@ -100,6 +100,7 @@ int params_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int nwayrst_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int physid_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int reset_reply_cb(const struct nlmsghdr *nlhdr, void *data);
+int rxflow_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 
 static struct {
 	uint8_t		cmd;
@@ -132,6 +133,10 @@ static struct {
 	{
 		.cmd	= ETHNL_CMD_ACT_RESET,
 		.cb	= reset_reply_cb,
+	},
+	{
+		.cmd	= ETHNL_CMD_SET_RXFLOW,
+		.cb	= rxflow_reply_cb,
 	},
 };
 
@@ -227,6 +232,11 @@ static struct monitor_option monitor_opts[] = {
 	{
 		.pattern	= "--reset",
 		.cmd		= ETHNL_CMD_ACT_RESET,
+	},
+	{
+		.pattern	= "-x|--show-rxfh|--show-rxfh-indir|"
+				  "-X|--rxfh|--set-rxfh-indir",
+		.cmd		= ETHNL_CMD_SET_RXFLOW,
 	},
 };
 
