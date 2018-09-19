@@ -4979,39 +4979,6 @@ static int fecmode_str_to_type(const char *str)
 	return 0;
 }
 
-/* Takes a comma-separated list of FEC modes, returns the bitwise OR of their
- * corresponding ETHTOOL_FEC_* constants.
- * Accepts repetitions (e.g. 'auto,auto') and trailing comma (e.g. 'off,').
- */
-static int parse_fecmode(const char *str)
-{
-	int fecmode = 0;
-	char buf[6];
-
-	if (!str)
-		return 0;
-	while (*str) {
-		size_t next;
-		int mode;
-
-		next = strcspn(str, ",");
-		if (next >= 6) /* Bad mode, longest name is 5 chars */
-			return 0;
-		/* Copy into temp buffer and nul-terminate */
-		memcpy(buf, str, next);
-		buf[next] = 0;
-		mode = fecmode_str_to_type(buf);
-		if (!mode) /* Bad mode encountered */
-			return 0;
-		fecmode |= mode;
-		str += next;
-		/* Skip over ',' (but not nul) */
-		if (*str)
-			str++;
-	}
-	return fecmode;
-}
-
 static int do_gfec(struct cmd_context *ctx)
 {
 	struct ethtool_fecparam feccmd = { 0 };
@@ -5041,22 +5008,26 @@ static int do_gfec(struct cmd_context *ctx)
 
 static int do_sfec(struct cmd_context *ctx)
 {
-	char *fecmode_str = NULL;
+	enum { ARG_NONE, ARG_ENCODING } state = ARG_NONE;
 	struct ethtool_fecparam feccmd;
-	struct cmdline_info cmdline_fec[] = {
-		{ "encoding", CMDL_STR,  &fecmode_str,  &feccmd.fec},
-	};
-	int changed;
-	int fecmode;
-	int rv;
+	int fecmode = 0, newmode;
+	int rv, i;
 
-	parse_generic_cmdline(ctx, &changed, cmdline_fec,
-			      ARRAY_SIZE(cmdline_fec));
-
-	if (!fecmode_str)
+	for (i = 0; i < ctx->argc; i++) {
+		if (!strcmp(ctx->argp[i], "encoding")) {
+			state = ARG_ENCODING;
+			continue;
+		}
+		if (state == ARG_ENCODING) {
+			newmode = fecmode_str_to_type(ctx->argp[i]);
+			if (!newmode)
+				exit_bad_args();
+			fecmode |= newmode;
+			continue;
+		}
 		exit_bad_args();
+	}
 
-	fecmode = parse_fecmode(fecmode_str);
 	if (!fecmode)
 		exit_bad_args();
 
@@ -5265,7 +5236,7 @@ static const struct option {
 	  "		[ all ]\n"},
 	{ "--show-fec", 1, do_gfec, "Show FEC settings"},
 	{ "--set-fec", 1, do_sfec, "Set FEC settings",
-	  "		[ encoding auto|off|rs|baser ]\n"},
+	  "		[ encoding auto|off|rs|baser [...]]\n"},
 	{ "-h|--help", 0, show_usage, "Show this help" },
 	{ "--version", 0, do_version, "Show version number" },
 	{}
