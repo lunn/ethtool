@@ -671,7 +671,7 @@ static void sff8636_dom_parse(const __u8 *id, struct sff_diags *sd)
 
 static void sff8636_show_dom(const __u8 *id, __u32 eeprom_len)
 {
-	struct sff_diags sd;
+	struct sff_diags sd = {0};
 	char *rx_power_string = NULL;
 	char power_string[MAX_DESC_SIZE];
 	int i;
