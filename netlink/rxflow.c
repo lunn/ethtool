@@ -8,6 +8,33 @@
 #include "strset.h"
 #include "parser.h"
 
+static const char *flow_type_labels[] = {
+	[TCP_V4_FLOW]		= "TCP over IPv4",
+	[UDP_V4_FLOW]		= "UDP over IPv4",
+	[SCTP_V4_FLOW]		= "SCTP over IPv4",
+	[AH_ESP_V4_FLOW]	= "IPSEC AH/ESP over IPv4",
+	[AH_V4_FLOW]		= "IPSEC AH over IPv4",
+	[ESP_V4_FLOW]		= "IPSEC ESP over IPv4",
+	[TCP_V6_FLOW]		= "TCP over IPv6",
+	[UDP_V6_FLOW]		= "UDP over IPv6",
+	[SCTP_V6_FLOW]		= "SCTP over IPv6",
+	[AH_ESP_V6_FLOW]	= "IPSEC AH/ESP over IPv6",
+	[AH_V6_FLOW]		= "IPSEC AH over IPv6",
+	[ESP_V6_FLOW]		= "IPSEC ESP over IPv6",
+	[IPV4_FLOW]		= "Generic IPv4",
+	[IPV6_FLOW]		= "Generic IPv6",
+};
+
+static const char *hash_field_labels[] = {
+	[1]	= "L2DA",
+	[2]	= "VLAN tag",
+	[3]	= "L3 proto",
+	[4]	= "IP SA",
+	[5]	= "IP DA",
+	[6]	= "L4 bytes 0 & 1 [TCP/UDP src port]",
+	[7]	= "L4 bytes 2 & 3 [TCP/UDP dst port]",
+};
+
 /* GET_RXFLOW */
 
 static int apply_block(uint32_t *table, unsigned int size,
@@ -204,6 +231,67 @@ static void dump_hashfn_walk_cb(unsigned int idx, const char *name, bool val,
 	printf("    %s: %s\n", name, val ? "on" : "off");
 }
 
+static void dump_hash_fields(uint32_t fields)
+{
+	unsigned int i;
+
+	printf(" use these fields for computing Hash flow key:\n");
+	if (!fields) {
+		printf("None\n\n");
+		return;
+	}
+
+	for (i = 0; i < 32; i++) {
+		if (!(fields & (1U << i)))
+			continue;
+		if (i < MNL_ARRAY_SIZE(hash_field_labels) &&
+		    hash_field_labels[i])
+			printf("%s\n", hash_field_labels[i]);
+		else
+			printf("unknown (bit %u)\n", i);
+	}
+	putchar('\n');
+}
+
+static int dump_hashopts(const struct nlattr *opts, const uint32_t *req_type)
+{
+	const struct nlattr *opt;
+	int ret;
+
+
+	mnl_attr_for_each_nested(opt, opts) {
+		const struct nlattr *tb[ETHTOOL_A_RXHASHOPT_MAX + 1] = {};
+		DECLARE_ATTR_TB_INFO(tb);
+		const struct nla_bitfield32 *fields;
+		uint32_t flow_type;
+
+		if (mnl_attr_get_type(opt) != ETHTOOL_A_RXHASHOPTS_OPT)
+			continue;
+		ret = mnl_attr_parse_nested(opt, attr_cb, &tb_info);
+		if (ret < 0 || !tb[ETHTOOL_A_RXHASHOPT_FLOWTYPE])
+			continue;
+		flow_type = mnl_attr_get_u32(tb[ETHTOOL_A_RXHASHOPT_FLOWTYPE]);
+		if (req_type && flow_type != *req_type)
+			continue;
+
+		if (flow_type >= MNL_ARRAY_SIZE(flow_type_labels) ||
+		    !flow_type_labels[flow_type])
+			printf("BIT%u flows", flow_type);
+		else
+			printf("%s flows", flow_type_labels[flow_type]);
+
+		fields = tb[ETHTOOL_A_RXHASHOPT_FIELDS] ?
+			 mnl_attr_get_payload(tb[ETHTOOL_A_RXHASHOPT_FIELDS]) :
+			 NULL;
+		if (tb[ETHTOOL_A_RXHASHOPT_DISCARD])
+			printf(" - All matching flows discarded on RX\n");
+		else
+			dump_hash_fields(fields ? fields->value : 0);
+	}
+
+	return 0;
+}
+
 int rxflow_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 {
 	const struct nlattr *tb[ETHTOOL_A_RXFLOW_MAX + 1] = {};
@@ -241,6 +329,13 @@ int rxflow_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 			printf("RSS hash function:\n");
 			printf("    Operation not supported\n");
 		}
+	}
+	if (mask_ok(nlctx, ETHTOOL_IM_RXFLOW_HASHOPTS)) {
+		ret = dump_hashopts(tb[ETHTOOL_A_RXFLOW_HASH_OPTS],
+				    nlctx->cmd_private);
+		if (ret < 0)
+			printf("Cannot get RX network flow hashing options: %s\n",
+			       strerror(-ret));
 	}
 
 	return MNL_CB_OK;
@@ -283,6 +378,101 @@ int nl_grxfh(struct cmd_context *ctx)
 		return -EMSGSIZE;
 
 	return ethnl_send_get_request(nlctx, rxflow_reply_cb);
+}
+
+struct hashopts_params {
+	uint32_t	flow_type;
+	uint32_t	context;
+};
+
+static const struct lookup_entry_u32 flow_types[] = {
+	{ .arg = "all",		.val = 0 },
+	{ .arg = "*",		.val = 0 },
+	{ .arg = "tcp4",	.val = TCP_V4_FLOW },
+	{ .arg = "udp4",	.val = UDP_V4_FLOW },
+	{ .arg = "sctp4",	.val = SCTP_V4_FLOW },
+	{ .arg = "ah4",		.val = AH_V4_FLOW },
+	{ .arg = "esp4",	.val = ESP_V4_FLOW },
+	{ .arg = "tcp6",	.val = TCP_V6_FLOW },
+	{ .arg = "udp6",	.val = UDP_V6_FLOW },
+	{ .arg = "sctp6",	.val = SCTP_V6_FLOW },
+	{ .arg = "ah6",		.val = AH_V6_FLOW },
+	{ .arg = "esp6",	.val = ESP_V6_FLOW },
+	{}
+};
+
+static const struct param_parser get_hashopts_parser[] = {
+	{
+		.arg		= "rx-flow-hash",
+		.handler	= nl_parse_lookup_u32,
+		.handler_data	= flow_types,
+		.dest_offset	= offsetof(struct hashopts_params, flow_type),
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "context",
+		.handler	= nl_parse_direct_u32,
+		.dest_offset	= offsetof(struct hashopts_params, context),
+		.min_argc	= 1,
+	},
+	{}
+};
+
+static int ethnl_get_hashopts(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	struct hashopts_params params = {};
+	int ret;
+
+	ret = nl_parser(nlctx, get_hashopts_parser, &params);
+	if (ret < 0)
+		exit(2);
+
+	ret = ethnl_prep_get_request(ctx, ETHNL_CMD_GET_RXFLOW,
+				     ETHTOOL_A_RXFLOW_DEV);
+	if (ret < 0)
+		return ret;
+	if (ethnla_put_u32(nlctx, ETHTOOL_A_RXFLOW_INFOMASK,
+			   ETHTOOL_IM_RXFLOW_HASHOPTS))
+		return -EMSGSIZE;
+	/* ETHTOOL_A_RXFLOW_COMPACT = false */
+	ret = nl_parser(nlctx, grxfh_params, NULL);
+	if (ret < 0)
+		return ret;
+	if (params.context &&
+	    ethnla_put_u32(nlctx, ETHTOOL_A_RXFLOW_CONTEXT, params.context))
+		return -EMSGSIZE;
+	if (params.flow_type)
+		nlctx->cmd_private = &params.flow_type;
+
+	ret = ethnl_send_get_request(nlctx, rxflow_reply_cb);
+	nlctx->cmd_private = NULL;
+	return ret;
+}
+
+int nl_grxclass(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	const char *arg;
+
+	nlctx->cmd = "-n";
+	nlctx->argp = ctx->argp;
+	nlctx->argc = ctx->argc;
+	nlctx->filter_mask = ETHTOOL_IM_RXFLOW_HASHOPTS;
+
+	if (nlctx->argc == 0) {
+		fprintf(stderr, "ethtool: missing argument for '-n'\n");
+		exit(2);
+	}
+	arg = ctx->argp[0];
+
+	if (!strcmp(arg, "rx-flow-hash")) {
+		return ethnl_get_hashopts(ctx);
+	} else {
+		fprintf(stderr, "ethtool: unknown argument '%s' for '-n'\n",
+			arg);
+		exit(2);
+	}
 }
 
 /* SET_RXFLOW */

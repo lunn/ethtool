@@ -4996,6 +4996,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_reset	NULL
 #define nl_grxfh	NULL
 #define nl_srxfh	NULL
+#define nl_grxclass	NULL
 #endif
 
 static const struct option {
@@ -5094,7 +5095,7 @@ static const struct option {
 	  "Show adapter statistics" },
 	{ "--phy-statistics", 1, do_gphystats, NULL,
 	  "Show phy statistics" },
-	{ "-n|-u|--show-nfc|--show-ntuple", 1, do_grxclass, NULL,
+	{ "-n|-u|--show-nfc|--show-ntuple", 1, do_grxclass, nl_grxclass,
 	  "Show Rx network flow classification options or rules",
 	  "		[ rx-flow-hash tcp4|udp4|ah4|esp4|sctp4|"
 	  "tcp6|udp6|ah6|esp6|sctp6 [context %d] |\n"
