@@ -4997,6 +4997,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_grxfh	NULL
 #define nl_srxfh	NULL
 #define nl_grxclass	NULL
+#define nl_srxclass	NULL
 #endif
 
 static const struct option {
@@ -5100,7 +5101,7 @@ static const struct option {
 	  "		[ rx-flow-hash tcp4|udp4|ah4|esp4|sctp4|"
 	  "tcp6|udp6|ah6|esp6|sctp6 [context %d] |\n"
 	  "		  rule %d ]\n" },
-	{ "-N|-U|--config-nfc|--config-ntuple", 1, do_srxclass, NULL,
+	{ "-N|-U|--config-nfc|--config-ntuple", 1, do_srxclass, nl_srxclass,
 	  "Configure Rx network flow classification options or rules",
 	  "		rx-flow-hash tcp4|udp4|ah4|esp4|sctp4|"
 	  "tcp6|udp6|ah6|esp6|sctp6 m|v|t|s|d|f|n|r... [context %d] |\n"

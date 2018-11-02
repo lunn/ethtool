@@ -803,3 +803,115 @@ out_free:
 	free(data.weight.weights);
 	return ret;
 }
+
+static const struct bitfield32_parser_special rxh_parser_specials[] = {
+	{ 'r', RXH_DISCARD },
+	{}
+};
+static const struct bitfield32_parser_data rxh_parser_data = {
+	.bits = {
+		[1]	= 'm',
+		[2]	= 'v',
+		[3]	= 't',
+		[4]	= 's',
+		[5]	= 'd',
+		[6]	= 'f',
+		[7]	= 'n',
+	},
+	.specials = rxh_parser_specials,
+};
+
+int ethnl_set_hashopts(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	struct nlattr *opts_attr, *opt_attr;
+	struct nla_bitfield32 flags;
+	unsigned int nopts = 0;
+	uint32_t context = 0;
+	int ret;
+
+	ret = ethnl_prep_get_request(ctx, ETHNL_CMD_SET_RXFLOW,
+				     ETHTOOL_A_RXFLOW_DEV);
+	if (ret < 0)
+		return 2;
+
+	opts_attr = ethnla_nest_start(nlctx, ETHTOOL_A_RXFLOW_HASH_OPTS);
+	if (!opts_attr)
+		return 2;
+	while (nlctx->argc > 0) {
+		if (nlctx->argc < 2) {
+			fprintf(stderr, "extra argument '%s' for -N\n",
+				nlctx->argp[0]);
+			return 2;
+		}
+		if (!strcmp(nlctx->argp[0], "context")) {
+			ret = parse_u32(nlctx->argp[1], &context);
+			if (ret < 0)
+				return 2;
+			nlctx->argc -= 2;
+			nlctx->argp += 2;
+			continue;
+		}
+
+		opt_attr = ethnla_nest_start(nlctx, ETHTOOL_A_RXHASHOPTS_OPT);
+		if (!opts_attr)
+			return 2;
+		ret = nl_parse_lookup_u32(nlctx, ETHTOOL_A_RXHASHOPT_FLOWTYPE,
+					  flow_types, NULL);
+		if (ret < 0)
+			return 2;
+		ret = nl_parse_char_bitfield32(nlctx, 0, &rxh_parser_data,
+					       &flags);
+		if (ret < 0)
+			return 2;
+		if (flags.value & RXH_DISCARD)
+			ret = ethnla_put_flag(nlctx,
+					      ETHTOOL_A_RXHASHOPT_DISCARD,
+					      true);
+		else
+			ret = ethnla_put(nlctx, ETHTOOL_A_RXHASHOPT_FIELDS,
+					 sizeof(flags), &flags);
+		if (ret < 0)
+			return 2;
+		mnl_attr_nest_end(nlctx->nlhdr, opt_attr);
+
+		nlctx->argc -= 2;
+		nlctx->argp += 2;
+		nopts++;
+	}
+	if (nopts == 0) {
+		fprintf(stderr, "no hash opts present, ignoring\n");
+		return 0;
+	}
+	mnl_attr_nest_end(nlctx->nlhdr, opts_attr);
+
+	return ethnl_send_get_request(nlctx, nomsg_reply_cb);
+}
+
+int nl_srxclass(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	const char *arg;
+
+	nlctx->cmd = "-N";
+	nlctx->argp = ctx->argp;
+	nlctx->argc = ctx->argc;
+
+	if (nlctx->argc == 0) {
+		fprintf(stderr, "ethtool: missing argument for '-N'\n");
+		exit(2);
+	}
+	arg = ctx->argp[0];
+
+	if (!strcmp(arg, "rx-flow-hash")) {
+		nlctx->argc--;
+		nlctx->argp++;
+		return ethnl_set_hashopts(ctx);
+	} else {
+		fprintf(stderr, "ethtool: unknown argument '%s' for '-N'\n",
+			arg);
+		exit(2);
+	}
+
+	return -EOPNOTSUPP;
+}
