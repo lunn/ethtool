@@ -1465,8 +1465,10 @@ static void dump_features(const struct feature_defs *defs,
 		 * kernel version
 		 */
 		if (defs->off_flag_matched[i] == 0 &&
-		    off_flag_def[i].get_cmd == 0 &&
-		    kernel_ver < off_flag_def[i].min_kernel_ver)
+		    ((off_flag_def[i].get_cmd == 0 &&
+		      kernel_ver < off_flag_def[i].min_kernel_ver) ||
+		     (off_flag_def[i].get_cmd == ETHTOOL_GUFO &&
+		      kernel_ver >= KERNEL_VERSION(4, 14, 0))))
 			continue;
 
 		value = off_flag_def[i].value;
