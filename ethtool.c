@@ -2078,7 +2078,7 @@ static int do_gchannels(struct cmd_context *ctx)
 
 static int do_gcoalesce(struct cmd_context *ctx)
 {
-	struct ethtool_coalesce ecoal;
+	struct ethtool_coalesce ecoal = {};
 	int err;
 
 	if (ctx->argc != 0)
