@@ -530,6 +530,7 @@ static void init_global_link_mode_masks(void)
 		ETHTOOL_LINK_MODE_10000baseER_Full_BIT,
 		ETHTOOL_LINK_MODE_2500baseT_Full_BIT,
 		ETHTOOL_LINK_MODE_5000baseT_Full_BIT,
+		ETHTOOL_LINK_MODE_100baseT1_Full_BIT,
 	};
 	static const enum ethtool_link_mode_bit_indices
 		additional_advertised_flags_bits[] = {
@@ -689,6 +690,8 @@ static void dump_link_caps(const char *prefix, const char *an_prefix,
 		  "2500baseT/Full" },
 		{ 0, ETHTOOL_LINK_MODE_5000baseT_Full_BIT,
 		  "5000baseT/Full" },
+		{ 0, ETHTOOL_LINK_MODE_100baseT1_Full_BIT,
+		  "100baseT1/Full" },
 	};
 	int indent;
 	int did1, new_line_pend, i;
