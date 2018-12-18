@@ -607,17 +607,31 @@ struct dsa_mv88e6xxx_switch {
 };
 
 static const struct dsa_mv88e6xxx_switch dsa_mv88e6xxx_switches[] = {
+	{ .id = 0x04a0, .name = "88E6085 ", .dump = NULL },
+	{ .id = 0x0950, .name = "88E6095 ", .dump = NULL },
+	{ .id = 0x0990, .name = "88E6097 ", .dump = NULL },
 	{ .id = 0x0a00, .name = "88E6190X", .dump = dsa_mv88e6390 },
 	{ .id = 0x0a10, .name = "88E6390X", .dump = dsa_mv88e6390 },
+	{ .id = 0x1060, .name = "88E6131 ", .dump = NULL },
+	{ .id = 0x1150, .name = "88E6320 ", .dump = NULL },
 	{ .id = 0x1210, .name = "88E6123 ", .dump = dsa_mv88e6161 },
 	{ .id = 0x1610, .name = "88E6161 ", .dump = dsa_mv88e6161 },
+	{ .id = 0x1650, .name = "88E6165 ", .dump = NULL },
+	{ .id = 0x1710, .name = "88E6171 ", .dump = NULL },
 	{ .id = 0x1720, .name = "88E6172 ", .dump = dsa_mv88e6352 },
+	{ .id = 0x1750, .name = "88E6175 ", .dump = NULL },
 	{ .id = 0x1760, .name = "88E6176 ", .dump = dsa_mv88e6352 },
 	{ .id = 0x1900, .name = "88E6190 ", .dump = dsa_mv88e6390 },
+	{ .id = 0x1910, .name = "88E6191 ", .dump = NULL },
 	{ .id = 0x1a70, .name = "88E6185 ", .dump = dsa_mv88e6185 },
 	{ .id = 0x2400, .name = "88E6240 ", .dump = dsa_mv88e6352 },
 	{ .id = 0x2900, .name = "88E6290 ", .dump = dsa_mv88e6390 },
+	{ .id = 0x3100, .name = "88E6321 ", .dump = NULL },
+	{ .id = 0x3400, .name = "88E6141 ", .dump = NULL },
+	{ .id = 0x3410, .name = "88E6341 ", .dump = NULL },
 	{ .id = 0x3520, .name = "88E6352 ", .dump = dsa_mv88e6352 },
+	{ .id = 0x3710, .name = "88E6350 ", .dump = NULL },
+	{ .id = 0x3750, .name = "88E6351 ", .dump = NULL },
 	{ .id = 0x3900, .name = "88E6390 ", .dump = dsa_mv88e6390 },
 };
 
