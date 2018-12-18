@@ -30,6 +30,66 @@
 	      ((_val) & 0x4000) ? "14 " : "", \
 	      ((_val) & 0x8000) ? "15 " : "")
 
+static void dsa_mv88e6185(int reg, u16 val)
+{
+	switch (reg) {
+	case 0:
+		REG(reg, "Port Status", val);
+		break;
+	case 1:
+		REG(reg, "PCS Control", val);
+		break;
+	case 3:
+		REG(reg, "Switch Identifier", val);
+		break;
+	case 4:
+		REG(reg, "Port Control", val);
+		break;
+	case 5:
+		REG(reg, "Port Control 1", val);
+		break;
+	case 6:
+		REG(reg, "Port Base VLAN Map (Header)", val);
+		break;
+	case 7:
+		REG(reg, "Default VLAN ID & Priority", val);
+		break;
+	case 8:
+		REG(reg, "Port Control 2", val);
+		break;
+	case 9:
+		REG(reg, "Rate Control", val);
+		break;
+	case 10:
+		REG(reg, "Rate Control 2", val);
+		break;
+	case 11:
+		REG(reg, "Port Association Vector", val);
+		break;
+	case 16:
+		REG(reg, "InDiscardsLo Frame Counter", val);
+		break;
+	case 17:
+		REG(reg, "InDiscardsHi Frame Counter", val);
+		break;
+	case 18:
+		REG(reg, "InFiltered Frame Counter", val);
+		break;
+	case 19:
+		REG(reg, "OutFiltered Frame Counter", val);
+		break;
+	case 24:
+		REG(reg, "Tag Remap 0-3", val);
+		break;
+	case 25:
+		REG(reg, "Tag Remap 4-7", val);
+		break;
+	default:
+		REG(reg, "Reserved", val);
+		break;
+	}
+};
+
 struct dsa_mv88e6xxx_switch {
 	void (*dump)(int reg, u16 val);
 	const char *name;
@@ -37,6 +97,7 @@ struct dsa_mv88e6xxx_switch {
 };
 
 static const struct dsa_mv88e6xxx_switch dsa_mv88e6xxx_switches[] = {
+	{ .id = 0x1a70, .name = "88E6185 ", .dump = dsa_mv88e6185 },
 };
 
 static int dsa_mv88e6xxx_dump_regs(struct ethtool_regs *regs)
