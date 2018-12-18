@@ -1166,6 +1166,7 @@ static const struct {
 	{ "vmxnet3", vmxnet3_dump_regs },
 	{ "fjes", fjes_dump_regs },
 	{ "lan78xx", lan78xx_dump_regs },
+	{ "dsa", dsa_dump_regs },
 #endif
 };
 
