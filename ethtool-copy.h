@@ -14,12 +14,6 @@
 #ifndef _LINUX_ETHTOOL_H
 #define _LINUX_ETHTOOL_H
 
-#ifdef __powerpc64__
-/* Powerpc needs __SANE_USERSPACE_TYPES__ before <linux/types.h> to select
- * 'int-ll64.h' and avoid compile warnings when printing __u64 with %llu.
- */
-#define __SANE_USERSPACE_TYPES__
-#endif
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/if_ether.h>
