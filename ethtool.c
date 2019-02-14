@@ -1214,6 +1214,7 @@ static const struct {
 	{ "fjes", fjes_dump_regs },
 	{ "lan78xx", lan78xx_dump_regs },
 	{ "dsa", dsa_dump_regs },
+	{ "fec", fec_dump_regs },
 #endif
 };
 
