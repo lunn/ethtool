@@ -1420,14 +1420,14 @@ static int dump_coalesce(const struct ethtool_coalesce *ecoal)
 		"tx-frames-irq: %u\n"
 		"\n"
 		"rx-usecs-low: %u\n"
-		"rx-frame-low: %u\n"
+		"rx-frames-low: %u\n"
 		"tx-usecs-low: %u\n"
-		"tx-frame-low: %u\n"
+		"tx-frames-low: %u\n"
 		"\n"
 		"rx-usecs-high: %u\n"
-		"rx-frame-high: %u\n"
+		"rx-frames-high: %u\n"
 		"tx-usecs-high: %u\n"
-		"tx-frame-high: %u\n"
+		"tx-frames-high: %u\n"
 		"\n",
 		ecoal->stats_block_coalesce_usecs,
 		ecoal->rate_sample_interval,
