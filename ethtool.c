@@ -5098,6 +5098,8 @@ static int do_sfec(struct cmd_context *ctx)
 	return 0;
 }
 
+static int do_perqueue(struct cmd_context *ctx);
+
 #ifndef TEST_ETHTOOL
 int send_ioctl(struct cmd_context *ctx, void *cmd)
 {
@@ -5293,6 +5295,8 @@ static const struct option {
 	{ "--show-fec", 1, do_gfec, "Show FEC settings"},
 	{ "--set-fec", 1, do_sfec, "Set FEC settings",
 	  "		[ encoding auto|off|rs|baser [...]]\n"},
+	{ "-Q|--per-queue", 1, do_perqueue, "Apply per-queue command",
+	  "             [queue_mask %x] SUB_COMMAND\n"},
 	{ "-h|--help", 0, show_usage, "Show this help" },
 	{ "--version", 0, do_version, "Show version number" },
 	{}
@@ -5342,6 +5346,77 @@ static int find_option(int argc, char **argp)
 	}
 
 	return -1;
+}
+
+#define MAX(x, y) (x > y ? x : y)
+
+static int find_max_num_queues(struct cmd_context *ctx)
+{
+	struct ethtool_channels echannels;
+
+	echannels.cmd = ETHTOOL_GCHANNELS;
+	if (send_ioctl(ctx, &echannels))
+		return -1;
+
+	return MAX(echannels.rx_count, echannels.tx_count) +
+		echannels.combined_count;
+}
+
+static int do_perqueue(struct cmd_context *ctx)
+{
+	__u32 queue_mask[__KERNEL_DIV_ROUND_UP(MAX_NUM_QUEUE, 32)] = {0};
+	int i, n_queues = 0;
+
+	if (ctx->argc == 0)
+		exit_bad_args();
+
+	/*
+	 * The sub commands will be applied to
+	 * all queues if no queue_mask set
+	 */
+	if (strncmp(*ctx->argp, "queue_mask", 11)) {
+		n_queues = find_max_num_queues(ctx);
+		if (n_queues < 0) {
+			perror("Cannot get number of queues");
+			return -EFAULT;
+		} else if (n_queues > MAX_NUM_QUEUE) {
+			n_queues = MAX_NUM_QUEUE;
+		}
+		for (i = 0; i < n_queues / 32; i++)
+			queue_mask[i] = ~0;
+		if (n_queues % 32)
+			queue_mask[i] = (1 << (n_queues - i * 32)) - 1;
+		fprintf(stdout,
+			"The sub commands will be applied to all %d queues\n",
+			n_queues);
+	} else {
+		ctx->argc--;
+		ctx->argp++;
+		if (parse_hex_u32_bitmap(*ctx->argp, MAX_NUM_QUEUE,
+		    queue_mask)) {
+			fprintf(stdout, "Invalid queue mask\n");
+			return -1;
+		}
+		for (i = 0; i < __KERNEL_DIV_ROUND_UP(MAX_NUM_QUEUE, 32); i++) {
+			__u32 mask = queue_mask[i];
+
+			while (mask > 0) {
+				if (mask & 0x1)
+					n_queues++;
+				mask = mask >> 1;
+			}
+		}
+		ctx->argc--;
+		ctx->argp++;
+	}
+
+	i = find_option(ctx->argc, ctx->argp);
+	if (i < 0)
+		exit_bad_args();
+
+	/* no sub_command support yet */
+
+	return -EOPNOTSUPP;
 }
 
 int main(int argc, char **argp)

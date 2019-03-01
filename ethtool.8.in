@@ -391,6 +391,14 @@ ethtool \- query or control network driver and hardware settings
 .I devname
 .B encoding
 .BR auto | off | rs | baser \ [...]
+.HP
+.B ethtool \-Q|\-\-per\-queue
+.I devname
+.RB [ queue_mask
+.IR %x ]
+.I sub_command
+.RB ...
+ .
 .
 .\" Adjust lines (i.e. full justification) and hyphenate.
 .ad
@@ -1150,6 +1158,18 @@ off	Turn off FEC
 RS	Force RS-FEC encoding
 BaseR	Force BaseR encoding
 .TE
+.RE
+.TP
+.B \-Q|\-\-per\-queue
+Applies provided sub command to specific queues.
+.RS 4
+.TP
+.B queue_mask %x
+Sets the specific queues which the sub command is applied to.
+If queue_mask is not set, the sub command will be applied to all queues.
+.TP
+.B sub_command
+Sub command to apply.
 .RE
 .SH BUGS
 Not supported (in part or whole) on all network drivers.
