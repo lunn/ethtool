@@ -5321,7 +5321,7 @@ static const struct option {
 	{ "--set-fec", 1, do_sfec, "Set FEC settings",
 	  "		[ encoding auto|off|rs|baser [...]]\n"},
 	{ "-Q|--per-queue", 1, do_perqueue, "Apply per-queue command."
-	  "The supported sub commands include --show-coalesce",
+	  "The supported sub commands include --show-coalesce, --coalesce",
 	  "             [queue_mask %x] SUB_COMMAND\n"},
 	{ "-h|--help", 0, show_usage, "Show this help" },
 	{ "--version", 0, do_version, "Show version number" },
@@ -5411,6 +5411,57 @@ get_per_queue_coalesce(struct cmd_context *ctx, __u32 *queue_mask, int n_queues)
 	return per_queue_opt;
 }
 
+static void set_per_queue_coalesce(struct cmd_context *ctx,
+				   struct ethtool_per_queue_op *per_queue_opt,
+				   int n_queues)
+{
+	struct ethtool_coalesce ecoal;
+	DECLARE_COALESCE_OPTION_VARS();
+	struct cmdline_info cmdline_coalesce[] = COALESCE_CMDLINE_INFO(ecoal);
+	__u32 *queue_mask = per_queue_opt->queue_mask;
+	struct ethtool_coalesce *ecoal_q;
+	int gcoalesce_changed = 0;
+	int i, idx = 0;
+
+	parse_generic_cmdline(ctx, &gcoalesce_changed,
+			      cmdline_coalesce, ARRAY_SIZE(cmdline_coalesce));
+
+	ecoal_q = (struct ethtool_coalesce *)(per_queue_opt + 1);
+	for (i = 0; i < __KERNEL_DIV_ROUND_UP(MAX_NUM_QUEUE, 32); i++) {
+		int queue = i * 32;
+		__u32 mask = queue_mask[i];
+
+		while (mask > 0) {
+			if (mask & 0x1) {
+				int changed = 0;
+
+				memcpy(&ecoal, ecoal_q + idx,
+				       sizeof(struct ethtool_coalesce));
+				do_generic_set(cmdline_coalesce,
+					       ARRAY_SIZE(cmdline_coalesce),
+					       &changed);
+				if (!changed)
+					fprintf(stderr,
+						"Queue %d, no coalesce parameters changed\n",
+						queue);
+				memcpy(ecoal_q + idx, &ecoal,
+				       sizeof(struct ethtool_coalesce));
+				idx++;
+			}
+			mask = mask >> 1;
+			queue++;
+		}
+		if (idx == n_queues)
+			break;
+	}
+
+	per_queue_opt->cmd = ETHTOOL_PERQUEUE;
+	per_queue_opt->sub_command = ETHTOOL_SCOALESCE;
+
+	if (send_ioctl(ctx, per_queue_opt))
+		perror("Cannot set device per queue parameters");
+}
+
 static int do_perqueue(struct cmd_context *ctx)
 {
 	struct ethtool_per_queue_op *per_queue_opt;
@@ -5472,6 +5523,17 @@ static int do_perqueue(struct cmd_context *ctx)
 			return -EFAULT;
 		}
 		dump_per_queue_coalesce(per_queue_opt, queue_mask, n_queues);
+		free(per_queue_opt);
+	} else if (strstr(args[i].opts, "--coalesce") != NULL) {
+		ctx->argc--;
+		ctx->argp++;
+		per_queue_opt = get_per_queue_coalesce(ctx, queue_mask,
+						       n_queues);
+		if (per_queue_opt == NULL) {
+			perror("Cannot get device per queue parameters");
+			return -EFAULT;
+		}
+		set_per_queue_coalesce(ctx, per_queue_opt, n_queues);
 		free(per_queue_opt);
 	} else {
 		perror("The subcommand is not supported yet");

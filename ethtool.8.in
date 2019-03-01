@@ -1169,7 +1169,8 @@ Sets the specific queues which the sub command is applied to.
 If queue_mask is not set, the sub command will be applied to all queues.
 .TP
 .B sub_command
-Sub command to apply. The supported sub commands include --show-coalesce.
+Sub command to apply. The supported sub commands include --show-coalesce and
+--coalesce.
 .RE
 .SH BUGS
 Not supported (in part or whole) on all network drivers.
