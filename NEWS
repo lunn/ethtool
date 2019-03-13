@@ -1,3 +1,14 @@
+Version 5.0 - March 13, 2019
+	* Feature: don't report UFO on kernels v4.14 and above
+	* Fix: zero initialize coalesce struct
+	* Feature: dsa: add pretty dump
+	* Feature: dsa: mv88e6xxx: add pretty dump
+	* Feature: dsa: mv88e6xxx: add pretty dump for 88E6185
+	* Feature: dsa: mv88e6xxx: add pretty dump for 88E6161
+	* Feature: dsa: mv88e6xxx: add pretty dump for 88E6352
+	* Feature: dsa: mv88e6xxx: add pretty dump for 88E6390
+	* Feature: dsa: mv88e6xxx: add pretty dump for others
+
 Version 4.19 - November 2, 2018
 	* Feature: support combinations of FEC modes
 	* Feature: better syntax for combinations of FEC modes
