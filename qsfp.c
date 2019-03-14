@@ -706,7 +706,8 @@ static void sff8636_show_dom(const __u8 *id, __u32 eeprom_len)
 	 * current fields are supported or not. A valid temperature
 	 * reading is used as existence for TX/RX power.
 	 */
-	if ((sd.sfp_temp[MCURR] == 0x0) || (sd.sfp_temp[MCURR] == 0xFFFF))
+	if ((sd.sfp_temp[MCURR] == 0x0) ||
+	    (sd.sfp_temp[MCURR] == (__s16)0xFFFF))
 		return;
 
 	printf("\t%-41s : %s\n", "Alarm/warning flags implemented",
