@@ -4818,28 +4818,15 @@ static int do_get_phy_tunable(struct cmd_context *ctx)
 {
 	int argc = ctx->argc;
 	char **argp = ctx->argp;
-	u8 downshift_changed = 0;
-	int i;
 
 	if (argc < 1)
 		exit_bad_args();
-	for (i = 0; i < argc; i++) {
-		if (!strcmp(argp[i], "downshift")) {
-			downshift_changed = 1;
-			i += 1;
-			if (i < argc)
-				exit_bad_args();
-		} else  {
-			exit_bad_args();
-		}
-	}
 
-	if (downshift_changed) {
+	if (!strcmp(argp[0], "downshift")) {
 		struct {
 			struct ethtool_tunable ds;
-			u8 __count;
+			u8 count;
 		} cont;
-		u8 count = 0;
 
 		cont.ds.cmd = ETHTOOL_PHY_GTUNABLE;
 		cont.ds.id = ETHTOOL_PHY_DOWNSHIFT;
@@ -4849,11 +4836,12 @@ static int do_get_phy_tunable(struct cmd_context *ctx)
 			perror("Cannot Get PHY downshift count");
 			return 87;
 		}
-		count = *((u8 *)&cont.ds.data[0]);
-		if (count)
-			fprintf(stdout, "Downshift count: %d\n", count);
+		if (cont.count)
+			fprintf(stdout, "Downshift count: %d\n", cont.count);
 		else
 			fprintf(stdout, "Downshift disabled\n");
+	} else {
+		exit_bad_args();
 	}
 
 	return 0;
@@ -4995,17 +4983,12 @@ static int do_set_phy_tunable(struct cmd_context *ctx)
 	u8 ds_cnt = DOWNSHIFT_DEV_DEFAULT_COUNT;
 	u8 ds_changed = 0, ds_has_cnt = 0, ds_enable = 0;
 
-	if (ctx->argc == 0)
-		exit_bad_args();
-
 	/* Parse arguments */
-	while (ctx->argc) {
-		if (parse_named_bool(ctx, "downshift", &ds_enable)) {
-			ds_changed = 1;
-			ds_has_cnt = parse_named_u8(ctx, "count", &ds_cnt);
-		} else {
-			exit_bad_args();
-		}
+	if (parse_named_bool(ctx, "downshift", &ds_enable)) {
+		ds_changed = 1;
+		ds_has_cnt = parse_named_u8(ctx, "count", &ds_cnt);
+	} else {
+		exit_bad_args();
 	}
 
 	/* Validate parameters */
@@ -5029,14 +5012,14 @@ static int do_set_phy_tunable(struct cmd_context *ctx)
 	if (ds_changed) {
 		struct {
 			struct ethtool_tunable ds;
-			u8 __count;
+			u8 count;
 		} cont;
 
 		cont.ds.cmd = ETHTOOL_PHY_STUNABLE;
 		cont.ds.id = ETHTOOL_PHY_DOWNSHIFT;
 		cont.ds.type_id = ETHTOOL_TUNABLE_U8;
 		cont.ds.len = 1;
-		*((u8 *)&cont.ds.data[0]) = ds_cnt;
+		cont.count = ds_cnt;
 		err = send_ioctl(ctx, &cont.ds);
 		if (err < 0) {
 			perror("Cannot Set PHY downshift count");
