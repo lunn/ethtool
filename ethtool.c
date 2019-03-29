@@ -4840,6 +4840,28 @@ static int do_get_phy_tunable(struct cmd_context *ctx)
 			fprintf(stdout, "Downshift count: %d\n", cont.count);
 		else
 			fprintf(stdout, "Downshift disabled\n");
+	} else if (!strcmp(argp[0], "fast-link-down")) {
+		struct {
+			struct ethtool_tunable fld;
+			u8 msecs;
+		} cont;
+
+		cont.fld.cmd = ETHTOOL_PHY_GTUNABLE;
+		cont.fld.id = ETHTOOL_PHY_FAST_LINK_DOWN;
+		cont.fld.type_id = ETHTOOL_TUNABLE_U8;
+		cont.fld.len = 1;
+		if (send_ioctl(ctx, &cont.fld) < 0) {
+			perror("Cannot Get PHY Fast Link Down value");
+			return 87;
+		}
+
+		if (cont.msecs == ETHTOOL_PHY_FAST_LINK_DOWN_ON)
+			fprintf(stdout, "Fast Link Down enabled\n");
+		else if (cont.msecs == ETHTOOL_PHY_FAST_LINK_DOWN_OFF)
+			fprintf(stdout, "Fast Link Down disabled\n");
+		else
+			fprintf(stdout, "Fast Link Down enabled, %d msecs\n",
+				cont.msecs);
 	} else {
 		exit_bad_args();
 	}
@@ -4982,11 +5004,17 @@ static int do_set_phy_tunable(struct cmd_context *ctx)
 	int err = 0;
 	u8 ds_cnt = DOWNSHIFT_DEV_DEFAULT_COUNT;
 	u8 ds_changed = 0, ds_has_cnt = 0, ds_enable = 0;
+	u8 fld_changed = 0, fld_enable = 0;
+	u8 fld_msecs = ETHTOOL_PHY_FAST_LINK_DOWN_ON;
 
 	/* Parse arguments */
 	if (parse_named_bool(ctx, "downshift", &ds_enable)) {
 		ds_changed = 1;
 		ds_has_cnt = parse_named_u8(ctx, "count", &ds_cnt);
+	} else if (parse_named_bool(ctx, "fast-link-down", &fld_enable)) {
+		fld_changed = 1;
+		if (fld_enable)
+			parse_named_u8(ctx, "msecs", &fld_msecs);
 	} else {
 		exit_bad_args();
 	}
@@ -5006,6 +5034,11 @@ static int do_set_phy_tunable(struct cmd_context *ctx)
 
 		if (!ds_enable)
 			ds_cnt = DOWNSHIFT_DEV_DISABLE;
+	} else if (fld_changed) {
+		if (!fld_enable)
+			fld_msecs = ETHTOOL_PHY_FAST_LINK_DOWN_OFF;
+		else if (fld_msecs == ETHTOOL_PHY_FAST_LINK_DOWN_OFF)
+			exit_bad_args();
 	}
 
 	/* Do it */
@@ -5023,6 +5056,22 @@ static int do_set_phy_tunable(struct cmd_context *ctx)
 		err = send_ioctl(ctx, &cont.ds);
 		if (err < 0) {
 			perror("Cannot Set PHY downshift count");
+			err = 87;
+		}
+	} else if (fld_changed) {
+		struct {
+			struct ethtool_tunable fld;
+			u8 msecs;
+		} cont;
+
+		cont.fld.cmd = ETHTOOL_PHY_STUNABLE;
+		cont.fld.id = ETHTOOL_PHY_FAST_LINK_DOWN;
+		cont.fld.type_id = ETHTOOL_TUNABLE_U8;
+		cont.fld.len = 1;
+		cont.msecs = fld_msecs;
+		err = send_ioctl(ctx, &cont.fld);
+		if (err < 0) {
+			perror("Cannot Set PHY Fast Link Down value");
 			err = 87;
 		}
 	}
@@ -5276,9 +5325,11 @@ static const struct option {
 	  "		[ tx-lpi on|off ]\n"
 	  "		[ tx-timer %d ]\n"},
 	{ "--set-phy-tunable", 1, do_set_phy_tunable, "Set PHY tunable",
-	  "		[ downshift on|off [count N] ]\n"},
+	  "		[ downshift on|off [count N] ]\n"
+	  "		[ fast-link-down on|off [msecs N] ]\n"},
 	{ "--get-phy-tunable", 1, do_get_phy_tunable, "Get PHY tunable",
-	  "		[ downshift ]\n"},
+	  "		[ downshift ]\n"
+	  "		[ fast-link-down ]\n"},
 	{ "--reset", 1, do_reset, "Reset components",
 	  "		[ flags %x ]\n"
 	  "		[ mgmt ]\n"
