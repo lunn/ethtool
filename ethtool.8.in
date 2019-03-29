@@ -355,10 +355,16 @@ ethtool \- query or control network driver and hardware settings
 .A1 on off
 .BN count
 .RB ]
+.RB [
+.B fast\-link\-down
+.A1 on off
+.BN msecs
+.RB ]
 .HP
 .B ethtool \-\-get\-phy\-tunable
 .I devname
 .RB [ downshift ]
+.RB [ fast-link-down ]
 .HP
 .B ethtool \-\-reset
 .I devname
@@ -1069,12 +1075,22 @@ Sets the PHY tunable parameters.
 .RS 4
 .TP
 .A2 downshift on off
-Specifies whether downshift should be enabled
+Specifies whether downshift should be enabled.
 .TS
 nokeep;
 lB	l.
 .BI count \ N
-Sets the PHY downshift re-tries count.
+	Sets the PHY downshift re-tries count.
+.TE
+.TP
+.A2 fast-link-down on off
+Specifies whether Fast Link Down should be enabled and time until link down (if supported).
+.TS
+nokeep;
+lB	l.
+.BI msecs \ N
+	Sets the period after which the link is reported as down. Note that the PHY may choose
+	the closest supported value. Only on reading back the tunable do you get the actual value.
 .TE
 .PD
 .RE
@@ -1090,6 +1106,14 @@ Link speed downshift after N failed 1000BASE-T auto-negotiation attempts.
 Downshift is useful where cable does not have the 4 pairs instance.
 
 Gets the PHY downshift count/status.
+.TP
+.B fast\-link\-down
+Depending on the mode it may take 0.5s - 1s until a broken link is reported as down.
+In certain use cases a link-down event needs to be reported as soon as possible.
+Some PHYs support a Fast Link Down Feature and may allow configuration of the delay
+before a broken link is reported as being down.
+
+Gets the PHY Fast Link Down status / period.
 .RE
 .TP
 .B \-\-reset
