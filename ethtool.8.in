@@ -297,6 +297,8 @@ ethtool \- query or control network driver and hardware settings
 .B ethtool \-X|\-\-set\-rxfh\-indir|\-\-rxfh
 .I devname
 .RB [ hkey \ \*(MA:\...]
+.RB [ start
+.IR N ]
 .RB [\  equal
 .IR N \ |
 .BI weight\  W0
@@ -958,6 +960,10 @@ even if a nibble is zero.
 .BI hfunc
 Sets RSS hash function of the specified network device.
 List of RSS hash functions which kernel supports is shown as a part of the --show-rxfh command output.
+.TP
+.BI start\  N
+For the \fBequal\fR and \fBweight\fR options, sets the starting receive queue
+for spreading flows to \fIN\fR.
 .TP
 .BI equal\  N
 Sets the receive flow hash indirection table to spread flows evenly
