@@ -5810,6 +5810,9 @@ opt_found:
 			return (ret >= 0) ? ret : 1;
 	}
 
+	if (!func)
+		return 1;
+
 	if (ctx.devname && strlen(ctx.devname) >= IFNAMSIZ) {
 		fprintf(stderr,
 			"ethtool: device names longer than %u characters are only allowed with netlink\n",
@@ -5819,6 +5822,5 @@ opt_found:
 	ret = ioctl_init(&ctx, no_dev);
 	if (ret)
 		return ret;
-
 	return func(&ctx);
 }
