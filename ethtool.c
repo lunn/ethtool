@@ -5558,9 +5558,13 @@ opt_found:
 			return (ret >= 0) ? ret : 1;
 	}
 
-	ret = ioctl_init(&ctx, want_device);
-	if (ret)
-		return ret;
+	if (func) {
+		ret = ioctl_init(&ctx, want_device);
+		if (ret)
+			return ret;
 
-	return func(&ctx);
+		return func(&ctx);
+	} else {
+		return 1;
+	}
 }
