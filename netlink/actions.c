@@ -377,3 +377,96 @@ int nl_reset(struct cmd_context *ctx)
 
 	return ret;
 }
+
+/* ACT_CABLE_TEST */
+
+int cable_test_reply_cb(const struct nlmsghdr *nlhdr, void *data)
+{
+	const struct nlattr *tb[ETHTOOL_A_CABLE_TEST_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	struct nl_context *nlctx = data;
+	int ret;
+
+	ret = mnl_attr_parse(nlhdr, GENL_HDRLEN, attr_cb, &tb_info);
+	if (ret < 0)
+		return ret;
+	nlctx->devname = get_dev_name(tb[ETHTOOL_A_CABLE_TEST_DEV]);
+	if (!dev_ok(nlctx))
+		return MNL_CB_OK;
+
+	printf("Starting cable test on device %s\n", nlctx->devname);
+
+	return MNL_CB_OK;
+}
+
+static int cable_test_results_cb(const struct nlmsghdr *nlhdr, void *data)
+{
+	const struct genlmsghdr *ghdr = (const struct genlmsghdr *)(nlhdr + 1);
+	struct nl_context *nlctx = data;
+	struct nlattr *evattr;
+
+	if (ghdr->cmd != ETHNL_CMD_EVENT)
+		return MNL_CB_OK;
+
+	if (nlhdr->nlmsg_seq != nlctx->seq)
+		return MNL_CB_OK;
+
+	mnl_attr_for_each(evattr, nlhdr, GENL_HDRLEN) {
+		switch(mnl_attr_get_type(evattr)) {
+		case ETHTOOL_A_EVENT_CABLE_TEST:
+			monitor_cable_test(nlctx, evattr);
+			return MNL_CB_STOP;
+		default:
+			break;
+		}
+	}
+	return MNL_CB_OK;
+}
+
+static int cable_test_process_results(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	uint32_t grpid = nlctx->mon_mcgrp_id;
+	int ret;
+
+	if (!grpid) {
+		fprintf(stderr, "multicast group 'monitor' not found\n");
+		return -EOPNOTSUPP;
+	}
+
+	ret = mnl_socket_setsockopt(nlctx->sk, NETLINK_ADD_MEMBERSHIP,
+				    &grpid, sizeof(grpid));
+	if (ret < 0)
+		return ret;
+
+	nlctx->is_monitor = true;
+	nlctx->port = 0;
+
+	return ethnl_process_reply(nlctx, cable_test_results_cb);
+}
+
+int nl_cable_test(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	int ret;
+
+	nlctx->argp = ctx->argp;
+	nlctx->argc = ctx->argc;
+	ret = msg_init(nlctx, ETHNL_CMD_ACT_CABLE_TEST,
+		       NLM_F_REQUEST | NLM_F_ACK);
+	if (ret < 0)
+		return -EFAULT;
+	if (ethnla_put_dev(nlctx, ETHTOOL_A_CABLE_TEST_DEV, ctx->devname))
+		return -EMSGSIZE;
+
+	ret = ethnl_sendmsg(nlctx);
+	if (ret < 0)
+		return -EFAULT;
+	ret = ethnl_process_reply(nlctx, nomsg_reply_cb);
+
+	if (ret < 0)
+		fprintf(stderr, "Cannot start cable test\n");
+	else
+		cable_test_process_results(ctx);
+	return ret;
+}

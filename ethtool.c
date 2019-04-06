@@ -4998,6 +4998,7 @@ static int show_usage(struct cmd_context *ctx);
 #define nl_srxfh	NULL
 #define nl_grxclass	NULL
 #define nl_srxclass	NULL
+#define nl_cable_test	NULL
 #endif
 
 static const struct option {
@@ -5216,6 +5217,8 @@ static const struct option {
 	  "Apply per-queue command. "
 	  "The supported sub commands include --show-coalesce, --coalesce",
 	  "             [queue_mask %x] SUB_COMMAND\n"},
+	{ "--cable-test", 1, NULL, nl_cable_test,
+	  "Perform a cable test"},
 	{ "-h|--help", 0, show_usage, NULL,
 	 "Show this help" },
 	{ "--version", 0, do_version, NULL,

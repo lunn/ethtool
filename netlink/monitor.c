@@ -72,6 +72,112 @@ static void monitor_renamedev(struct nl_context *nlctx, struct nlattr *evattr)
 		printf("Device %s renamed to %s.\n", oldname, newname);
 }
 
+static int get_cable_test_result(const struct nlattr *nest, uint8_t *pair,
+			  uint16_t *code)
+{
+	const struct nlattr *tb[ETHTOOL_A_CABLE_RESULT_MAX+1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	int ret;
+
+	ret = mnl_attr_parse_nested(nest, attr_cb, &tb_info);
+	if (ret < 0 ||
+	    !tb[ETHTOOL_A_CABLE_RESULT_PAIR] ||
+	    !tb[ETHTOOL_A_CABLE_RESULT_CODE])
+		return -EFAULT;
+
+	*pair = mnl_attr_get_u8(tb[ETHTOOL_A_CABLE_RESULT_PAIR]);
+	*code = mnl_attr_get_u8(tb[ETHTOOL_A_CABLE_RESULT_CODE]);
+
+	return 0;
+}
+
+static int get_cable_test_fault_length(const struct nlattr *nest,
+				       uint8_t *pair, int *cm)
+{
+	const struct nlattr *tb[ETHTOOL_A_CABLE_FAULT_LENGTH_MAX+1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	int ret;
+
+	ret = mnl_attr_parse_nested(nest, attr_cb, &tb_info);
+	if (ret < 0 ||
+	    !tb[ETHTOOL_A_CABLE_FAULT_LENGTH_PAIR] ||
+	    !tb[ETHTOOL_A_CABLE_FAULT_LENGTH_CM])
+		return -EFAULT;
+
+	*pair = mnl_attr_get_u8(tb[ETHTOOL_A_CABLE_FAULT_LENGTH_PAIR]);
+	*cm = mnl_attr_get_u16(tb[ETHTOOL_A_CABLE_FAULT_LENGTH_CM]);
+
+	return 0;
+}
+
+static char *code2txt(uint16_t code)
+{
+	switch(code) {
+	case ETHTOOL_A_CABLE_RESULT_CODE_UNSPEC:
+	default:
+		return "Unknown";
+	case ETHTOOL_A_CABLE_RESULT_CODE_OK:
+		return "OK";
+	case ETHTOOL_A_CABLE_RESULT_CODE_OPEN:
+		return "Open Circuit";
+	case ETHTOOL_A_CABLE_RESULT_CODE_SAME_SHORT:
+		return "Short within Pair";
+	case ETHTOOL_A_CABLE_RESULT_CODE_CROSS_SHORT:
+		return "Short to another pair";
+	}
+}
+
+static int monitor_cable_test_event(struct nl_context *nlctx,
+				    struct nlattr *evattr)
+{
+	char name[IFNAMSIZ] = "";
+	uint16_t code;
+	uint8_t pair;
+	int ifindex;
+	int ret;
+	int cm;
+
+	switch (mnl_attr_get_type(evattr)) {
+	case ETHTOOL_A_CABLE_TEST_EVENT_DEV:
+		ret = get_dev_info(evattr, &ifindex, name);
+		if (ret < 0)
+			return ret;
+
+		printf("Cable test for device %s.\n", name);
+		break;
+
+	case ETHTOOL_A_CABLE_TEST_EVENT_RESULT:
+		ret = get_cable_test_result(evattr, &pair, &code);
+		if (ret < 0)
+			return ret;
+
+		printf("Pair: %d, result: %s\n", pair, code2txt(code));
+		break;
+
+	case ETHTOOL_A_CABLE_TEST_EVENT_FAULT_LENGTH:
+		ret = get_cable_test_fault_length(evattr, &pair, &cm);
+		if (ret < 0)
+			return ret;
+
+		printf("Pair: %d, fault length: %0.2fm\n", pair,
+		       (float)cm / 100);
+		break;
+	}
+	return 0;
+}
+
+void monitor_cable_test(struct nl_context *nlctx, struct nlattr *evattr)
+{
+	struct nlattr *pos;
+	int ret;
+
+	mnl_attr_for_each_nested(pos,  evattr) {
+		ret = monitor_cable_test_event(nlctx, pos);
+		if (ret < 0)
+			return;
+	}
+}
+
 static int monitor_event_cb(const struct nlmsghdr *nlhdr, void *data)
 {
 	struct nl_context *nlctx = data;
@@ -88,6 +194,9 @@ static int monitor_event_cb(const struct nlmsghdr *nlhdr, void *data)
 		case ETHTOOL_A_EVENT_RENAMEDEV:
 			monitor_renamedev(nlctx, evattr);
 			break;
+		case ETHTOOL_A_EVENT_CABLE_TEST:
+			monitor_cable_test(nlctx, evattr);
+			break;
 		}
 	}
 
@@ -101,6 +210,7 @@ int nwayrst_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int physid_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int reset_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int rxflow_reply_cb(const struct nlmsghdr *nlhdr, void *data);
+int cable_test_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 
 static struct {
 	uint8_t		cmd;
@@ -137,6 +247,10 @@ static struct {
 	{
 		.cmd	= ETHNL_CMD_SET_RXFLOW,
 		.cb	= rxflow_reply_cb,
+	},
+	{
+		.cmd	= ETHNL_CMD_ACT_CABLE_TEST,
+		.cb	= cable_test_reply_cb,
 	},
 };
 
@@ -237,6 +351,10 @@ static struct monitor_option monitor_opts[] = {
 		.pattern	= "-x|--show-rxfh|--show-rxfh-indir|"
 				  "-X|--rxfh|--set-rxfh-indir",
 		.cmd		= ETHNL_CMD_SET_RXFLOW,
+	},
+	{
+		.pattern	= "--cable-test",
+		.cmd		= ETHNL_CMD_ACT_CABLE_TEST,
 	},
 };
 

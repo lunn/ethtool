@@ -193,4 +193,6 @@ static inline void copy_devname(char *dst, const char *src)
 	dst[IFNAMSIZ - 1] = '\0';
 }
 
+void monitor_cable_test(struct nl_context *nlctx, struct nlattr *evattr);
+
 #endif /* ETHTOOL_NETLINK_INT_H__ */

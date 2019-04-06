@@ -40,6 +40,7 @@ int nl_grxfh(struct cmd_context *ctx);
 int nl_srxfh(struct cmd_context *ctx);
 int nl_grxclass(struct cmd_context *ctx);
 int nl_srxclass(struct cmd_context *ctx);
+int nl_cable_test(struct cmd_context *ctx);
 int nl_monitor(struct cmd_context *ctx);
 
 void monitor_usage();
