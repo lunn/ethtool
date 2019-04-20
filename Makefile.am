@@ -17,6 +17,11 @@ ethtool_SOURCES += \
 		  ixgbevf.c tse.c vmxnet3.c qsfp.c qsfp.h fjes.c lan78xx.c
 endif
 
+if ENABLE_BASH_COMPLETION
+bashcompletiondir = $(BASH_COMPLETION_DIR)
+dist_bashcompletion_DATA = shell-completion/bash/ethtool
+endif
+
 TESTS = test-cmdline test-features
 check_PROGRAMS = test-cmdline test-features
 test_cmdline_SOURCES = test-cmdline.c test-common.c $(ethtool_SOURCES) 
