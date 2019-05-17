@@ -1,3 +1,20 @@
+Version 5.1 - May 17, 2019
+	* Feature: Add support for 200Gbps (50Gbps per lane) link mode
+	* Feature: simplify handling of PHY tunable downshift
+	* Feature: add support for PHY tunable Fast Link Down
+	* Feature: add PHY Fast Link Down tunable to man page
+	* Feature: Add a 'start N' option when specifying the Rx flow hash indirection table.
+	* Feature: Add bash-completion script
+	* Feature: add 10000baseR_FEC link mode name
+	* Fix: qsfp: fix special value comparison
+	* Feature: move option parsing related code into function
+	* Feature: move cmdline_coalesce out of do_scoalesce
+	* Feature: introduce new ioctl for per-queue settings
+	* Feature: support per-queue sub command --show-coalesce
+	* Feature: support per-queue sub command --coalesce
+	* Fix: fix up dump_coalesce output to match actual option names
+	* Feature: fec: add pretty dump
+
 Version 5.0 - March 13, 2019
 	* Feature: don't report UFO on kernels v4.14 and above
 	* Fix: zero initialize coalesce struct
