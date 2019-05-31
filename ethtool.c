@@ -545,6 +545,8 @@ static void init_global_link_mode_masks(void)
 		ETHTOOL_LINK_MODE_200000baseLR4_ER4_FR4_Full_BIT,
 		ETHTOOL_LINK_MODE_200000baseDR4_Full_BIT,
 		ETHTOOL_LINK_MODE_200000baseCR4_Full_BIT,
+		ETHTOOL_LINK_MODE_100baseT1_Full_BIT,
+		ETHTOOL_LINK_MODE_1000baseT1_Full_BIT,
 	};
 	static const enum ethtool_link_mode_bit_indices
 		additional_advertised_flags_bits[] = {
@@ -634,10 +636,14 @@ static void dump_link_caps(const char *prefix, const char *an_prefix,
 		  "100baseT/Half" },
 		{ 1, ETHTOOL_LINK_MODE_100baseT_Full_BIT,
 		  "100baseT/Full" },
+		{ 0, ETHTOOL_LINK_MODE_100baseT1_Full_BIT,
+		  "100baseT1/Full" },
 		{ 0, ETHTOOL_LINK_MODE_1000baseT_Half_BIT,
 		  "1000baseT/Half" },
 		{ 1, ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
 		  "1000baseT/Full" },
+		{ 0, ETHTOOL_LINK_MODE_1000baseT1_Full_BIT,
+		  "1000baseT1/Full" },
 		{ 0, ETHTOOL_LINK_MODE_1000baseKX_Full_BIT,
 		  "1000baseKX/Full" },
 		{ 0, ETHTOOL_LINK_MODE_2500baseX_Full_BIT,
