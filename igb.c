@@ -859,6 +859,18 @@ igb_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs)
 		"0x03430: TDFPC       (Tx data FIFO packet count)      0x%08X\n",
 		regs_buff[550]);
 
+	/*
+	 * Starting from kernel version 5.3 the registers dump buffer grew from
+	 * 739 4-byte words to 740 words, and word 740 contains the RR2DCDELAY
+	 * register.
+	 */
+	if (regs->len < 740)
+		return 0;
+
+	fprintf(stdout,
+		"0x05BF4: RR2DCDELAY  (Max. DMA read delay)            0x%08X\n",
+		regs_buff[739]);
+
 	return 0;
 }
 
