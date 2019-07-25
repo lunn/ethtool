@@ -1,3 +1,7 @@
+Version 5.2 - July 25, 2019
+	* Feature: Add 100BaseT1 and 1000BaseT1 link modes
+	* Feature: Use standard file location macros in ethtool.spec
+
 Version 5.1 - May 17, 2019
 	* Feature: Add support for 200Gbps (50Gbps per lane) link mode
 	* Feature: simplify handling of PHY tunable downshift
