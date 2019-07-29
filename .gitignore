@@ -27,3 +27,6 @@ autom4te.cache
 .deps
 test-*.log
 test-*.trs
+
+.*.swp
+*.patch
