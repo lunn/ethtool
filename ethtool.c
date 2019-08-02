@@ -1245,7 +1245,7 @@ static int dump_regs(int gregs_dump_raw, int gregs_dump_hex,
 
 	if (gregs_dump_raw) {
 		fwrite(regs->data, regs->len, 1, stdout);
-		return 0;
+		goto nested;
 	}
 
 	if (!gregs_dump_hex)
@@ -1253,7 +1253,7 @@ static int dump_regs(int gregs_dump_raw, int gregs_dump_hex,
 			if (!strncmp(driver_list[i].name, info->driver,
 				     ETHTOOL_BUSINFO_LEN)) {
 				if (driver_list[i].func(info, regs) == 0)
-					return 0;
+					goto nested;
 				/* This version (or some other
 				 * variation in the dump format) is
 				 * not handled; fall back to hex
@@ -1262,6 +1262,15 @@ static int dump_regs(int gregs_dump_raw, int gregs_dump_hex,
 			}
 
 	dump_hex(stdout, regs->data, regs->len, 0);
+
+nested:
+	/* Recurse dump if some drvinfo and regs structures are nested */
+	if (info->regdump_len > regs->len + sizeof(*info) + sizeof(*regs)) {
+		info = (struct ethtool_drvinfo *)(&regs->data[0] + regs->len);
+		regs = (struct ethtool_regs *)(&regs->data[0] + regs->len + sizeof(*info));
+
+		return dump_regs(gregs_dump_raw, gregs_dump_hex, info, regs);
+	}
 
 	return 0;
 }
