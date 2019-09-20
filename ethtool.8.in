@@ -362,11 +362,17 @@ ethtool \- query or control network driver and hardware settings
 .A1 on off
 .BN msecs
 .RB ]
+.RB [
+.B energy\-detect\-power\-down
+.A1 on off
+.BN msecs
+.RB ]
 .HP
 .B ethtool \-\-get\-phy\-tunable
 .I devname
 .RB [ downshift ]
 .RB [ fast-link-down ]
+.RB [ energy-detect-power-down ]
 .HP
 .B ethtool \-\-reset
 .I devname
@@ -1100,6 +1106,24 @@ lB	l.
 	Sets the period after which the link is reported as down. Note that the PHY may choose
 	the closest supported value. Only on reading back the tunable do you get the actual value.
 .TE
+.TP
+.A2 energy-detect-power-down on off
+Specifies whether Energy Detect Power Down (EDPD) should be enabled (if supported).
+This will put the RX and TX circuit blocks into a low power mode, and the PHY will
+wake up periodically to send link pulses to avoid any lock-up situation with a peer
+PHY that may also have EDPD enabled. By default, this setting will also enable the
+periodic transmission of TX pulses.
+.TS
+nokeep;
+lB	l.
+.BI msecs \ N
+	Some PHYs support configuration of the wake-up interval to send TX pulses.
+	This setting allows the control of this interval, and 0 disables TX pulses
+	if the PHY supports this. Disabling TX pulses can create a lock-up situation
+	where neither of the PHYs wakes the other one. If unspecified the default
+	value (in milliseconds) will be used by the PHY.
+.TE
+.TP
 .PD
 .RE
 .TP
@@ -1122,6 +1146,10 @@ Some PHYs support a Fast Link Down Feature and may allow configuration of the de
 before a broken link is reported as being down.
 
 Gets the PHY Fast Link Down status / period.
+.TP
+.B energy\-detect\-power\-down
+Gets the current configured setting for Energy Detect Power Down (if supported).
+
 .RE
 .TP
 .B \-\-reset

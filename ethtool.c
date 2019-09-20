@@ -4897,6 +4897,30 @@ static int do_get_phy_tunable(struct cmd_context *ctx)
 		else
 			fprintf(stdout, "Fast Link Down enabled, %d msecs\n",
 				cont.msecs);
+	} else if (!strcmp(argp[0], "energy-detect-power-down")) {
+		struct {
+			struct ethtool_tunable ds;
+			u16 msecs;
+		} cont;
+
+		cont.ds.cmd = ETHTOOL_PHY_GTUNABLE;
+		cont.ds.id = ETHTOOL_PHY_EDPD;
+		cont.ds.type_id = ETHTOOL_TUNABLE_U16;
+		cont.ds.len = 2;
+		if (send_ioctl(ctx, &cont.ds) < 0) {
+			perror("Cannot Get PHY Energy Detect Power Down value");
+			return 87;
+		}
+
+		if (cont.msecs == ETHTOOL_PHY_EDPD_DISABLE)
+			fprintf(stdout, "Energy Detect Power Down: disabled\n");
+		else if (cont.msecs == ETHTOOL_PHY_EDPD_NO_TX)
+			fprintf(stdout,
+				"Energy Detect Power Down: enabled, TX disabled\n");
+		else
+			fprintf(stdout,
+				"Energy Detect Power Down: enabled, TX %u msecs\n",
+				cont.msecs);
 	} else {
 		exit_bad_args();
 	}
@@ -5018,7 +5042,10 @@ static int parse_named_bool(struct cmd_context *ctx, const char *name, u8 *on)
 	return 1;
 }
 
-static int parse_named_u8(struct cmd_context *ctx, const char *name, u8 *val)
+static int parse_named_uint(struct cmd_context *ctx,
+			    const char *name,
+			    unsigned long long *val,
+			    unsigned long long max)
 {
 	if (ctx->argc < 2)
 		return 0;
@@ -5026,12 +5053,36 @@ static int parse_named_u8(struct cmd_context *ctx, const char *name, u8 *val)
 	if (strcmp(*ctx->argp, name))
 		return 0;
 
-	*val = get_uint_range(*(ctx->argp + 1), 0, 0xff);
+	*val = get_uint_range(*(ctx->argp + 1), 0, max);
 
 	ctx->argc -= 2;
 	ctx->argp += 2;
 
 	return 1;
+}
+
+static int parse_named_u8(struct cmd_context *ctx, const char *name, u8 *val)
+{
+	unsigned long long val1;
+	int ret;
+
+	ret = parse_named_uint(ctx, name, &val1, 0xff);
+	if (ret)
+		*val = val1;
+
+	return ret;
+}
+
+static int parse_named_u16(struct cmd_context *ctx, const char *name, u16 *val)
+{
+	unsigned long long val1;
+	int ret;
+
+	ret = parse_named_uint(ctx, name, &val1, 0xffff);
+	if (ret)
+		*val = val1;
+
+	return ret;
 }
 
 static int do_set_phy_tunable(struct cmd_context *ctx)
@@ -5041,6 +5092,8 @@ static int do_set_phy_tunable(struct cmd_context *ctx)
 	u8 ds_changed = 0, ds_has_cnt = 0, ds_enable = 0;
 	u8 fld_changed = 0, fld_enable = 0;
 	u8 fld_msecs = ETHTOOL_PHY_FAST_LINK_DOWN_ON;
+	u8 edpd_changed = 0, edpd_enable = 0;
+	u16 edpd_tx_interval = ETHTOOL_PHY_EDPD_DFLT_TX_MSECS;
 
 	/* Parse arguments */
 	if (parse_named_bool(ctx, "downshift", &ds_enable)) {
@@ -5050,6 +5103,11 @@ static int do_set_phy_tunable(struct cmd_context *ctx)
 		fld_changed = 1;
 		if (fld_enable)
 			parse_named_u8(ctx, "msecs", &fld_msecs);
+	} else if (parse_named_bool(ctx, "energy-detect-power-down",
+				    &edpd_enable)) {
+		edpd_changed = 1;
+		if (edpd_enable)
+			parse_named_u16(ctx, "msecs", &edpd_tx_interval);
 	} else {
 		exit_bad_args();
 	}
@@ -5074,6 +5132,16 @@ static int do_set_phy_tunable(struct cmd_context *ctx)
 			fld_msecs = ETHTOOL_PHY_FAST_LINK_DOWN_OFF;
 		else if (fld_msecs == ETHTOOL_PHY_FAST_LINK_DOWN_OFF)
 			exit_bad_args();
+	} else if (edpd_changed) {
+		if (!edpd_enable)
+			edpd_tx_interval = ETHTOOL_PHY_EDPD_DISABLE;
+		else if (edpd_tx_interval == 0)
+			edpd_tx_interval = ETHTOOL_PHY_EDPD_NO_TX;
+		else if (edpd_tx_interval > ETHTOOL_PHY_EDPD_NO_TX) {
+			fprintf(stderr, "'msecs' max value is %d.\n",
+				(ETHTOOL_PHY_EDPD_NO_TX - 1));
+			exit_bad_args();
+		}
 	}
 
 	/* Do it */
@@ -5107,6 +5175,22 @@ static int do_set_phy_tunable(struct cmd_context *ctx)
 		err = send_ioctl(ctx, &cont.fld);
 		if (err < 0) {
 			perror("Cannot Set PHY Fast Link Down value");
+			err = 87;
+		}
+	} else if (edpd_changed) {
+		struct {
+			struct ethtool_tunable fld;
+			u16 msecs;
+		} cont;
+
+		cont.fld.cmd = ETHTOOL_PHY_STUNABLE;
+		cont.fld.id = ETHTOOL_PHY_EDPD;
+		cont.fld.type_id = ETHTOOL_TUNABLE_U16;
+		cont.fld.len = 2;
+		cont.msecs = edpd_tx_interval;
+		err = send_ioctl(ctx, &cont.fld);
+		if (err < 0) {
+			perror("Cannot Set PHY Energy Detect Power Down");
 			err = 87;
 		}
 	}
@@ -5361,10 +5445,12 @@ static const struct option {
 	  "		[ tx-timer %d ]\n"},
 	{ "--set-phy-tunable", 1, do_set_phy_tunable, "Set PHY tunable",
 	  "		[ downshift on|off [count N] ]\n"
-	  "		[ fast-link-down on|off [msecs N] ]\n"},
+	  "		[ fast-link-down on|off [msecs N] ]\n"
+	  "		[ energy-detect-power-down on|off [msecs N] ]\n"},
 	{ "--get-phy-tunable", 1, do_get_phy_tunable, "Get PHY tunable",
 	  "		[ downshift ]\n"
-	  "		[ fast-link-down ]\n"},
+	  "		[ fast-link-down ]\n"
+	  "		[ energy-detect-power-down ]\n"},
 	{ "--reset", 1, do_reset, "Reset components",
 	  "		[ flags %x ]\n"
 	  "		[ mgmt ]\n"
