@@ -964,7 +964,8 @@ natsemi_dump_regs(struct ethtool_drvinfo *info maybe_unused,
 }
 
 int
-natsemi_dump_eeprom(struct ethtool_drvinfo *info, struct ethtool_eeprom *ee)
+natsemi_dump_eeprom(struct ethtool_drvinfo *info maybe_unused,
+		    struct ethtool_eeprom *ee)
 {
 	int i;
 	u16 *eebuf = (u16 *)ee->data;
