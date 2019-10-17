@@ -3891,7 +3891,7 @@ print_complex_table(unsigned revision, const struct efx_nic_reg_table *table,
 }
 
 int
-sfc_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs)
+sfc_dump_regs(struct ethtool_drvinfo *info maybe_unused, struct ethtool_regs *regs)
 {
 	const struct efx_nic_reg *reg;
 	const struct efx_nic_reg_table *table;
