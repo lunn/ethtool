@@ -364,8 +364,8 @@ e1000_get_mac_type(u16 device_id, u8 revision_id)
 	return mac_type;
 }
 
-int
-e1000_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs)
+int e1000_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+		    struct ethtool_regs *regs)
 {
 	u32 *regs_buff = (u32 *)regs->data;
 	u16 hw_device_id = (u16)regs->version;
