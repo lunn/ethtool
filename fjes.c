@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include "internal.h"
 
-int fjes_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs)
+int fjes_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+		   struct ethtool_regs *regs)
 {
 	u32 *regs_buff = (u32 *)regs->data;
 
