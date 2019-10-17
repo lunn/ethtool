@@ -118,13 +118,13 @@ static void dump_fifo(const char *name, const void *p)
 	printf("\n%s\n", name);
 	printf("---------------\n");
 	printf("End Address                      0x%08X\n", r[0]);
-  	printf("Write Pointer                    0x%08X\n", r[1]);
-  	printf("Read Pointer                     0x%08X\n", r[2]);
-  	printf("Packet Counter                   0x%08X\n", r[3]);
-  	printf("Level                            0x%08X\n", r[4]);
-  	printf("Control                          0x%08X\n", r[5]);
-  	printf("Control/Test                     0x%08X\n", r[6]);
-	dump_timer("LED", p + 0x20);
+	printf("Write Pointer                    0x%08X\n", r[1]);
+	printf("Read Pointer                     0x%08X\n", r[2]);
+	printf("Packet Counter                   0x%08X\n", r[3]);
+	printf("Level                            0x%08X\n", r[4]);
+	printf("Control                          0x%08X\n", r[5]);
+	printf("Control/Test                     0x%08X\n", r[6]);
+	dump_timer("LED", r + 8);
 }
 
 static void dump_gmac_fifo(const char *name, const void *p)
