@@ -23,6 +23,8 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 
+#define maybe_unused __attribute__((__unused__))
+
 /* ethtool.h expects these to be defined by <linux/types.h> */
 #ifndef HAVE_BE_TYPES
 typedef uint16_t __be16;

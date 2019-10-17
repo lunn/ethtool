@@ -470,7 +470,7 @@ static int rxflow_str_to_type(const char *str)
 	return flow_type;
 }
 
-static int do_version(struct cmd_context *ctx)
+static int do_version(struct cmd_context *ctx maybe_unused)
 {
 	fprintf(stdout,
 		PACKAGE " version " VERSION
@@ -5484,7 +5484,7 @@ static const struct option {
 	{}
 };
 
-static int show_usage(struct cmd_context *ctx)
+static int show_usage(struct cmd_context *ctx maybe_unused)
 {
 	int i;
 
