@@ -3808,8 +3808,7 @@ print_single_register(unsigned revision, const struct efx_nic_reg *reg,
 }
 
 static const void *
-print_simple_table(unsigned revision, const struct efx_nic_reg_table *table,
-		   const void *buf)
+print_simple_table(const struct efx_nic_reg_table *table, const void *buf)
 {
 	const struct efx_nic_reg_field *field = &table->fields[0];
 	size_t value_width = (field->width + 3) >> 2;
@@ -3918,7 +3917,7 @@ sfc_dump_regs(struct ethtool_drvinfo *info maybe_unused, struct ethtool_regs *re
 		    revision <= table->max_revision) {
 			printf("\n%s:\n", table->name);
 			if (table->field_count == 1)
-				buf = print_simple_table(revision, table, buf);
+				buf = print_simple_table(table, buf);
 			else
 				buf = print_complex_table(revision, table, buf);
 		}
