@@ -18,7 +18,7 @@
 #define GMAC_REG_NUM		55
 #define GMAC_DMA_REG_NUM	23
 
-int st_mac100_dump_regs(struct ethtool_drvinfo *info,
+int st_mac100_dump_regs(struct ethtool_drvinfo *info maybe_unused,
 			struct ethtool_regs *regs)
 {
 	int i;
@@ -51,7 +51,8 @@ int st_mac100_dump_regs(struct ethtool_drvinfo *info,
 	return 0;
 }
 
-int st_gmac_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs)
+int st_gmac_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+		      struct ethtool_regs *regs)
 {
 	int i;
 	unsigned int *stmmac_reg = (unsigned int *)regs->data;
