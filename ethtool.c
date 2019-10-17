@@ -1275,7 +1275,8 @@ nested:
 	return 0;
 }
 
-static int dump_eeprom(int geeprom_dump_raw, struct ethtool_drvinfo *info,
+static int dump_eeprom(int geeprom_dump_raw,
+		       struct ethtool_drvinfo *info maybe_unused,
 		       struct ethtool_eeprom *ee)
 {
 	if (geeprom_dump_raw) {
