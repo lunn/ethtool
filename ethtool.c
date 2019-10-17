@@ -5507,7 +5507,7 @@ static int show_usage(struct cmd_context *ctx maybe_unused)
 	return 0;
 }
 
-static int find_option(int argc, char **argp)
+static int find_option(char *arg)
 {
 	const char *opt;
 	size_t len;
@@ -5517,8 +5517,7 @@ static int find_option(int argc, char **argp)
 		opt = args[k].opts;
 		for (;;) {
 			len = strcspn(opt, "|");
-			if (strncmp(*argp, opt, len) == 0 &&
-			    (*argp)[len] == 0)
+			if (strncmp(arg, opt, len) == 0 && arg[len] == 0)
 				return k;
 
 			if (opt[len] == 0)
@@ -5667,7 +5666,7 @@ static int do_perqueue(struct cmd_context *ctx)
 		ctx->argp++;
 	}
 
-	i = find_option(ctx->argc, ctx->argp);
+	i = find_option(ctx->argp[0]);
 	if (i < 0)
 		exit_bad_args();
 
@@ -5719,7 +5718,7 @@ int main(int argc, char **argp)
 	if (argc == 0)
 		exit_bad_args();
 
-	k = find_option(argc, argp);
+	k = find_option(*argp);
 	if (k >= 0) {
 		argp++;
 		argc--;
