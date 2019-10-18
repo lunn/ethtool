@@ -328,11 +328,24 @@ void sff8079_show_all(const __u8 *id)
 {
 	sff8079_show_identifier(id);
 	if (((id[0] == 0x02) || (id[0] == 0x03)) && (id[1] == 0x04)) {
+		unsigned int br_nom, br_min, br_max;
+
+		if (id[12] == 0) {
+			br_nom = br_min = br_max = 0;
+		} else if (id[12] == 255) {
+			br_nom = id[66] * 250;
+			br_max = id[67];
+			br_min = id[67];
+		} else {
+			br_nom = id[12] * 100;
+			br_max = id[66];
+			br_min = id[67];
+		}
 		sff8079_show_ext_identifier(id);
 		sff8079_show_connector(id);
 		sff8079_show_transceiver(id);
 		sff8079_show_encoding(id);
-		sff8079_show_value_with_unit(id, 12, "BR, Nominal", 100, "MBd");
+		printf("\t%-41s : %u%s\n", "BR, Nominal", br_nom, "MBd");
 		sff8079_show_rate_identifier(id);
 		sff8079_show_value_with_unit(id, 14,
 					     "Length (SMF,km)", 1, "km");
@@ -348,8 +361,8 @@ void sff8079_show_all(const __u8 *id)
 		sff8079_show_ascii(id, 40, 55, "Vendor PN");
 		sff8079_show_ascii(id, 56, 59, "Vendor rev");
 		sff8079_show_options(id);
-		sff8079_show_value_with_unit(id, 66, "BR margin, max", 1, "%");
-		sff8079_show_value_with_unit(id, 67, "BR margin, min", 1, "%");
+		printf("\t%-41s : %u%s\n", "BR margin, max", br_max, "%");
+		printf("\t%-41s : %u%s\n", "BR margin, min", br_min, "%");
 		sff8079_show_ascii(id, 68, 83, "Vendor SN");
 		sff8079_show_ascii(id, 84, 91, "Date code");
 	}
