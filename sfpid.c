@@ -185,10 +185,14 @@ static void sff8079_show_transceiver(const __u8 *id)
 		printf("%s Extended: 25G Base-CR CA-S\n", pfx);
 	if (id[36] == 0xd)
 		printf("%s Extended: 25G Base-CR CA-N\n", pfx);
+	if (id[36] == 0x16)
+		printf("%s Extended: 10Gbase-T with SFI electrical interface\n", pfx);
 	if (id[36] == 0x18)
 		printf("%s Extended: 100G AOC or 25GAUI C2M AOC with worst BER of 10^(-12)\n", pfx);
 	if (id[36] == 0x19)
 		printf("%s Extended: 100G ACC or 25GAUI C2M ACC with worst BER of 10^(-12)\n", pfx);
+	if (id[36] == 0x1c)
+		printf("%s Extended: 10Gbase-T Short Reach\n", pfx);
 }
 
 static void sff8079_show_encoding(const __u8 *id)
