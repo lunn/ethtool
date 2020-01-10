@@ -1,3 +1,43 @@
+Version 5.4 - January 10, 2020
+
+	* Feature: ethtool: implement support for Energy Detect Power Down
+ 	* Fix: fix arithmetic on pointer to void is a GNU extension warning
+ 	* Fix: fix unused parameter warnings in do_version() and show_usage()
+ 	* Fix: fix unused parameter warning in find_option()
+ 	* Fix: fix unused parameter warning in dump_eeprom()
+ 	* Fix: fix unused parameter warning in altera_tse_dump_regs()
+ 	* Fix: fix unused parameter warning in sfc_dump_regs()
+ 	* Fix: fix unused parameter warning in print_simple_table()
+ 	* Fix: fix unused parameter warning in natsemi_dump_regs()
+ 	* Fix: fix unused parameter warning in netsemi_dump_eeprom()
+ 	* Fix: fix unused parameter warning in ixgbe_dump_regs()
+ 	* Fix: fix unused parameter warning in realtek_dump_regs()
+ 	* Fix: fix unused parameter warning in lan78xx_dump_regs()
+ 	* Fix: fix unused parameter warning in {skge, sky2}_dump_regs()
+ 	* Fix: fix unused parameter warning in dsa_dump_regs()
+ 	* Fix: fix unused parameter warning in vmxnet3_dump_regs()
+ 	* Fix: fix unused parameter warning in st_{mac100, gmac}_dump_regs()
+ 	* Fix: fix unused parameter warning in ixgbevf_dump_regs()
+ 	* Fix: fix unused parameter warning in fec_8xx_dump_regs()
+ 	* Fix: fix unused parameter warning in tg3_dump_{eeprom, regs}()
+ 	* Fix: fix unused parameter warning in vioc_dump_regs()
+ 	* Fix: fix unused parameter warning in e100_dump_regs()
+ 	* Fix: fix unused parameter warning in de2104[01]_dump_regs()
+ 	* Fix: fix unused parameter warning in igb_dump_regs()
+ 	* Fix: fix unused parameter warning in e1000_dump_regs()
+ 	* Fix: fix unused parameter warning in smsc911x_dump_regs()
+ 	* Fix: fix unused parameter warning in at76c50x_usb_dump_regs()
+ 	* Fix: fix unused parameter warning in fec_dump_regs()
+ 	* Fix: fix unused parameter warning in amd8111e_dump_regs()
+ 	* Fix: fix unused parameter warning in et131x_dump_regs()
+ 	* Fix: fix unused parameter warning in ibm_emac_dump_regs()
+ 	* Fix: fix unused parameter warning in ixgb_dump_regs()
+ 	* Fix: fix unused parameter warning in fjes_dump_regs()
+ 	* Fix: fix unused parameter warning in e1000_get_mac_type()
+ 	* Fix: ethtool: correctly interpret bitrate of 255
+ 	* Fix: ethtool: mark 10G Base-ER as SFF-8472 revision 10.4 onwards
+ 	* Fix: ethtool: add 0x16 and 0x1c extended compliance codes
+
 Version 5.3 - September 23, 2019
 	* Feature: igb: dump RR2DCDELAY register
 	* Feature: dump nested registers
