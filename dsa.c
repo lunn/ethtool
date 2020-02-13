@@ -8,6 +8,9 @@
 #define REG(_reg, _name, _val) \
 	printf("%.02u: %-38.38s 0x%.4x\n", _reg, _name, _val)
 
+#define REGHEX(_reg, _name, _val)					\
+	printf("%.04x: %-38.38s 0x%.4x\n", _reg, _name, _val)
+
 #define FIELD(_name, _fmt, ...) \
 	printf("      %-36.36s " _fmt "\n", _name, ##__VA_ARGS__)
 
@@ -423,8 +426,39 @@ static void dsa_mv88e6352(int reg, u16 val)
 	}
 };
 
+static const u16 mv88e6390_serdes_regs[] = {
+	/* SERDES common registers */
+	0xf00a, 0xf00b, 0xf00c,
+	0xf010, 0xf011, 0xf012, 0xf013,
+	0xf016, 0xf017, 0xf018,
+	0xf01b, 0xf01c, 0xf01d, 0xf01e, 0xf01f,
+	0xf020, 0xf021, 0xf022, 0xf023, 0xf024, 0xf025, 0xf026, 0xf027,
+	0xf028, 0xf029,
+	0xf030, 0xf031, 0xf032, 0xf033, 0xf034, 0xf035, 0xf036, 0xf037,
+	0xf038, 0xf039,
+	/* SGMII */
+	0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007,
+	0x2008,
+	0x200f,
+	0xa000, 0xa001, 0xa002, 0xa003,
+	/* 10Gbase-X */
+	0x1000, 0x1001, 0x1002, 0x1003, 0x1004, 0x1005, 0x1006, 0x1007,
+	0x1008,
+	0x100e, 0x100f,
+	0x1018, 0x1019,
+	0x9000, 0x9001, 0x9002, 0x9003, 0x9004,
+	0x9006,
+	0x9010, 0x9011, 0x9012, 0x9013, 0x9014, 0x9015, 0x9016,
+	/* 10Gbase-R */
+	0x1020, 0x1021, 0x1022, 0x1023, 0x1024, 0x1025, 0x1026, 0x1027,
+	0x1028, 0x1029, 0x102a, 0x102b,
+};
+
 static void dsa_mv88e6390(int reg, u16 val)
 {
+	if (reg > 31)
+		reg = mv88e6390_serdes_regs[reg - 32];
+
 	switch (reg) {
 	case 0:
 		REG(reg, "Port Status", val);
@@ -570,6 +604,9 @@ static void dsa_mv88e6390(int reg, u16 val)
 	case 15:
 		REG(reg, "Port Ether Type", val);
 		break;
+	case 16 ... 21:
+		REG(reg, "Reserved", val);
+		break;
 	case 22:
 		REG(reg, "LED Control", val);
 		break;
@@ -582,11 +619,17 @@ static void dsa_mv88e6390(int reg, u16 val)
 	case 25:
 		REG(reg, "Port Control 3", val);
 		break;
+	case 26:
+		REG(reg, "Reserved", val);
+		break;
 	case 27:
 		REG(reg, "Queue Counters", val);
 		break;
 	case 28:
 		REG(reg, "Queue Control", val);
+		break;
+	case 29:
+		REG(reg, "Reserved", val);
 		break;
 	case 30:
 		REG(reg, "Cut Through Control", val);
@@ -594,8 +637,336 @@ static void dsa_mv88e6390(int reg, u16 val)
 	case 31:
 		REG(reg, "Debug Counters", val);
 		break;
+
+        /* SERDES Common registers */
+	case 0xf00a:
+		REGHEX(reg, "FIFO and CRC Int Enable", val);
+		break;
+	case 0xf00b:
+		REGHEX(reg, "FIFO and CRC Int Status", val);
+		break;
+	case 0xf00c:
+		REGHEX(reg, "PPM FIFO Control 1", val);
+		break;
+	case 0xf010:
+		REGHEX(reg, "Packet Generation Control 1", val);
+		break;
+	case 0xf011:
+		REGHEX(reg, "Packet Generation Control 2", val);
+		break;
+	case 0xf012:
+		REGHEX(reg, "Initial Payload 0-1/Packet Generation", val);
+		break;
+	case 0xf013:
+		REGHEX(reg, "Initial Payload 2-3/Packet Generation", val);
+		break;
+	case 0xf016:
+		REGHEX(reg, "Packet Generation Length", val);
+		break;
+	case 0xf017:
+		REGHEX(reg, "Packet Generation Burst Sequence", val);
+		break;
+	case 0xf018:
+		REGHEX(reg, "Packet Generation IPG", val);
+		break;
+	case 0xf01b:
+		REGHEX(reg, "Transmit Packet Counter [15:0]", val);
+		break;
+	case 0xf01c:
+		REGHEX(reg, "Transmit Packet Counter [31:16]", val);
+		break;
+	case 0xf01d:
+		REGHEX(reg, "Transmit Packet Counter [47:32]", val);
+		break;
+	case 0xf01e:
+		REGHEX(reg, "Transmit Byte Counter [15:0]", val);
+		break;
+	case 0xf01f:
+		REGHEX(reg, "Transmit Byte Counter [31:16]", val);
+		break;
+	case 0xf020:
+		REGHEX(reg, "Transmit Byte Counter [47:32]", val);
+		break;
+	case 0xf021:
+		REGHEX(reg, "Receive Packet Counter [15:0]", val);
+		break;
+	case 0xf022:
+		REGHEX(reg, "Receive Packet Counter [31:16]", val);
+		break;
+	case 0xf023:
+		REGHEX(reg, "Receive Byte Count [15:0]", val);
+		break;
+	case 0xf024:
+		REGHEX(reg, "Receive Byte Count [31:16]", val);
+		break;
+	case 0xf025:
+		REGHEX(reg, "Receive Byte Count [47:32]", val);
+		break;
+	case 0xf026:
+		REGHEX(reg, "Receive Packet Error Count [15:0]", val);
+		break;
+	case 0xf027:
+		REGHEX(reg, "Receive Packet Error Count [31:16]", val);
+		break;
+	case 0xf028:
+		REGHEX(reg, "Receive Packet Error Count [47:32]", val);
+		break;
+	case 0xf029:
+		REGHEX(reg, "PRBS Control", val);
+		break;
+	case 0xf030:
+		REGHEX(reg, "PRBS Symbol Tx Counter [15:0]", val);
+		break;
+	case 0xf031:
+		REGHEX(reg, "PRBS Symbol Tx Counter [31:16]", val);
+		break;
+	case 0xf032:
+		REGHEX(reg, "PRBS Symbol Tx Counter [47:32]", val);
+		break;
+	case 0xf033:
+		REGHEX(reg, "PRBS Symbol Rx Counter [15:0]", val);
+		break;
+	case 0xf034:
+		REGHEX(reg, "PRBS Symbol Rx Counter [31:16]", val);
+		break;
+	case 0xf035:
+		REGHEX(reg, "PRBS Symbol Rx Counter [47:32]", val);
+		break;
+	case 0xf036:
+		REGHEX(reg, "PRBS Error Count [15:0]", val);
+		break;
+	case 0xf037:
+		REGHEX(reg, "PRBS Error Count [31:16]", val);
+		break;
+	case 0xf038:
+		REGHEX(reg, "PRBS Error Count [47:32]", val);
+		break;
+	case 0xf039:
+		REGHEX(reg, "Receive Packet Counter [47:32]", val);
+		break;
+	case 0x2000:
+		REGHEX(reg, "1000BASE-X/SGMII Control Register", val);
+		FIELD("Reset", "%u", !!(val & 0x8000));
+		FIELD("Loopback", "%u", !!(val & 0x4000));
+		FIELD("SGMII Speed", "%s",
+		      (val & (0x2000 | 0x0100)) == 0x0000 ? "10 Mbps" :
+		      (val & (0x2000 | 0x0100)) == 0x2000 ? "100 Mbps" :
+		      (val & (0x2000 | 0x0100)) == 0x0100 ? "1000 Mbps" :
+		      (val & (0x2000 | 0x0100)) == (0x2000 | 0x0100) ?
+		      	"Reserved" : "?");
+		FIELD("Autoneg Enable", "%u", !!(val & 0x1000));
+		FIELD("Power down", "%u", !!(val & 0x0800));
+		FIELD("Isolate", "%u", !!(val & 0x0400));
+		FIELD("Restart Autonet", "%u", !!(val & 0x0200));
+		FIELD("Duplex", "%s", val & 0x0100 ? "Full" : "Half");
+		break;
+	case 0x2001:
+		REGHEX(reg, "1000BASE-X/SGMII Status Register", val);
+		FIELD("Autoneg Complete", "%u", !!(val & 0x0020));
+		FIELD("Remote Fault", "%u", !!(val & 0x0010));
+		FIELD("Link Status", "%s", val & 0x0004 ? "Up" : "Down");
+		break;
+	case 0x2002:
+		REGHEX(reg, "PHY Identifier", val);
+		break;
+	case 0x2003:
+		REGHEX(reg, "PHY Identifier", val);
+		break;
+	case 0x2004:
+		REGHEX(reg, "SGMII (Media side) Auto-Negotiation Advertisement",
+		       val);
+		FIELD("Link Status", "%s", val & 0x8000 ? "Up" : "Down");
+		FIELD("Duplex", "%s", val & 0x1000 ? "Full" : "Half");
+		FIELD("SGMII Speed", "%s",
+		      (val & 0x0c00) == 0x0000 ? "10 Mbps" :
+		      (val & 0x0c00) == 0x0400 ? "100 Mbps" :
+		      (val & 0x0c00) == 0x0800 ? "1000 Mbps" :
+		      (val & 0x0c00) == 0x0c00 ? "Reserved" : "?");
+		FIELD("Transmit Pause", "%u", !!(val & 0x0200));
+		FIELD("Receive Pause", "%u", !!(val & 0x0100));
+		FIELD("Fibre/Copper", "%s", val & 0x0080 ? "Fibre" : "Copper");
+		FIELD("EEE mode", "%u", !!(val & 0x0040));
+		FIELD("Clock stopped during LPI", "%u", !!(val & 0x0020));
+		break;
+	case 0x2005:
+		REGHEX(reg, "SGMII (Media side) Link Partner Ability Register",
+		       val);
+		FIELD("Acknowledge", "%u", !!(val & 0x4000));
+		break;
+	case 0x2006:
+		REGHEX(reg, "1000BASE-X Auto-Negotiation Expansion Register",
+		       val);
+		break;
+	case 0x2007:
+		REGHEX(reg, "1000BASE-X Next Page Transmit Register", val);
+		break;
+	case 0x2008:
+		REGHEX(reg, "1000BASE-X Link Partner Next Page Register", val);
+		break;
+	case 0x200f:
+		REGHEX(reg, "Extended Status Register", val);
+		break;
+	case 0xa000:
+		REGHEX(reg, "1000BASE-X Timer Mode Select Register", val);
+		break;
+	case 0xa001:
+		REGHEX(reg, "1000BASE-X Interrupt Enable Register ", val);
+		FIELD("Speed Changed", "%u", !!(val & 0x4000));
+		FIELD("Duplex Changed", "%u", !!(val & 0x2000));
+		FIELD("Page Received", "%u", !!(val & 0x1000));
+		FIELD("Autoneg Complete", "%u", !!(val & 0x0800));
+		FIELD("Link Up->Link Down", "%u", !!(val & 0x0400));
+		FIELD("Link Down->Link Up", "%u", !!(val & 0x0200));
+		FIELD("Symbol Error", "%u", !!(val & 0x0100));
+		FIELD("False Carrier", "%u", !!(val & 0x0080));
+		break;
+	case 0xa002:
+		REGHEX(reg, "1000BASE-X Interrupt Status Register ", val);
+		FIELD("Speed Changed", "%u", !!(val & 0x4000));
+		FIELD("Duplex Changed", "%u", !!(val & 0x2000));
+		FIELD("Page Received", "%u", !!(val & 0x1000));
+		FIELD("Autoneg Complete", "%u", !!(val & 0x0800));
+		FIELD("Link Up->Link Down", "%u", !!(val & 0x0400));
+		FIELD("Link Down->Link Up", "%u", !!(val & 0x0200));
+		FIELD("Symbol Error", "%u", !!(val & 0x0100));
+		FIELD("False Carrier", "%u", !!(val & 0x0080));
+		break;
+	case 0xa003:
+		REGHEX(reg, "1000BASE-X PHY Specific Status", val);
+		FIELD("Speed", "%s",
+		      (val & 0xc000) == 0x0000 ? "10 Mbps" :
+		      (val & 0xc000) == 0x4000 ? "100 Mbps" :
+		      (val & 0xc000) == 0x8000 ? "1000 Mbps" :
+		      (val & 0xc000) == 0xc000 ? "Reserved" : "?");
+		FIELD("Duplex", "%s", val & 0x2000 ? "Full" : "Half");
+		FIELD("Page Received", "%u", !!(val & 0x1000));
+		FIELD("Speed/Duplex Resolved", "%u", !!(val & 0x0800));
+		FIELD("Link", "%s", val & 0x0400 ? "Up" : "Down");
+		FIELD("Sync", "%u", !!(val & 0x0020));
+		FIELD("Energy Detect", "%u", !!(val & 0x0010));
+		FIELD("Transmit Pause", "%u", !!(val & 0x00080));
+		FIELD("Receive Pause", "%u", !!(val & 0x00040));
+		break;
+
+	case 0x1000:
+		REGHEX(reg, "10GBASE-X4 PCS Control 1", val);
+		break;
+	case 0x1001:
+		REGHEX(reg, "10GBASE-X4 PCS Status 1", val);
+		break;
+	case 0x1002:
+		REGHEX(reg, "PCS Device Identifier 1", val);
+		break;
+	case 0x1003:
+		REGHEX(reg, "PCS Device Identifier 2", val);
+		break;
+	case 0x1004:
+		REGHEX(reg, "CS Speed Ability", val);
+		break;
+	case 0x1005:
+		REGHEX(reg, "PCS Devices In Package 1", val);
+		break;
+	case 0x1006:
+		REGHEX(reg, "PCS Devices In Package 2", val);
+		break;
+	case 0x1008:
+		REGHEX(reg, "10GBASE-X4 PCS Status 2", val);
+		break;
+	case 0x100e:
+		REGHEX(reg, "PCS Package Identifier 1", val);
+		break;
+	case 0x100f:
+		REGHEX(reg, "PCS Package Identifier 2", val);
+		break;
+	case 0x1018:
+		REGHEX(reg, "10GBase-X Lane Status", val);
+		break;
+	case 0x1019:
+		REGHEX(reg, "10GBase-X Test Control", val);
+		break;
+	case 0x9000:
+		REGHEX(reg, "10GBase-X Control", val);
+		break;
+	case 0x9001:
+		REGHEX(reg, "10GBase-X Interrupt Enable 1", val);
+		break;
+	case 0x9002:
+		REGHEX(reg, "10GBase-X Interrupt Enable 2", val);
+		break;
+	case 0x9003:
+		REGHEX(reg, "10GBase-X Interrupt Status 1", val);
+		break;
+	case 0x9004:
+		REGHEX(reg, "10GBase-X Interrupt Status 2", val);
+		break;
+	case 0x9006:
+		REGHEX(reg, "10GBase-X Real Time Status", val);
+		break;
+	case 0x9010:
+		REGHEX(reg, "10GBase-X Random Sequence Control", val);
+		break;
+	case 0x9011:
+		REGHEX(reg, "10GBase-X Jitter Packet Transmit Counter LSB",
+		       val);
+		break;
+	case 0x9012:
+		REGHEX(reg, "10GBase-X Jitter Packet Transmit Counter MSB",
+		       val);
+		break;
+	case 0x9013:
+		REGHEX(reg, "10GBase-X Jitter Packet Received Counter LSB",
+		       val);
+		break;
+	case 0x9014:
+		REGHEX(reg, "10GBase-X Jitter Packet Received Counter MSB",
+		       val);
+		break;
+	case 0x9015:
+		REGHEX(reg, "10GBase-X Jitter Packet Error Counter LSB",
+		       val);
+		break;
+	case 0x9016:
+		REGHEX(reg, "10GBase-X Jitter Packet Error Counter MSB",
+		       val);
+		break;
+	case 0x1020:
+		REGHEX(reg, "10GBASE-R PCS Status 1", val);
+		break;
+	case 0x1021:
+		REGHEX(reg, "10GBASE-R PCS Status 2", val);
+		break;
+	case 0x1022:
+		REGHEX(reg, "10GBASE-R PCS Test Pattern Seed A 0", val);
+		break;
+	case 0x1023:
+		REGHEX(reg, "10GBASE-R PCS Test Pattern Seed A 1", val);
+		break;
+	case 0x1024:
+		REGHEX(reg, "10GBASE-R PCS Test Pattern Seed A 2", val);
+		break;
+	case 0x1025:
+		REGHEX(reg, "10GBASE-R PCS Test Pattern Seed A 3", val);
+		break;
+	case 0x1026:
+		REGHEX(reg, "10GBASE-R PCS Test Pattern Seed B 0", val);
+		break;
+	case 0x1027:
+		REGHEX(reg, "10GBASE-R PCS Test Pattern Seed B 1", val);
+		break;
+	case 0x1028:
+		REGHEX(reg, "10GBASE-R PCS Test Pattern Seed B 2", val);
+		break;
+	case 0x1029:
+		REGHEX(reg, "10GBASE-R PCS Test Pattern Seed B 3", val);
+		break;
+	case 0x102a:
+		REGHEX(reg, "10GBASE-R PCS Test Pattern Control", val);
+		break;
+	case 0x102b:
+		REGHEX(reg, "10GBASE-R PCS Test Error Counter", val);
+		break;
 	default:
-		REG(reg, "Reserved", val);
+		REGHEX(reg, "Reserved", val);
 		break;
 	}
 };
@@ -666,6 +1037,17 @@ static int dsa_mv88e6xxx_dump_regs(struct ethtool_regs *regs)
 			sw->dump(i, data[i]);
 		else
 			REG(i, "", data[i]);
+
+	/* Dump the SERDES registers, if provided */
+	if (regs->len > 32 * 2) {
+		printf("\n%s Switch Port SERDES Registers\n", sw->name);
+		printf("-------------------------------------\n");
+		for (i = 32; i < regs->len / 2; i++)
+			if (sw->dump)
+				sw->dump(i, data[i]);
+			else
+				REG(i, "", data[i]);
+	}
 
 	return 0;
 }
