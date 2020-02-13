@@ -408,8 +408,14 @@ static void dsa_mv88e6352(int reg, u16 val)
 	case 19:
 		REG(reg, "Rx Frame Counter", val);
 		break;
+	case 20 ... 21:
+		REG(reg, "Reserved", val);
+		break;
 	case 22:
 		REG(reg, "LED Control", val);
+		break;
+	case 23:
+		REG(reg, "Reserved", val);
 		break;
 	case 24:
 		REG(reg, "Tag Remap 0-3", val);
@@ -417,11 +423,162 @@ static void dsa_mv88e6352(int reg, u16 val)
 	case 25:
 		REG(reg, "Tag Remap 4-7", val);
 		break;
+	case 26:
+		REG(reg, "Reserved", val);
+		break;
 	case 27:
 		REG(reg, "Queue Counters", val);
 		break;
-	default:
+	case 28 ... 31:
 		REG(reg, "Reserved", val);
+		break;
+	case 32 + 0:
+		REG(reg - 32, "Fibre Control", val);
+		FIELD("Reset", "%u", !!(val & 0x8000));
+		FIELD("Loopback", "%u", !!(val & 0x4000));
+		FIELD("Speed", "%s",
+		      (val & (0x2000 | 0x0100)) == 0x0000 ? "10 Mbps" :
+		      (val & (0x2000 | 0x0100)) == 0x2000 ? "100 Mbps" :
+		      (val & (0x2000 | 0x0100)) == 0x0100 ? "1000 Mbps" :
+		      (val & (0x2000 | 0x0100)) == (0x2000 | 0x0100) ?
+		      "Reserved" : "?");
+		FIELD("Autoneg Enable", "%u", !!(val & 0x1000));
+		FIELD("Power down", "%u", !!(val & 0x0800));
+		FIELD("Isolate", "%u", !!(val & 0x0400));
+		FIELD("Restart Autoneg", "%u", !!(val & 0x0200));
+		FIELD("Duplex", "%s", val & 0x0100 ? "Full" : "Half");
+		break;
+	case 32 + 1:
+		REG(reg - 32, "Fiber Status", val);
+		FIELD("100Base-X FD",  "%u", !!(val & 0x4000));
+		FIELD("100Base-X HD",  "%u", !!(val & 0x2000));
+		FIELD("Autoneg Complete", "%u", !!(val & 0x0020));
+		FIELD("Remote Fault", "%u", !!(val & 0x0010));
+		FIELD("Link Status", "%s", val & 0x0004 ? "Up" : "Down");
+		break;
+	case 32 + 2:
+		REG(reg - 32, "PHY ID", val);
+		break;
+	case 32 + 3:
+		REG(reg - 32, "PHY ID", val);
+		break;
+	case 32 + 4:
+		REG(reg - 32, "Fibre Autoneg Advertisement - 1000BaseX mode", val);
+		FIELD("Remote Fault", "%s",
+		      (val & 0x3000) == 0x0000 ? "No error, link OK" :
+		      (val & 0x3000) == 0x1000 ? "Link failure" :
+		      (val & 0x3000) == 0x2000 ? "Offline" :
+		      (val & 0x3000) == 0x3000 ? "Autoneg Error" : "?");
+		FIELD("Pause", "%s",
+		      (val & 0x0180) == 0x0000 ? "No Pause" :
+		      (val & 0x0180) == 0x0080 ? "Symmetric Pause" :
+		      (val & 0x0180) == 0x0100 ? "Asymmetric Pause" :
+		      (val & 0x0180) == 0x0180 ? "Symmetric & Asymmetric Pause" :
+		      "?");
+		FIELD("1000BaseX HD", "%u", !!(val & 0x0040));
+		FIELD("1000BaseX FD", "%u", !!(val & 0x0020));
+		break;
+	case 32 + 5:
+		REG(reg - 32, "Fibre Link Autoneg Ability - 1000BaseX mode", val);
+		FIELD("Acknowledge", "%u", !!(val & 0x4000));
+		FIELD("Remote Fault", "%s",
+		      (val & 0x3000) == 0x0000 ? "No error, link OK" :
+		      (val & 0x3000) == 0x1000 ? "Link failure" :
+		      (val & 0x3000) == 0x2000 ? "Offline" :
+		      (val & 0x3000) == 0x3000 ? "Autoneg Error" : "?");
+		FIELD("Pause", "%s",
+		      (val & 0x0180) == 0x0000 ? "No Pause" :
+		      (val & 0x0180) == 0x0080 ? "Symmetric Pause" :
+		      (val & 0x0180) == 0x0100 ? "Asymmetric Pause" :
+		      (val & 0x0180) == 0x0180 ? "Symmetric & Asymmetric Pause" :
+		      "?");
+		FIELD("1000BaseX HD", "%u", !!(val & 0x0040));
+		FIELD("1000BaseX FD", "%u", !!(val & 0x0020));
+		break;
+	case 32 + 6:
+		REG(reg - 32, "Fibre Autoneg Expansion", val);
+		break;
+	case 32 + 7:
+		REG(reg - 32, "Fibre Next Page Transmit", val);
+		break;
+	case 32 + 8:
+		REG(reg - 32, "Fibre Link Partner Next Page", val);
+		break;
+	case 32 + 9 ... 32 + 14:
+		REG(reg - 32, "Reserved", val);
+		break;
+	case 32 + 15:
+		REG(reg - 32, "Extended Status", val);
+		break;
+	case 32 + 16:
+		REG(reg - 32, "Fiber Specific Control", val);
+		break;
+		FIELD("Mode", "%s",
+		      (val & 0x0003) == 0x0000 ? "100BaseFX" :
+		      (val & 0x0003) == 0x0001 ? "1000aseX" :
+		      (val & 0x0003) == 0x0002 ? "SGMII System" :
+		      (val & 0x0003) == 0x0003 ? "SGMII Media" : "?");
+		break;
+	case 32 + 17:
+		REG(reg - 32, "Fiber Specific Status", val);
+		FIELD("Speed", "%s",
+		      (val & 0xc000) == 0x0000 ? "10 Mbps" :
+		      (val & 0xc000) == 0x4000 ? "100 Mbps" :
+		      (val & 0xc000) == 0x8000 ? "1000 Mbps" :
+		      (val & 0xc000) == 0xc000 ? "Reserved" : "?");
+		FIELD("Duplex", "%s", val & 0x2000 ? "Full" : "Half");
+		FIELD("Speed/Duplex Resolved", "%u", !!(val & 0x0800));
+		FIELD("Link", "%s", val & 0x0400 ? "Up" : "Down");
+		FIELD("Sync", "%u", !!(val & 0x0020));
+		FIELD("Energy Detect", "%u", !!(val & 0x0010));
+		FIELD("Transmit Pause", "%u", !!(val & 0x0008));
+		FIELD("Receive Pause", "%u", !!(val & 0x00004));
+		break;
+	case 32 + 18:
+		REG(reg - 32, "Fibre Interrupt Enable", val);
+		FIELD("Speed Changed", "%u", !!(val & 0x4000));
+		FIELD("Duplex Changed", "%u", !!(val & 0x2000));
+		FIELD("Page Received", "%u", !!(val & 0x1000));
+		FIELD("Autoneg Complete", "%u", !!(val & 0x0800));
+		FIELD("Link Status Change", "%u", !!(val & 0x0400));
+		FIELD("Symbol Error", "%u", !!(val & 0x0200));
+		FIELD("False Carrier", "%u", !!(val & 0x0100));
+		FIELD("Energy Detect", "%u", !!(val & 0x0010));
+		break;
+	case 32 + 19:
+		REG(reg - 32, "Fibre Interrupt Status", val);
+		FIELD("Speed Changed", "%u", !!(val & 0x4000));
+		FIELD("Duplex Changed", "%u", !!(val & 0x2000));
+		FIELD("Page Received", "%u", !!(val & 0x1000));
+		FIELD("Autoneg Complete", "%u", !!(val & 0x0800));
+		FIELD("Link Status Change", "%u", !!(val & 0x0400));
+		FIELD("Symbol Error", "%u", !!(val & 0x0200));
+		FIELD("False Carrier", "%u", !!(val & 0x0100));
+		FIELD("Energy Detect", "%u", !!(val & 0x0010));
+		break;
+	case 32 + 20:
+		REG(reg - 32, "Reserved", val);
+		break;
+	case 32 + 21:
+		REG(reg - 32, "Fiber Receive Error", val);
+		break;
+	case 32 + 22:
+		REG(reg - 32, "Reserved", val);
+		break;
+	case 32 + 23:
+		REG(reg - 32, "PRBS Control", val);
+		break;
+	case 32 + 24:
+		REG(reg - 32, "PRBS Error Counter LSB", val);
+		break;
+	case 32 + 25:
+		REG(reg - 32, "PRBS Error Counter MSB", val);
+		break;
+	case 32 + 26:
+		REG(reg - 32, "Fiber Specific Control 2", val);
+		break;
+	default:
+		REG(reg - 32, "Reserved", val);
 		break;
 	}
 };
