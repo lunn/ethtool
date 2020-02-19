@@ -583,39 +583,8 @@ static void dsa_mv88e6352(int reg, u16 val)
 	}
 };
 
-static const u16 mv88e6390_serdes_regs[] = {
-	/* SERDES common registers */
-	0xf00a, 0xf00b, 0xf00c,
-	0xf010, 0xf011, 0xf012, 0xf013,
-	0xf016, 0xf017, 0xf018,
-	0xf01b, 0xf01c, 0xf01d, 0xf01e, 0xf01f,
-	0xf020, 0xf021, 0xf022, 0xf023, 0xf024, 0xf025, 0xf026, 0xf027,
-	0xf028, 0xf029,
-	0xf030, 0xf031, 0xf032, 0xf033, 0xf034, 0xf035, 0xf036, 0xf037,
-	0xf038, 0xf039,
-	/* SGMII */
-	0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007,
-	0x2008,
-	0x200f,
-	0xa000, 0xa001, 0xa002, 0xa003,
-	/* 10Gbase-X */
-	0x1000, 0x1001, 0x1002, 0x1003, 0x1004, 0x1005, 0x1006, 0x1007,
-	0x1008,
-	0x100e, 0x100f,
-	0x1018, 0x1019,
-	0x9000, 0x9001, 0x9002, 0x9003, 0x9004,
-	0x9006,
-	0x9010, 0x9011, 0x9012, 0x9013, 0x9014, 0x9015, 0x9016,
-	/* 10Gbase-R */
-	0x1020, 0x1021, 0x1022, 0x1023, 0x1024, 0x1025, 0x1026, 0x1027,
-	0x1028, 0x1029, 0x102a, 0x102b,
-};
-
 static void dsa_mv88e6390(int reg, u16 val)
 {
-	if (reg > 31)
-		reg = mv88e6390_serdes_regs[reg - 32];
-
 	switch (reg) {
 	case 0:
 		REG(reg, "Port Status", val);
@@ -794,8 +763,45 @@ static void dsa_mv88e6390(int reg, u16 val)
 	case 31:
 		REG(reg, "Debug Counters", val);
 		break;
+	default:
+		REG(reg, "Reserved", val);
+		break;
+	}
+}
 
-        /* SERDES Common registers */
+static const u16 mv88e6390_serdes_regs[] = {
+	/* SERDES common registers */
+	0xf00a, 0xf00b, 0xf00c,
+	0xf010, 0xf011, 0xf012, 0xf013,
+	0xf016, 0xf017, 0xf018,
+	0xf01b, 0xf01c, 0xf01d, 0xf01e, 0xf01f,
+	0xf020, 0xf021, 0xf022, 0xf023, 0xf024, 0xf025, 0xf026, 0xf027,
+	0xf028, 0xf029,
+	0xf030, 0xf031, 0xf032, 0xf033, 0xf034, 0xf035, 0xf036, 0xf037,
+	0xf038, 0xf039,
+	/* SGMII */
+	0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007,
+	0x2008,
+	0x200f,
+	0xa000, 0xa001, 0xa002, 0xa003,
+	/* 10Gbase-X */
+	0x1000, 0x1001, 0x1002, 0x1003, 0x1004, 0x1005, 0x1006, 0x1007,
+	0x1008,
+	0x100e, 0x100f,
+	0x1018, 0x1019,
+	0x9000, 0x9001, 0x9002, 0x9003, 0x9004,
+	0x9006,
+	0x9010, 0x9011, 0x9012, 0x9013, 0x9014, 0x9015, 0x9016,
+	/* 10Gbase-R */
+	0x1020, 0x1021, 0x1022, 0x1023, 0x1024, 0x1025, 0x1026, 0x1027,
+	0x1028, 0x1029, 0x102a, 0x102b,
+};
+
+static void dsa_mv88e6390_serdes(int reg, u16 val)
+{
+	reg = mv88e6390_serdes_regs[reg];
+
+	switch (reg) {
 	case 0xf00a:
 		REGHEX(reg, "FIFO and CRC Int Enable", val);
 		break;
@@ -1130,6 +1136,7 @@ static void dsa_mv88e6390(int reg, u16 val)
 
 struct dsa_mv88e6xxx_switch {
 	void (*dump)(int reg, u16 val);
+	void (*dump_serdes)(int reg, u16 val);
 	const char *name;
 	u16 id;
 };
@@ -1138,8 +1145,10 @@ static const struct dsa_mv88e6xxx_switch dsa_mv88e6xxx_switches[] = {
 	{ .id = 0x04a0, .name = "88E6085 ", .dump = NULL },
 	{ .id = 0x0950, .name = "88E6095 ", .dump = NULL },
 	{ .id = 0x0990, .name = "88E6097 ", .dump = NULL },
-	{ .id = 0x0a00, .name = "88E6190X", .dump = dsa_mv88e6390 },
-	{ .id = 0x0a10, .name = "88E6390X", .dump = dsa_mv88e6390 },
+	{ .id = 0x0a00, .name = "88E6190X", .dump = dsa_mv88e6390,
+	.dump_serdes = dsa_mv88e6390_serdes },
+	{ .id = 0x0a10, .name = "88E6390X", .dump = dsa_mv88e6390,
+	.dump_serdes = dsa_mv88e6390_serdes },
 	{ .id = 0x1060, .name = "88E6131 ", .dump = NULL },
 	{ .id = 0x1150, .name = "88E6320 ", .dump = NULL },
 	{ .id = 0x1210, .name = "88E6123 ", .dump = dsa_mv88e6161 },
@@ -1149,18 +1158,21 @@ static const struct dsa_mv88e6xxx_switch dsa_mv88e6xxx_switches[] = {
 	{ .id = 0x1720, .name = "88E6172 ", .dump = dsa_mv88e6352 },
 	{ .id = 0x1750, .name = "88E6175 ", .dump = NULL },
 	{ .id = 0x1760, .name = "88E6176 ", .dump = dsa_mv88e6352 },
-	{ .id = 0x1900, .name = "88E6190 ", .dump = dsa_mv88e6390 },
+	{ .id = 0x1900, .name = "88E6190 ", .dump = dsa_mv88e6390,
+	.dump_serdes = dsa_mv88e6390_serdes },
 	{ .id = 0x1910, .name = "88E6191 ", .dump = NULL },
 	{ .id = 0x1a70, .name = "88E6185 ", .dump = dsa_mv88e6185 },
 	{ .id = 0x2400, .name = "88E6240 ", .dump = dsa_mv88e6352 },
-	{ .id = 0x2900, .name = "88E6290 ", .dump = dsa_mv88e6390 },
+	{ .id = 0x2900, .name = "88E6290 ", .dump = dsa_mv88e6390,
+	.dump_serdes = dsa_mv88e6390_serdes },
 	{ .id = 0x3100, .name = "88E6321 ", .dump = NULL },
 	{ .id = 0x3400, .name = "88E6141 ", .dump = NULL },
 	{ .id = 0x3410, .name = "88E6341 ", .dump = NULL },
 	{ .id = 0x3520, .name = "88E6352 ", .dump = dsa_mv88e6352 },
 	{ .id = 0x3710, .name = "88E6350 ", .dump = NULL },
 	{ .id = 0x3750, .name = "88E6351 ", .dump = NULL },
-	{ .id = 0x3900, .name = "88E6390 ", .dump = dsa_mv88e6390 },
+	{ .id = 0x3900, .name = "88E6390 ", .dump = dsa_mv88e6390,
+	.dump_serdes = dsa_mv88e6390_serdes },
 };
 
 static int dsa_mv88e6xxx_dump_regs(struct ethtool_regs *regs)
@@ -1195,15 +1207,29 @@ static int dsa_mv88e6xxx_dump_regs(struct ethtool_regs *regs)
 		else
 			REG(i, "", data[i]);
 
+	if (regs->len > (1 * (32 * 2))) {
+		printf("\n%s Global 1 Registers\n", sw->name);
+		printf("------------------------------\n");
+		for (i = 32; i < 64; i++)
+			REG(i - 32, "", data[i]);
+	}
+
+	if (regs->len > (2 * (32 * 2))) {
+		printf("\n%s Global 2 Registers\n", sw->name);
+		printf("------------------------------\n");
+		for (i = 64; i < 96; i++)
+			REG(i - 64, "", data[i]);
+	}
+
 	/* Dump the SERDES registers, if provided */
-	if (regs->len > 32 * 2) {
+	if (regs->len > (3 * (32 * 2))) {
 		printf("\n%s Switch Port SERDES Registers\n", sw->name);
 		printf("-------------------------------------\n");
-		for (i = 32; i < regs->len / 2; i++)
-			if (sw->dump)
-				sw->dump(i, data[i]);
+		for (i = 96; i < regs->len / 2; i++)
+			if (sw->dump_serdes)
+				sw->dump_serdes(i - 96, data[i]);
 			else
-				REG(i, "", data[i]);
+				REGHEX(i - 96, "", data[i]);
 	}
 
 	return 0;
