@@ -5805,6 +5805,7 @@ int main(int argc, char **argp)
 	}
 	if ((*argp)[0] == '-')
 		exit_bad_args();
+	nlfunc = nl_gset;
 	func = do_gset;
 	no_dev = false;
 

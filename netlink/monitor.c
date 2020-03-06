@@ -15,6 +15,14 @@ static struct {
 	uint8_t		cmd;
 	mnl_cb_t	cb;
 } monitor_callbacks[] = {
+	{
+		.cmd	= ETHTOOL_MSG_LINKMODES_NTF,
+		.cb	= linkmodes_reply_cb,
+	},
+	{
+		.cmd	= ETHTOOL_MSG_LINKINFO_NTF,
+		.cb	= linkinfo_reply_cb,
+	},
 };
 
 static void clear_filter(struct nl_context *nlctx)
@@ -69,6 +77,14 @@ static struct monitor_option monitor_opts[] = {
 	{
 		.pattern	= "|--all",
 		.cmd		= 0,
+	},
+	{
+		.pattern	= "-s|--change",
+		.cmd		= ETHTOOL_MSG_LINKINFO_NTF,
+	},
+	{
+		.pattern	= "-s|--change",
+		.cmd		= ETHTOOL_MSG_LINKMODES_NTF,
 	},
 };
 

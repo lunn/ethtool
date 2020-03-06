@@ -30,6 +30,7 @@ struct nl_context {
 	bool			is_monitor;
 	uint32_t		filter_cmds[CMDMASK_WORDS];
 	const char		*filter_devname;
+	bool			no_banner;
 };
 
 struct attr_tb_info {
@@ -45,6 +46,9 @@ int attr_cb(const struct nlattr *attr, void *data);
 
 const char *get_dev_name(const struct nlattr *nest);
 int get_dev_info(const struct nlattr *nest, int *ifindex, char *ifname);
+
+int linkmodes_reply_cb(const struct nlmsghdr *nlhdr, void *data);
+int linkinfo_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 
 static inline void copy_devname(char *dst, const char *src)
 {
