@@ -242,16 +242,21 @@ ethtool \- query or control network driver and hardware settings
 .I devname
 .BN speed
 .B2 duplex half full
-.B4 port tp aui bnc mii fibre
+.B4 port tp aui bnc mii fibre da
 .B3 mdix auto on off
 .B2 autoneg on off
-.BN advertise
+.RB [ advertise \ \fIN\fP[\fB/\fP\fIM\fP]
+|
+.BI advertise \ mode
+.A1 on off
+.RB ...]
 .BN phyad
 .B2 xcvr internal external
-.RB [ wol \ \*(WO]
+.RB [ wol \ \fIN\fP[\fB/\fP\fIM\fP]
+.RB | \ wol \ \*(WO]
 .RB [ sopass \ \*(MA]
 .RB [ msglvl
-.IR N \ |
+.IR N\fP[/\fIM\fP] \ |
 .BI msglvl \ type
 .A1 on off
 .RB ...]
@@ -638,7 +643,7 @@ with just the device name as an argument will show you the supported device spee
 .A2 duplex half full
 Sets full or half duplex mode.
 .TP
-.A4 port tp aui bnc mii fibre
+.A4 port tp aui bnc mii fibre da
 Selects device port.
 .TP
 .A3 mdix auto on off

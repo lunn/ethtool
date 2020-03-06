@@ -5166,18 +5166,19 @@ static const struct option args[] = {
 	{
 		.opts	= "-s|--change",
 		.func	= do_sset,
+		.nlfunc	= nl_sset,
 		.help	= "Change generic options",
 		.xhelp	= "		[ speed %d ]\n"
 			  "		[ duplex half|full ]\n"
-			  "		[ port tp|aui|bnc|mii|fibre ]\n"
+			  "		[ port tp|aui|bnc|mii|fibre|da ]\n"
 			  "		[ mdix auto|on|off ]\n"
 			  "		[ autoneg on|off ]\n"
-			  "		[ advertise %x ]\n"
+			  "		[ advertise %x[/%x] | mode on|off ... [--] ]\n"
 			  "		[ phyad %d ]\n"
 			  "		[ xcvr internal|external ]\n"
-			  "		[ wol p|u|m|b|a|g|s|f|d... ]\n"
+			  "		[ wol %d[/%d] | p|u|m|b|a|g|s|f|d... ]\n"
 			  "		[ sopass %x:%x:%x:%x:%x:%x ]\n"
-			  "		[ msglvl %d | msglvl type on|off ... ]\n"
+			  "		[ msglvl %d[/%d] | type on|off ... [--] ]\n"
 	},
 	{
 		.opts	= "-a|--show-pause",
