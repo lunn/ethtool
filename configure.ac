@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(ethtool, 5.4, netdev@vger.kernel.org)
 AC_PREREQ(2.52)
 AC_CONFIG_SRCDIR([ethtool.c])
-AM_INIT_AUTOMAKE([gnu])
+AM_INIT_AUTOMAKE([gnu subdir-objects])
 AC_CONFIG_HEADERS([ethtool-config.h])
 
 AM_MAINTAINER_MODE
@@ -65,6 +65,18 @@ AS_IF([test "x$with_bash_completion_dir" = xyes],
 AC_SUBST([BASH_COMPLETION_DIR])
 AM_CONDITIONAL([ENABLE_BASH_COMPLETION],
 	       [test "x$with_bash_completion_dir" != xno])
+
+AC_ARG_ENABLE(netlink,
+	      [  --enable-netlink	  enable netlink interface (enabled by default)],
+	      ,
+	      enable_netlink=yes)
+if test x$enable_netlink = xyes; then
+    PKG_PROG_PKG_CONFIG
+    PKG_CHECK_MODULES([MNL], [libmnl])
+    AC_DEFINE(ETHTOOL_ENABLE_NETLINK, 1,
+	      Define this to support netlink interface to talk to kernel.)
+fi
+AM_CONDITIONAL([ETHTOOL_ENABLE_NETLINK], [test x$enable_netlink = xyes])
 
 AC_CONFIG_FILES([Makefile ethtool.spec ethtool.8])
 AC_OUTPUT

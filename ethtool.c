@@ -48,6 +48,8 @@
 #include <linux/sockios.h>
 #include <linux/netlink.h>
 
+#include "netlink/extapi.h"
+
 #ifndef MAX_ADDR_LEN
 #define MAX_ADDR_LEN	32
 #endif
@@ -5292,6 +5294,7 @@ struct option {
 	const char	*opts;
 	bool		no_dev;
 	int		(*func)(struct cmd_context *);
+	int		(*nlfunc)(struct cmd_context *);
 	const char	*help;
 	const char	*xhelp;
 };
@@ -5856,11 +5859,36 @@ static int do_perqueue(struct cmd_context *ctx)
 	return 0;
 }
 
+static int ioctl_init(struct cmd_context *ctx, bool no_dev)
+{
+	if (no_dev) {
+		ctx->fd = -1;
+		return 0;
+	}
+
+	/* Setup our control structures. */
+	memset(&ctx->ifr, 0, sizeof(ctx->ifr));
+	strcpy(ctx->ifr.ifr_name, ctx->devname);
+
+	/* Open control socket. */
+	ctx->fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (ctx->fd < 0)
+		ctx->fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_GENERIC);
+	if (ctx->fd < 0) {
+		perror("Cannot get control socket");
+		return 70;
+	}
+
+	return 0;
+}
+
 int main(int argc, char **argp)
 {
+	int (*nlfunc)(struct cmd_context *) = NULL;
 	int (*func)(struct cmd_context *);
-	struct cmd_context ctx;
+	struct cmd_context ctx = {};
 	bool no_dev;
+	int ret;
 	int k;
 
 	init_global_link_mode_masks();
@@ -5869,7 +5897,6 @@ int main(int argc, char **argp)
 	argp++;
 	argc--;
 
-	ctx.debug = 0;
 	if (*argp && !strcmp(*argp, "--debug")) {
 		char *eptr;
 
@@ -5895,6 +5922,7 @@ int main(int argc, char **argp)
 		argp++;
 		argc--;
 		func = args[k].func;
+		nlfunc = args[k].nlfunc;
 		no_dev = args[k].no_dev;
 		goto opt_found;
 	}
@@ -5904,33 +5932,43 @@ int main(int argc, char **argp)
 	no_dev = false;
 
 opt_found:
+	if (nlfunc) {
+		if (netlink_init(&ctx))
+			nlfunc = NULL;		/* fallback to ioctl() */
+	}
+
 	if (!no_dev) {
 		ctx.devname = *argp++;
 		argc--;
 
-		if (ctx.devname == NULL)
+		/* netlink supports altnames, we will have to recheck against
+		 * IFNAMSIZ later in case of fallback to ioctl
+		 */
+		if (!ctx.devname || strlen(ctx.devname) >= ALTIFNAMSIZ) {
+			netlink_done(&ctx);
 			exit_bad_args();
-		if (strlen(ctx.devname) >= IFNAMSIZ)
-			exit_bad_args();
-
-		/* Setup our control structures. */
-		memset(&ctx.ifr, 0, sizeof(ctx.ifr));
-		strcpy(ctx.ifr.ifr_name, ctx.devname);
-
-		/* Open control socket. */
-		ctx.fd = socket(AF_INET, SOCK_DGRAM, 0);
-		if (ctx.fd < 0)
-			ctx.fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_GENERIC);
-		if (ctx.fd < 0) {
-			perror("Cannot get control socket");
-			return 70;
 		}
-	} else {
-		ctx.fd = -1;
 	}
 
 	ctx.argc = argc;
 	ctx.argp = argp;
+
+	if (nlfunc) {
+		ret = nlfunc(&ctx);
+		netlink_done(&ctx);
+		if ((ret != -EOPNOTSUPP) || !func)
+			return (ret >= 0) ? ret : 1;
+	}
+
+	if (ctx.devname && strlen(ctx.devname) >= IFNAMSIZ) {
+		fprintf(stderr,
+			"ethtool: device names longer than %u characters are only allowed with netlink\n",
+			IFNAMSIZ - 1);
+		exit_bad_args();
+	}
+	ret = ioctl_init(&ctx, no_dev);
+	if (ret)
+		return ret;
 
 	return func(&ctx);
 }

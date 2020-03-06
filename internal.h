@@ -25,6 +25,11 @@
 
 #define maybe_unused __attribute__((__unused__))
 
+/* internal for netlink interface */
+#ifdef ETHTOOL_ENABLE_NETLINK
+struct nl_context;
+#endif
+
 /* ethtool.h expects these to be defined by <linux/types.h> */
 #ifndef HAVE_BE_TYPES
 typedef uint16_t __be16;
@@ -42,6 +47,10 @@ typedef int32_t s32;
 #include <linux/kernel.h>
 #ifndef __KERNEL_DIV_ROUND_UP
 #define __KERNEL_DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
+#endif
+
+#ifndef ALTIFNAMSIZ
+#define ALTIFNAMSIZ 128
 #endif
 
 #include <linux/ethtool.h>
@@ -203,6 +212,9 @@ struct cmd_context {
 	int argc;		/* number of arguments to the sub-command */
 	char **argp;		/* arguments to the sub-command */
 	unsigned long debug;	/* debugging mask */
+#ifdef ETHTOOL_ENABLE_NETLINK
+	struct nl_context *nlctx;	/* netlink context (opaque) */
+#endif
 };
 
 #ifdef TEST_ETHTOOL
