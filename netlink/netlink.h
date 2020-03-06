@@ -24,4 +24,15 @@ struct nl_context {
 	uint16_t		ethnl_fam;
 };
 
+struct attr_tb_info {
+	const struct nlattr **tb;
+	unsigned int max_type;
+};
+
+#define DECLARE_ATTR_TB_INFO(tbl) \
+	struct attr_tb_info tbl ## _info = { (tbl), (MNL_ARRAY_SIZE(tbl) - 1) }
+
+int nomsg_reply_cb(const struct nlmsghdr *nlhdr, void *data);
+int attr_cb(const struct nlattr *attr, void *data);
+
 #endif /* ETHTOOL_NETLINK_INT_H__ */

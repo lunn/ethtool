@@ -119,7 +119,15 @@ static inline int test_bit(unsigned int nr, const unsigned long *addr)
 /* debugging flags */
 enum {
 	DEBUG_PARSE,
+	DEBUG_NL_MSGS,		/* incoming/outgoing netlink messages */
+	DEBUG_NL_DUMP_SND,	/* dump outgoing netlink messages */
+	DEBUG_NL_DUMP_RCV,	/* dump incoming netlink messages */
 };
+
+static inline bool debug_on(unsigned long debug, unsigned int bit)
+{
+	return (debug & (1 << bit));
+}
 
 /* Internal values for old-style offload flags.  Values and names
  * must not clash with the flags defined for ETHTOOL_{G,S}FLAGS.
