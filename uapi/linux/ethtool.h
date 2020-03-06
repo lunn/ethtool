@@ -591,6 +591,9 @@ struct ethtool_pauseparam {
  * @ETH_SS_RSS_HASH_FUNCS: RSS hush function names
  * @ETH_SS_PHY_STATS: Statistic names, for use with %ETHTOOL_GPHYSTATS
  * @ETH_SS_PHY_TUNABLES: PHY tunable names
+ * @ETH_SS_LINK_MODES: link mode names
+ * @ETH_SS_MSG_CLASSES: debug message class names
+ * @ETH_SS_WOL_MODES: wake-on-lan modes
  */
 enum ethtool_stringset {
 	ETH_SS_TEST		= 0,
@@ -602,6 +605,12 @@ enum ethtool_stringset {
 	ETH_SS_TUNABLES,
 	ETH_SS_PHY_STATS,
 	ETH_SS_PHY_TUNABLES,
+	ETH_SS_LINK_MODES,
+	ETH_SS_MSG_CLASSES,
+	ETH_SS_WOL_MODES,
+
+	/* add new constants above here */
+	ETH_SS_COUNT
 };
 
 /**
@@ -1505,6 +1514,11 @@ enum ethtool_link_mode_bit_indices {
 	ETHTOOL_LINK_MODE_200000baseCR4_Full_BIT	 = 66,
 	ETHTOOL_LINK_MODE_100baseT1_Full_BIT		 = 67,
 	ETHTOOL_LINK_MODE_1000baseT1_Full_BIT		 = 68,
+	ETHTOOL_LINK_MODE_400000baseKR8_Full_BIT	 = 69,
+	ETHTOOL_LINK_MODE_400000baseSR8_Full_BIT	 = 70,
+	ETHTOOL_LINK_MODE_400000baseLR8_ER8_FR8_Full_BIT = 71,
+	ETHTOOL_LINK_MODE_400000baseDR8_Full_BIT	 = 72,
+	ETHTOOL_LINK_MODE_400000baseCR8_Full_BIT	 = 73,
 
 	/* must be last entry */
 	__ETHTOOL_LINK_MODE_MASK_NBITS
@@ -1616,6 +1630,7 @@ enum ethtool_link_mode_bit_indices {
 #define SPEED_56000		56000
 #define SPEED_100000		100000
 #define SPEED_200000		200000
+#define SPEED_400000		400000
 
 #define SPEED_UNKNOWN		-1
 
@@ -1679,6 +1694,8 @@ static __inline__ int ethtool_validate_duplex(__u8 duplex)
 #define WAKE_MAGIC		(1 << 5)
 #define WAKE_MAGICSECURE	(1 << 6) /* only meaningful if WAKE_MAGIC */
 #define WAKE_FILTER		(1 << 7)
+
+#define WOL_MODE_COUNT		8
 
 /* L2-L4 network traffic flow types */
 #define	TCP_V4_FLOW	0x01	/* hash or spec (tcp_ip4_spec) */
