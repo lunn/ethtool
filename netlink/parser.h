@@ -79,6 +79,20 @@ struct error_parser_data {
 	unsigned int	extra_args;
 };
 
+/* used by nl_parse_bitset() */
+struct bitset_parser_data {
+	bool		force_hex;
+	bool		no_mask;
+};
+
+/* used by nl_parse_char_bitset() */
+struct char_bitset_parser_data {
+	const char	*bit_chars;
+	unsigned int	nbits;
+	char		reset_char;
+	bool		no_mask;
+};
+
 int parse_u32(const char *arg, uint32_t *result);
 
 /* parser handlers to use as param_parser::handler */
@@ -115,6 +129,13 @@ int nl_parse_error(struct nl_context *nlctx, uint16_t type, const void *data,
 int nl_parse_byte_str(struct nl_context *nlctx, uint16_t type,
 		      const void *data, struct nl_msg_buff *msgbuff,
 		      void *dest);
+/* bitset represented by %x[/%x] or name on|off ... [--] */
+int nl_parse_bitset(struct nl_context *nlctx, uint16_t type, const void *data,
+		    struct nl_msg_buff *msgbuff, void *dest);
+/* bitset represented by %u[/%u] or string (characters for bits) */
+int nl_parse_char_bitset(struct nl_context *nlctx, uint16_t type,
+			 const void *data, struct nl_msg_buff *msgbuff,
+			 void *dest);
 
 /* main entry point called to parse the command line */
 int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
