@@ -604,6 +604,110 @@ int linkstate_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 	return MNL_CB_OK;
 }
 
+void wol_modes_cb(unsigned int idx, const char *name, bool val, void *data)
+{
+	struct ethtool_wolinfo *wol = data;
+
+	if (idx >= 32)
+		return;
+	wol->supported |= (1U << idx);
+	if (val)
+		wol->wolopts |= (1U << idx);
+}
+
+int wol_reply_cb(const struct nlmsghdr *nlhdr, void *data)
+{
+	const struct nlattr *tb[ETHTOOL_A_WOL_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	struct nl_context *nlctx = data;
+	struct ethtool_wolinfo wol = {};
+	int ret;
+
+	if (nlctx->is_dump || nlctx->is_monitor)
+		nlctx->no_banner = false;
+	ret = mnl_attr_parse(nlhdr, GENL_HDRLEN, attr_cb, &tb_info);
+	if (ret < 0)
+		return ret;
+	nlctx->devname = get_dev_name(tb[ETHTOOL_A_WOL_HEADER]);
+	if (!dev_ok(nlctx))
+		return MNL_CB_OK;
+
+	if (tb[ETHTOOL_A_WOL_MODES])
+		walk_bitset(tb[ETHTOOL_A_WOL_MODES], NULL, wol_modes_cb, &wol);
+	if (tb[ETHTOOL_A_WOL_SOPASS]) {
+		unsigned int len;
+
+		len = mnl_attr_get_payload_len(tb[ETHTOOL_A_WOL_SOPASS]);
+		if (len != SOPASS_MAX)
+			fprintf(stderr, "invalid SecureOn password length %u (should be %u)\n",
+				len, SOPASS_MAX);
+		else
+			memcpy(wol.sopass,
+			       mnl_attr_get_payload(tb[ETHTOOL_A_WOL_SOPASS]),
+			       SOPASS_MAX);
+	}
+	print_banner(nlctx);
+	dump_wol(&wol);
+
+	return MNL_CB_OK;
+}
+
+void msgmask_cb(unsigned int idx, const char *name, bool val, void *data)
+{
+	u32 *msg_mask = data;
+
+	if (idx >= 32)
+		return;
+	if (val)
+		*msg_mask |= (1U << idx);
+}
+
+void msgmask_cb2(unsigned int idx, const char *name, bool val, void *data)
+{
+	if (val)
+		printf(" %s", name);
+}
+
+int debug_reply_cb(const struct nlmsghdr *nlhdr, void *data)
+{
+	const struct nlattr *tb[ETHTOOL_A_DEBUG_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	const struct stringset *msgmask_strings = NULL;
+	struct nl_context *nlctx = data;
+	u32 msg_mask = 0;
+	int ret;
+
+	if (nlctx->is_dump || nlctx->is_monitor)
+		nlctx->no_banner = false;
+	ret = mnl_attr_parse(nlhdr, GENL_HDRLEN, attr_cb, &tb_info);
+	if (ret < 0)
+		return ret;
+	nlctx->devname = get_dev_name(tb[ETHTOOL_A_DEBUG_HEADER]);
+	if (!dev_ok(nlctx))
+		return MNL_CB_OK;
+
+	if (!tb[ETHTOOL_A_DEBUG_MSGMASK])
+		return MNL_CB_OK;
+	if (bitset_is_compact(tb[ETHTOOL_A_DEBUG_MSGMASK])) {
+		ret = netlink_init_ethnl2_socket(nlctx);
+		if (ret < 0)
+			return MNL_CB_OK;
+		msgmask_strings = global_stringset(ETH_SS_MSG_CLASSES,
+						   nlctx->ethnl2_socket);
+	}
+
+	print_banner(nlctx);
+	walk_bitset(tb[ETHTOOL_A_DEBUG_MSGMASK], NULL, msgmask_cb, &msg_mask);
+	printf("        Current message level: 0x%08x (%u)\n"
+	       "                              ",
+	       msg_mask, msg_mask);
+	walk_bitset(tb[ETHTOOL_A_DEBUG_MSGMASK], msgmask_strings, msgmask_cb2,
+		    NULL);
+	fputc('\n', stdout);
+
+	return MNL_CB_OK;
+}
+
 static int gset_request(struct nl_socket *nlsk, uint8_t msg_type,
 			uint16_t hdr_attr, mnl_cb_t cb)
 {
@@ -633,6 +737,16 @@ int nl_gset(struct cmd_context *ctx)
 	if (ret == -ENODEV)
 		return ret;
 
+	ret = gset_request(nlsk, ETHTOOL_MSG_WOL_GET, ETHTOOL_A_WOL_HEADER,
+			   wol_reply_cb);
+	if (ret == -ENODEV)
+		return ret;
+
+	ret = gset_request(nlsk, ETHTOOL_MSG_DEBUG_GET, ETHTOOL_A_DEBUG_HEADER,
+			   debug_reply_cb);
+	if (ret == -ENODEV)
+		return ret;
+
 	ret = gset_request(nlsk, ETHTOOL_MSG_LINKSTATE_GET,
 			   ETHTOOL_A_LINKSTATE_HEADER, linkstate_reply_cb);
 	if (ret == -ENODEV)
@@ -642,6 +756,7 @@ int nl_gset(struct cmd_context *ctx)
 		printf("No data available\n");
 		return 75;
 	}
+
 
 	return 0;
 }

@@ -23,6 +23,14 @@ static struct {
 		.cmd	= ETHTOOL_MSG_LINKINFO_NTF,
 		.cb	= linkinfo_reply_cb,
 	},
+	{
+		.cmd	= ETHTOOL_MSG_WOL_NTF,
+		.cb	= wol_reply_cb,
+	},
+	{
+		.cmd	= ETHTOOL_MSG_DEBUG_NTF,
+		.cb	= debug_reply_cb,
+	},
 };
 
 static void clear_filter(struct nl_context *nlctx)
@@ -85,6 +93,14 @@ static struct monitor_option monitor_opts[] = {
 	{
 		.pattern	= "-s|--change",
 		.cmd		= ETHTOOL_MSG_LINKMODES_NTF,
+	},
+	{
+		.pattern	= "-s|--change",
+		.cmd		= ETHTOOL_MSG_WOL_NTF,
+	},
+	{
+		.pattern	= "-s|--change",
+		.cmd		= ETHTOOL_MSG_DEBUG_NTF,
 	},
 };
 
