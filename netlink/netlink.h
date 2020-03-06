@@ -11,6 +11,7 @@
 #include <linux/netlink.h>
 #include <linux/genetlink.h>
 #include <linux/ethtool_netlink.h>
+#include "nlsock.h"
 
 #define WILDCARD_DEVNAME "*"
 
@@ -22,6 +23,9 @@ struct nl_context {
 	int			exit_code;
 	unsigned int		suppress_nlerr;
 	uint16_t		ethnl_fam;
+	uint32_t		ethnl_mongrp;
+	struct nl_socket	*ethnl_socket;
+	struct nl_socket	*ethnl2_socket;
 };
 
 struct attr_tb_info {
@@ -34,5 +38,12 @@ struct attr_tb_info {
 
 int nomsg_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int attr_cb(const struct nlattr *attr, void *data);
+
+static inline int netlink_init_ethnl2_socket(struct nl_context *nlctx)
+{
+	if (nlctx->ethnl2_socket)
+		return 0;
+	return nlsock_init(nlctx, &nlctx->ethnl2_socket, NETLINK_GENERIC);
+}
 
 #endif /* ETHTOOL_NETLINK_INT_H__ */
