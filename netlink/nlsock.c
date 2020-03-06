@@ -261,6 +261,7 @@ int nlsock_prep_get_request(struct nl_socket *nlsk, unsigned int nlcmd,
 	return 0;
 }
 
+#ifndef TEST_ETHTOOL
 /**
  * nlsock_sendmsg() - send a netlink message to kernel
  * @nlsk:    netlink socket
@@ -277,6 +278,7 @@ ssize_t nlsock_sendmsg(struct nl_socket *nlsk, struct nl_msg_buff *altbuff)
 	debug_msg(nlsk, msgbuff->buff, nlhdr->nlmsg_len, true);
 	return mnl_socket_sendto(nlsk->sk, nlhdr, nlhdr->nlmsg_len);
 }
+#endif
 
 /**
  * nlsock_send_get_request() - send request and process reply

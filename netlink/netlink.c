@@ -143,6 +143,12 @@ static int family_info_cb(const struct nlmsghdr *nlhdr, void *data)
 	return MNL_CB_OK;
 }
 
+#ifdef TEST_ETHTOOL
+static int get_genl_family(struct nl_socket *nlsk, struct fam_info *info)
+{
+	return 0;
+}
+#else
 static int get_genl_family(struct nl_socket *nlsk, struct fam_info *info)
 {
 	struct nl_msg_buff *msgbuff = &nlsk->msgbuff;
@@ -165,6 +171,7 @@ out:
 	nlsk->nlctx->suppress_nlerr = 0;
 	return ret;
 }
+#endif
 
 int netlink_init(struct cmd_context *ctx)
 {

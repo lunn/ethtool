@@ -12,6 +12,12 @@
 #define TEST_NO_WRAPPERS
 #include "internal.h"
 
+#ifdef ETHTOOL_ENABLE_NETLINK
+#define IS_NL 1
+#else
+#define IS_NL 0
+#endif
+
 static struct test_case {
 	int rc;
 	const char *args;
@@ -19,7 +25,10 @@ static struct test_case {
 	{ 1, "" },
 	{ 0, "devname" },
 	{ 0, "15_char_devname" },
-	{ 1, "16_char_devname!" },
+	/* netlink interface allows names up to 127 characters */
+	{ !IS_NL, "16_char_devname!" },
+	{ !IS_NL, "127_char_devname0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde" },
+	{ 1, "128_char_devname0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" },
 	/* Argument parsing for -s is specialised */
 	{ 0, "-s devname" },
 	{ 0, "--change devname speed 100 duplex half mdix auto" },
@@ -55,7 +64,8 @@ static struct test_case {
 	{ 0, "-s devname phyad 1" },
 	{ 1, "--change devname phyad foo" },
 	{ 1, "-s devname phyad" },
-	{ 0, "--change devname xcvr external" },
+	/* Deprecated 'xcvr' detected by netlink parser */
+	{ IS_NL, "--change devname xcvr external" },
 	{ 1, "-s devname xcvr foo" },
 	{ 1, "--change devname xcvr" },
 	{ 0, "-s devname wol p" },
@@ -69,7 +79,9 @@ static struct test_case {
 	{ 0, "-s devname msglvl hw on rx_status off" },
 	{ 1, "--change devname msglvl hw foo" },
 	{ 1, "-s devname msglvl hw" },
-	{ 0, "--change devname speed 100 duplex half port tp autoneg on advertise 0x1 phyad 1 xcvr external wol p sopass 01:23:45:67:89:ab msglvl 1" },
+	{ 0, "--change devname speed 100 duplex half port tp autoneg on advertise 0x1 phyad 1 wol p sopass 01:23:45:67:89:ab msglvl 1" },
+	/* Deprecated 'xcvr' detected by netlink parser */
+	{ IS_NL, "--change devname speed 100 duplex half port tp autoneg on advertise 0x1 phyad 1 xcvr external wol p sopass 01:23:45:67:89:ab msglvl 1" },
 	{ 1, "-s devname foo" },
 	{ 1, "-s" },
 	{ 0, "-a devname" },
@@ -293,6 +305,17 @@ int send_ioctl(struct cmd_context *ctx, void *cmd)
 	/* If we get this far then parsing succeeded */
 	test_exit(0);
 }
+
+#ifdef ETHTOOL_ENABLE_NETLINK
+struct nl_socket;
+struct nl_msg_buff;
+
+ssize_t nlsock_sendmsg(struct nl_socket *nlsk, struct nl_msg_buff *altbuff)
+{
+	/* If we get this far then parsing succeeded */
+	test_exit(0);
+}
+#endif
 
 int main(void)
 {
