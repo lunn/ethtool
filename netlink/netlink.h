@@ -14,6 +14,7 @@
 #include "nlsock.h"
 
 #define WILDCARD_DEVNAME "*"
+#define CMDMASK_WORDS DIV_ROUND_UP(__ETHTOOL_MSG_KERNEL_CNT, 32)
 
 struct nl_context {
 	struct cmd_context	*ctx;
@@ -26,6 +27,9 @@ struct nl_context {
 	uint32_t		ethnl_mongrp;
 	struct nl_socket	*ethnl_socket;
 	struct nl_socket	*ethnl2_socket;
+	bool			is_monitor;
+	uint32_t		filter_cmds[CMDMASK_WORDS];
+	const char		*filter_devname;
 };
 
 struct attr_tb_info {
@@ -46,6 +50,13 @@ static inline void copy_devname(char *dst, const char *src)
 {
 	strncpy(dst, src, ALTIFNAMSIZ);
 	dst[ALTIFNAMSIZ - 1] = '\0';
+}
+
+static inline bool dev_ok(const struct nl_context *nlctx)
+{
+	return !nlctx->filter_devname ||
+	       (nlctx->devname &&
+		!strcmp(nlctx->devname, nlctx->filter_devname));
 }
 
 static inline int netlink_init_ethnl2_socket(struct nl_context *nlctx)

@@ -15,6 +15,10 @@ struct nl_context;
 int netlink_init(struct cmd_context *ctx);
 void netlink_done(struct cmd_context *ctx);
 
+int nl_monitor(struct cmd_context *ctx);
+
+void nl_monitor_usage(void);
+
 #else /* ETHTOOL_ENABLE_NETLINK */
 
 static inline int netlink_init(struct cmd_context *ctx maybe_unused)
@@ -23,6 +27,10 @@ static inline int netlink_init(struct cmd_context *ctx maybe_unused)
 }
 
 static inline void netlink_done(struct cmd_context *ctx maybe_unused)
+{
+}
+
+static inline void nl_monitor_usage(void)
 {
 }
 

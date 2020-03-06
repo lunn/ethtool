@@ -133,6 +133,13 @@ ethtool \- query or control network driver and hardware settings
 .BN --debug
 .I args
 .HP
+.B ethtool \-\-monitor
+[
+.I command
+] [
+.I devname
+]
+.HP
 .B ethtool \-a|\-\-show\-pause
 .I devname
 .HP
@@ -1243,6 +1250,20 @@ If queue_mask is not set, the sub command will be applied to all queues.
 .B sub_command
 Sub command to apply. The supported sub commands include --show-coalesce and
 --coalesce.
+.RE
+.TP
+.B \-\-monitor
+Listens to netlink notification and displays them.
+.RS 4
+.TP
+.I command
+If argument matching a command is used, ethtool only shows notifications of
+this type. Without such argument or with --all, all notification types are
+shown.
+.TP
+.I devname
+If a device name is used as argument, only notification for this device are
+shown. Default is to show notifications for all devices.
 .RE
 .SH BUGS
 Not supported (in part or whole) on all network drivers.

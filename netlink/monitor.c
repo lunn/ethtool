@@ -1,0 +1,197 @@
+/*
+ * monitor.c - netlink notification monitor
+ *
+ * Implementation of "ethtool --monitor" for watching netlink notifications.
+ */
+
+#include <errno.h>
+
+#include "../internal.h"
+#include "netlink.h"
+#include "nlsock.h"
+#include "strset.h"
+
+static struct {
+	uint8_t		cmd;
+	mnl_cb_t	cb;
+} monitor_callbacks[] = {
+};
+
+static void clear_filter(struct nl_context *nlctx)
+{
+	unsigned int i;
+
+	for (i = 0; i < CMDMASK_WORDS; i++)
+		nlctx->filter_cmds[i] = 0;
+}
+
+static bool test_filter_cmd(const struct nl_context *nlctx, unsigned int cmd)
+{
+	return nlctx->filter_cmds[cmd / 32] & (1U << (cmd % 32));
+}
+
+static void set_filter_cmd(struct nl_context *nlctx, unsigned int cmd)
+{
+	nlctx->filter_cmds[cmd / 32] |= (1U << (cmd % 32));
+}
+
+static void set_filter_all(struct nl_context *nlctx)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(monitor_callbacks); i++)
+		set_filter_cmd(nlctx, monitor_callbacks[i].cmd);
+}
+
+static int monitor_any_cb(const struct nlmsghdr *nlhdr, void *data)
+{
+	const struct genlmsghdr *ghdr = (const struct genlmsghdr *)(nlhdr + 1);
+	struct nl_context *nlctx = data;
+	unsigned int i;
+
+	if (!test_filter_cmd(nlctx, ghdr->cmd))
+		return MNL_CB_OK;
+
+	for (i = 0; i < MNL_ARRAY_SIZE(monitor_callbacks); i++)
+		if (monitor_callbacks[i].cmd == ghdr->cmd)
+			return monitor_callbacks[i].cb(nlhdr, data);
+
+	return MNL_CB_OK;
+}
+
+struct monitor_option {
+	const char	*pattern;
+	uint8_t		cmd;
+	uint32_t	info_mask;
+};
+
+static struct monitor_option monitor_opts[] = {
+	{
+		.pattern	= "|--all",
+		.cmd		= 0,
+	},
+};
+
+static bool pattern_match(const char *s, const char *pattern)
+{
+	const char *opt = pattern;
+	const char *next;
+	int slen = strlen(s);
+	int optlen;
+
+	do {
+		next = opt;
+		while (*next && *next != '|')
+			next++;
+		optlen = next - opt;
+		if (slen == optlen && !strncmp(s, opt, optlen))
+			return true;
+
+		opt = next;
+		if (*opt == '|')
+			opt++;
+	} while (*opt);
+
+	return false;
+}
+
+static int parse_monitor(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	char **argp = ctx->argp;
+	int argc = ctx->argc;
+	const char *opt = "";
+	bool opt_found;
+	unsigned int i;
+
+	if (*argp && argp[0][0] == '-') {
+		opt = *argp;
+		argp++;
+		argc--;
+	}
+	opt_found = false;
+	clear_filter(nlctx);
+	for (i = 0; i < MNL_ARRAY_SIZE(monitor_opts); i++) {
+		if (pattern_match(opt, monitor_opts[i].pattern)) {
+			unsigned int cmd = monitor_opts[i].cmd;
+
+			if (!cmd)
+				set_filter_all(nlctx);
+			else
+				set_filter_cmd(nlctx, cmd);
+			opt_found = true;
+		}
+	}
+	if (!opt_found) {
+		fprintf(stderr, "monitoring for option '%s' not supported\n",
+			*argp);
+		return -1;
+	}
+
+	if (*argp && strcmp(*argp, WILDCARD_DEVNAME))
+		ctx->devname = *argp;
+	return 0;
+}
+
+int nl_monitor(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	struct nl_socket *nlsk = nlctx->ethnl_socket;
+	uint32_t grpid = nlctx->ethnl_mongrp;
+	bool is_dev;
+	int ret;
+
+	if (!grpid) {
+		fprintf(stderr, "multicast group 'monitor' not found\n");
+		return -EOPNOTSUPP;
+	}
+	if (parse_monitor(ctx) < 0)
+		return 1;
+	is_dev = ctx->devname && strcmp(ctx->devname, WILDCARD_DEVNAME);
+
+	ret = preload_global_strings(nlsk);
+	if (ret < 0)
+		return ret;
+	ret = mnl_socket_setsockopt(nlsk->sk, NETLINK_ADD_MEMBERSHIP,
+				    &grpid, sizeof(grpid));
+	if (ret < 0)
+		return ret;
+	if (is_dev) {
+		ret = preload_perdev_strings(nlsk, ctx->devname);
+		if (ret < 0)
+			goto out_strings;
+	}
+
+	nlctx->filter_devname = ctx->devname;
+	nlctx->is_monitor = true;
+	nlsk->port = 0;
+	nlsk->seq = 0;
+
+	fputs("listening...\n", stdout);
+	fflush(stdout);
+	ret = nlsock_process_reply(nlsk, monitor_any_cb, nlctx);
+
+out_strings:
+	cleanup_all_strings();
+	return ret;
+}
+
+void nl_monitor_usage(void)
+{
+	unsigned int i;
+	const char *p;
+
+	fputs("        ethtool --monitor               Show kernel notifications\n",
+	      stdout);
+	fputs("                ( [ --all ]", stdout);
+	for (i = 1; i < MNL_ARRAY_SIZE(monitor_opts); i++) {
+		fputs("\n                  | ", stdout);
+		for (p = monitor_opts[i].pattern; *p; p++)
+			if (*p == '|')
+				fputs(" | ", stdout);
+			else
+				fputc(*p, stdout);
+	}
+	fputs(" )\n", stdout);
+	fputs("                [ DEVNAME | * ]\n", stdout);
+}

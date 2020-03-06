@@ -149,6 +149,8 @@ static int strset_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 			return MNL_CB_OK;
 		nlctx->devname = devname;
 	}
+	if (ifindex && !dev_ok(nlctx))
+		return MNL_CB_OK;
 
 	if (ifindex) {
 		struct perdev_strings *perdev;

@@ -5664,6 +5664,7 @@ static int show_usage(struct cmd_context *ctx maybe_unused)
 		if (args[i].xhelp)
 			fputs(args[i].xhelp, stdout);
 	}
+	nl_monitor_usage();
 
 	return 0;
 }
@@ -5909,6 +5910,19 @@ int main(int argc, char **argp)
 		argp += 2;
 		argc -= 2;
 	}
+#ifdef ETHTOOL_ENABLE_NETLINK
+	if (*argp && !strcmp(*argp, "--monitor")) {
+		if (netlink_init(&ctx)) {
+			fprintf(stderr,
+				"Option --monitor is only available with netlink.\n");
+			return 1;
+		} else {
+			ctx.argp = ++argp;
+			ctx.argc = --argc;
+			return nl_monitor(&ctx);
+		}
+	}
+#endif
 
 	/* First argument must be either a valid option or a device
 	 * name to get settings for (which we don't expect to begin
