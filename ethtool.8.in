@@ -129,6 +129,10 @@ ethtool \- query or control network driver and hardware settings
 .HP
 .B ethtool \-\-version
 .HP
+.B ethtool
+.BN --debug
+.I args
+.HP
 .B ethtool \-a|\-\-show\-pause
 .I devname
 .HP
@@ -436,6 +440,14 @@ Shows a short help message.
 .TP
 .B \-\-version
 Shows the ethtool version number.
+.TP
+.BI \-\-debug \ N
+Turns on debugging messages. Argument is interpreted as a mask:
+.TS
+nokeep;
+lB	l.
+0x01  Parser information
+.TE
 .TP
 .B \-a \-\-show\-pause
 Queries the specified Ethernet device for pause parameter information.

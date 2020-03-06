@@ -107,6 +107,11 @@ static inline int test_bit(unsigned int nr, const unsigned long *addr)
 #define SIOCETHTOOL     0x8946
 #endif
 
+/* debugging flags */
+enum {
+	DEBUG_PARSE,
+};
+
 /* Internal values for old-style offload flags.  Values and names
  * must not clash with the flags defined for ETHTOOL_{G,S}FLAGS.
  */
@@ -197,6 +202,7 @@ struct cmd_context {
 	struct ifreq ifr;	/* ifreq suitable for ethtool ioctl */
 	int argc;		/* number of arguments to the sub-command */
 	char **argp;		/* arguments to the sub-command */
+	unsigned long debug;	/* debugging mask */
 };
 
 #ifdef TEST_ETHTOOL
