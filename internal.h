@@ -122,6 +122,7 @@ enum {
 	DEBUG_NL_MSGS,		/* incoming/outgoing netlink messages */
 	DEBUG_NL_DUMP_SND,	/* dump outgoing netlink messages */
 	DEBUG_NL_DUMP_RCV,	/* dump incoming netlink messages */
+	DEBUG_NL_PRETTY_MSG,	/* pretty print of messages and errors */
 };
 
 static inline bool debug_on(unsigned long debug, unsigned int bit)
