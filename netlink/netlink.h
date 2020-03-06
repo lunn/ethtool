@@ -21,6 +21,7 @@ struct nl_context {
 	bool			is_dump;
 	int			exit_code;
 	unsigned int		suppress_nlerr;
+	uint16_t		ethnl_fam;
 };
 
 #endif /* ETHTOOL_NETLINK_INT_H__ */
