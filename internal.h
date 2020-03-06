@@ -44,8 +44,8 @@ typedef int32_t s32;
 #define __KERNEL_DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
 #endif
 
-#include "ethtool-copy.h"
-#include "net_tstamp-copy.h"
+#include <linux/ethtool.h>
+#include <linux/net_tstamp.h>
 
 #if __BYTE_ORDER == __BIG_ENDIAN
 static inline u16 cpu_to_be16(u16 value)
