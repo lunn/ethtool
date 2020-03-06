@@ -56,6 +56,7 @@ int linkmodes_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int linkinfo_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int wol_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int debug_reply_cb(const struct nlmsghdr *nlhdr, void *data);
+int features_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 
 static inline void copy_devname(char *dst, const char *src)
 {

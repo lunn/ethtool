@@ -20,6 +20,7 @@ bool bitset_get_bit(const struct nlattr *bitset, bool mask, unsigned int idx,
 		    int *retptr);
 bool bitset_is_compact(const struct nlattr *bitset);
 bool bitset_is_empty(const struct nlattr *bitset, bool mask, int *retptr);
+uint32_t *get_compact_bitset_value(const struct nlattr *bitset);
 int walk_bitset(const struct nlattr *bitset, const struct stringset *labels,
 		bitset_walk_callback cb, void *data);
 

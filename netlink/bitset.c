@@ -153,6 +153,24 @@ err:
 	return true;
 }
 
+uint32_t *get_compact_bitset_value(const struct nlattr *bitset)
+{
+	const struct nlattr *tb[ETHTOOL_A_BITSET_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	unsigned int count;
+	int ret;
+
+	ret = mnl_attr_parse_nested(bitset, attr_cb, &tb_info);
+	if (ret < 0 ||
+	    !tb[ETHTOOL_A_BITSET_SIZE] || !tb[ETHTOOL_A_BITSET_VALUE])
+		return NULL;
+	count = mnl_attr_get_u32(tb[ETHTOOL_A_BITSET_SIZE]);
+	if (8 * mnl_attr_get_payload_len(tb[ETHTOOL_A_BITSET_VALUE]) < count)
+		return NULL;
+
+	return mnl_attr_get_payload(tb[ETHTOOL_A_BITSET_VALUE]);
+}
+
 int walk_bitset(const struct nlattr *bitset, const struct stringset *labels,
 		bitset_walk_callback cb, void *data)
 {
