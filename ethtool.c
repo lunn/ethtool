@@ -5372,6 +5372,7 @@ static const struct option args[] = {
 	{
 		.opts	= "-P|--show-permaddr",
 		.func	= do_permaddr,
+		.nlfunc	= nl_permaddr,
 		.help	= "Show permanent hardware address"
 	},
 	{

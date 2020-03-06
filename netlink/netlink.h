@@ -27,6 +27,7 @@ struct nl_context {
 	uint32_t		ethnl_mongrp;
 	struct nl_socket	*ethnl_socket;
 	struct nl_socket	*ethnl2_socket;
+	struct nl_socket	*rtnl_socket;
 	bool			is_monitor;
 	uint32_t		filter_cmds[CMDMASK_WORDS];
 	const char		*filter_devname;
@@ -74,6 +75,13 @@ static inline int netlink_init_ethnl2_socket(struct nl_context *nlctx)
 	if (nlctx->ethnl2_socket)
 		return 0;
 	return nlsock_init(nlctx, &nlctx->ethnl2_socket, NETLINK_GENERIC);
+}
+
+static inline int netlink_init_rtnl_socket(struct nl_context *nlctx)
+{
+	if (nlctx->rtnl_socket)
+		return 0;
+	return nlsock_init(nlctx, &nlctx->rtnl_socket, NETLINK_ROUTE);
 }
 
 #endif /* ETHTOOL_NETLINK_INT_H__ */
