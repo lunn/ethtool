@@ -30,7 +30,7 @@ ethtool_SOURCES += \
 		  netlink/nlsock.h netlink/strset.c netlink/strset.h \
 		  netlink/monitor.c netlink/bitset.c netlink/bitset.h \
 		  netlink/settings.c netlink/parser.c netlink/parser.h \
-		  netlink/permaddr.c \
+		  netlink/permaddr.c netlink/prettymsg.c netlink/prettymsg.h \
 		  uapi/linux/ethtool_netlink.h \
 		  uapi/linux/netlink.h uapi/linux/genetlink.h \
 		  uapi/linux/rtnetlink.h uapi/linux/if_link.h
