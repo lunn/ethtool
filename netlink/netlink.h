@@ -39,6 +39,15 @@ struct attr_tb_info {
 int nomsg_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int attr_cb(const struct nlattr *attr, void *data);
 
+const char *get_dev_name(const struct nlattr *nest);
+int get_dev_info(const struct nlattr *nest, int *ifindex, char *ifname);
+
+static inline void copy_devname(char *dst, const char *src)
+{
+	strncpy(dst, src, ALTIFNAMSIZ);
+	dst[ALTIFNAMSIZ - 1] = '\0';
+}
+
 static inline int netlink_init_ethnl2_socket(struct nl_context *nlctx)
 {
 	if (nlctx->ethnl2_socket)

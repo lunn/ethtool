@@ -11,6 +11,7 @@
 #include "extapi.h"
 #include "msgbuff.h"
 #include "nlsock.h"
+#include "strset.h"
 
 /* Used as reply callback for requests where no reply is expected (e.g. most
  * "set" type commands)
@@ -38,6 +39,57 @@ int attr_cb(const struct nlattr *attr, void *data)
 		tb_info->tb[type] = attr;
 
 	return MNL_CB_OK;
+}
+
+/* misc helpers */
+
+const char *get_dev_name(const struct nlattr *nest)
+{
+	const struct nlattr *tb[ETHTOOL_A_HEADER_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	int ret;
+
+	if (!nest)
+		return NULL;
+	ret = mnl_attr_parse_nested(nest, attr_cb, &tb_info);
+	if (ret < 0 || !tb[ETHTOOL_A_HEADER_DEV_NAME])
+		return "(none)";
+	return mnl_attr_get_str(tb[ETHTOOL_A_HEADER_DEV_NAME]);
+}
+
+int get_dev_info(const struct nlattr *nest, int *ifindex, char *ifname)
+{
+	const struct nlattr *tb[ETHTOOL_A_HEADER_MAX + 1] = {};
+	const struct nlattr *index_attr;
+	const struct nlattr *name_attr;
+	DECLARE_ATTR_TB_INFO(tb);
+	int ret;
+
+	if (ifindex)
+		*ifindex = 0;
+	if (ifname)
+		memset(ifname, '\0', ALTIFNAMSIZ);
+
+	if (!nest)
+		return -EFAULT;
+	ret = mnl_attr_parse_nested(nest, attr_cb, &tb_info);
+	index_attr = tb[ETHTOOL_A_HEADER_DEV_INDEX];
+	name_attr = tb[ETHTOOL_A_HEADER_DEV_NAME];
+	if (ret < 0 || (ifindex && !index_attr) || (ifname && !name_attr))
+		return -EFAULT;
+
+	if (ifindex)
+		*ifindex = mnl_attr_get_u32(index_attr);
+	if (ifname) {
+		strncpy(ifname, mnl_attr_get_str(name_attr), ALTIFNAMSIZ);
+		if (ifname[ALTIFNAMSIZ - 1]) {
+			ifname[ALTIFNAMSIZ - 1] = '\0';
+			fprintf(stderr, "kernel device name too long: '%s'\n",
+				mnl_attr_get_str(name_attr));
+			return -EFAULT;
+		}
+	}
+	return 0;
 }
 
 /* initialization */
@@ -153,4 +205,5 @@ void netlink_done(struct cmd_context *ctx)
 
 	free(ctx->nlctx);
 	ctx->nlctx = NULL;
+	cleanup_all_strings();
 }
