@@ -48,30 +48,11 @@
 #include <linux/sockios.h>
 #include <linux/netlink.h>
 
+#include "common.h"
 #include "netlink/extapi.h"
 
 #ifndef MAX_ADDR_LEN
 #define MAX_ADDR_LEN	32
-#endif
-
-#ifndef HAVE_NETIF_MSG
-enum {
-	NETIF_MSG_DRV		= 0x0001,
-	NETIF_MSG_PROBE		= 0x0002,
-	NETIF_MSG_LINK		= 0x0004,
-	NETIF_MSG_TIMER		= 0x0008,
-	NETIF_MSG_IFDOWN	= 0x0010,
-	NETIF_MSG_IFUP		= 0x0020,
-	NETIF_MSG_RX_ERR	= 0x0040,
-	NETIF_MSG_TX_ERR	= 0x0080,
-	NETIF_MSG_TX_QUEUED	= 0x0100,
-	NETIF_MSG_INTR		= 0x0200,
-	NETIF_MSG_TX_DONE	= 0x0400,
-	NETIF_MSG_RX_STATUS	= 0x0800,
-	NETIF_MSG_PKTDATA	= 0x1000,
-	NETIF_MSG_HW		= 0x2000,
-	NETIF_MSG_WOL		= 0x4000,
-};
 #endif
 
 #ifndef NETLINK_GENERIC
@@ -119,29 +100,6 @@ struct cmdline_info {
 	 * For anything else, points to int and is set if the option is
 	 * seen. */
 	void *seen_val;
-};
-
-struct flag_info {
-	const char *name;
-	u32 value;
-};
-
-static const struct flag_info flags_msglvl[] = {
-	{ "drv",	NETIF_MSG_DRV },
-	{ "probe",	NETIF_MSG_PROBE },
-	{ "link",	NETIF_MSG_LINK },
-	{ "timer",	NETIF_MSG_TIMER },
-	{ "ifdown",	NETIF_MSG_IFDOWN },
-	{ "ifup",	NETIF_MSG_IFUP },
-	{ "rx_err",	NETIF_MSG_RX_ERR },
-	{ "tx_err",	NETIF_MSG_TX_ERR },
-	{ "tx_queued",	NETIF_MSG_TX_QUEUED },
-	{ "intr",	NETIF_MSG_INTR },
-	{ "tx_done",	NETIF_MSG_TX_DONE },
-	{ "rx_status",	NETIF_MSG_RX_STATUS },
-	{ "pktdata",	NETIF_MSG_PKTDATA },
-	{ "hw",		NETIF_MSG_HW },
-	{ "wol",	NETIF_MSG_WOL },
 };
 
 struct off_flag_def {
@@ -424,26 +382,6 @@ static void flag_to_cmdline_info(const char *name, u32 value,
 	cli->flag_val = value;
 	cli->wanted_val = wanted;
 	cli->seen_val = mask;
-}
-
-static void
-print_flags(const struct flag_info *info, unsigned int n_info, u32 value)
-{
-	const char *sep = "";
-
-	while (n_info) {
-		if (value & info->value) {
-			printf("%s%s", sep, info->name);
-			sep = " ";
-			value &= ~info->value;
-		}
-		++info;
-		--n_info;
-	}
-
-	/* Print any unrecognised flags in hex */
-	if (value)
-		printf("%s%#x", sep, value);
 }
 
 static int rxflow_str_to_type(const char *str)
@@ -904,31 +842,9 @@ dump_link_usettings(const struct ethtool_link_usettings *link_usettings)
 		(link_usettings->base.autoneg == AUTONEG_DISABLE) ?
 		"off" : "on");
 
-	if (link_usettings->base.port == PORT_TP) {
-		fprintf(stdout, "	MDI-X: ");
-		if (link_usettings->base.eth_tp_mdix_ctrl == ETH_TP_MDI) {
-			fprintf(stdout, "off (forced)\n");
-		} else if (link_usettings->base.eth_tp_mdix_ctrl
-			   == ETH_TP_MDI_X) {
-			fprintf(stdout, "on (forced)\n");
-		} else {
-			switch (link_usettings->base.eth_tp_mdix) {
-			case ETH_TP_MDI:
-				fprintf(stdout, "off");
-				break;
-			case ETH_TP_MDI_X:
-				fprintf(stdout, "on");
-				break;
-			default:
-				fprintf(stdout, "Unknown");
-				break;
-			}
-			if (link_usettings->base.eth_tp_mdix_ctrl
-			    == ETH_TP_MDI_AUTO)
-				fprintf(stdout, " (auto)");
-			fprintf(stdout, "\n");
-		}
-	}
+	if (link_usettings->base.port == PORT_TP)
+		dump_mdix(link_usettings->base.eth_tp_mdix,
+			  link_usettings->base.eth_tp_mdix_ctrl);
 
 	return 0;
 }
@@ -997,58 +913,6 @@ static int parse_wolopts(char *optstr, u32 *data)
 		}
 		optstr++;
 	}
-	return 0;
-}
-
-static char *unparse_wolopts(int wolopts)
-{
-	static char buf[16];
-	char *p = buf;
-
-	memset(buf, 0, sizeof(buf));
-
-	if (wolopts) {
-		if (wolopts & WAKE_PHY)
-			*p++ = 'p';
-		if (wolopts & WAKE_UCAST)
-			*p++ = 'u';
-		if (wolopts & WAKE_MCAST)
-			*p++ = 'm';
-		if (wolopts & WAKE_BCAST)
-			*p++ = 'b';
-		if (wolopts & WAKE_ARP)
-			*p++ = 'a';
-		if (wolopts & WAKE_MAGIC)
-			*p++ = 'g';
-		if (wolopts & WAKE_MAGICSECURE)
-			*p++ = 's';
-		if (wolopts & WAKE_FILTER)
-			*p++ = 'f';
-	} else {
-		*p = 'd';
-	}
-
-	return buf;
-}
-
-static int dump_wol(struct ethtool_wolinfo *wol)
-{
-	fprintf(stdout, "	Supports Wake-on: %s\n",
-		unparse_wolopts(wol->supported));
-	fprintf(stdout, "	Wake-on: %s\n",
-		unparse_wolopts(wol->wolopts));
-	if (wol->supported & WAKE_MAGICSECURE) {
-		int i;
-		int delim = 0;
-
-		fprintf(stdout, "        SecureOn password: ");
-		for (i = 0; i < SOPASS_MAX; i++) {
-			fprintf(stdout, "%s%02x", delim?":":"", wol->sopass[i]);
-			delim = 1;
-		}
-		fprintf(stdout, "\n");
-	}
-
 	return 0;
 }
 
@@ -2839,8 +2703,7 @@ static int do_gset(struct cmd_context *ctx)
 		fprintf(stdout, "	Current message level: 0x%08x (%d)\n"
 			"			       ",
 			edata.data, edata.data);
-		print_flags(flags_msglvl, ARRAY_SIZE(flags_msglvl),
-			    edata.data);
+		print_flags(flags_msglvl, n_flags_msglvl, edata.data);
 		fprintf(stdout, "\n");
 		allfail = 0;
 	} else if (errno != EOPNOTSUPP) {
@@ -2886,13 +2749,13 @@ static int do_sset(struct cmd_context *ctx)
 	int msglvl_changed = 0;
 	u32 msglvl_wanted = 0;
 	u32 msglvl_mask = 0;
-	struct cmdline_info cmdline_msglvl[ARRAY_SIZE(flags_msglvl)];
+	struct cmdline_info cmdline_msglvl[n_flags_msglvl];
 	int argc = ctx->argc;
 	char **argp = ctx->argp;
 	int i;
 	int err = 0;
 
-	for (i = 0; i < ARRAY_SIZE(flags_msglvl); i++)
+	for (i = 0; i < n_flags_msglvl; i++)
 		flag_to_cmdline_info(flags_msglvl[i].name,
 				     flags_msglvl[i].value,
 				     &msglvl_wanted, &msglvl_mask,
