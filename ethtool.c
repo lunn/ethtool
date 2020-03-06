@@ -102,51 +102,6 @@ struct cmdline_info {
 	void *seen_val;
 };
 
-struct off_flag_def {
-	const char *short_name;
-	const char *long_name;
-	const char *kernel_name;
-	u32 get_cmd, set_cmd;
-	u32 value;
-	/* For features exposed through ETHTOOL_GFLAGS, the oldest
-	 * kernel version for which we can trust the result.  Where
-	 * the flag was added at the same time the kernel started
-	 * supporting the feature, this is 0 (to allow for backports).
-	 * Where the feature was supported before the flag was added,
-	 * it is the version that introduced the flag.
-	 */
-	u32 min_kernel_ver;
-};
-static const struct off_flag_def off_flag_def[] = {
-	{ "rx",     "rx-checksumming",		    "rx-checksum",
-	  ETHTOOL_GRXCSUM, ETHTOOL_SRXCSUM, ETH_FLAG_RXCSUM,	0 },
-	{ "tx",     "tx-checksumming",		    "tx-checksum-*",
-	  ETHTOOL_GTXCSUM, ETHTOOL_STXCSUM, ETH_FLAG_TXCSUM,	0 },
-	{ "sg",     "scatter-gather",		    "tx-scatter-gather*",
-	  ETHTOOL_GSG,	   ETHTOOL_SSG,     ETH_FLAG_SG,	0 },
-	{ "tso",    "tcp-segmentation-offload",	    "tx-tcp*-segmentation",
-	  ETHTOOL_GTSO,	   ETHTOOL_STSO,    ETH_FLAG_TSO,	0 },
-	{ "ufo",    "udp-fragmentation-offload",    "tx-udp-fragmentation",
-	  ETHTOOL_GUFO,	   ETHTOOL_SUFO,    ETH_FLAG_UFO,	0 },
-	{ "gso",    "generic-segmentation-offload", "tx-generic-segmentation",
-	  ETHTOOL_GGSO,	   ETHTOOL_SGSO,    ETH_FLAG_GSO,	0 },
-	{ "gro",    "generic-receive-offload",	    "rx-gro",
-	  ETHTOOL_GGRO,	   ETHTOOL_SGRO,    ETH_FLAG_GRO,	0 },
-	{ "lro",    "large-receive-offload",	    "rx-lro",
-	  0,		   0,		    ETH_FLAG_LRO,
-	  KERNEL_VERSION(2,6,24) },
-	{ "rxvlan", "rx-vlan-offload",		    "rx-vlan-hw-parse",
-	  0,		   0,		    ETH_FLAG_RXVLAN,
-	  KERNEL_VERSION(2,6,37) },
-	{ "txvlan", "tx-vlan-offload",		    "tx-vlan-hw-insert",
-	  0,		   0,		    ETH_FLAG_TXVLAN,
-	  KERNEL_VERSION(2,6,37) },
-	{ "ntuple", "ntuple-filters",		    "rx-ntuple-filter",
-	  0,		   0,		    ETH_FLAG_NTUPLE,	0 },
-	{ "rxhash", "receive-hashing",		    "rx-hashing",
-	  0,		   0,		    ETH_FLAG_RXHASH,	0 },
-};
-
 struct feature_def {
 	char name[ETH_GSTRING_LEN];
 	int off_flag_index; /* index in off_flag_def; negative if none match */
@@ -155,7 +110,7 @@ struct feature_def {
 struct feature_defs {
 	size_t n_features;
 	/* Number of features each offload flag is associated with */
-	unsigned int off_flag_matched[ARRAY_SIZE(off_flag_def)];
+	unsigned int off_flag_matched[OFF_FLAG_DEF_SIZE];
 	/* Name and offload flag index for each feature */
 	struct feature_def def[0];
 };
@@ -1416,7 +1371,7 @@ static void dump_features(const struct feature_defs *defs,
 	int indent;
 	int i, j;
 
-	for (i = 0; i < ARRAY_SIZE(off_flag_def); i++) {
+	for (i = 0; i < OFF_FLAG_DEF_SIZE; i++) {
 		/* Don't show features whose state is unknown on this
 		 * kernel version
 		 */
@@ -1733,7 +1688,7 @@ static struct feature_defs *get_feature_defs(struct cmd_context *ctx)
 		defs->def[i].off_flag_index = -1;
 
 		for (j = 0;
-		     j < ARRAY_SIZE(off_flag_def) &&
+		     j < OFF_FLAG_DEF_SIZE &&
 			     defs->def[i].off_flag_index < 0;
 		     j++) {
 			const char *pattern =
@@ -2181,7 +2136,7 @@ get_features(struct cmd_context *ctx, const struct feature_defs *defs)
 
 	state->off_flags = 0;
 
-	for (i = 0; i < ARRAY_SIZE(off_flag_def); i++) {
+	for (i = 0; i < OFF_FLAG_DEF_SIZE; i++) {
 		value = off_flag_def[i].value;
 		if (!off_flag_def[i].get_cmd)
 			continue;
@@ -2297,14 +2252,14 @@ static int do_sfeatures(struct cmd_context *ctx)
 	/* Generate cmdline_info for legacy flags and kernel-named
 	 * features, and parse our arguments.
 	 */
-	cmdline_features = calloc(ARRAY_SIZE(off_flag_def) + defs->n_features,
+	cmdline_features = calloc(OFF_FLAG_DEF_SIZE + defs->n_features,
 				  sizeof(cmdline_features[0]));
 	if (!cmdline_features) {
 		perror("Cannot parse arguments");
 		rc = 1;
 		goto err;
 	}
-	for (i = 0; i < ARRAY_SIZE(off_flag_def); i++)
+	for (i = 0; i < OFF_FLAG_DEF_SIZE; i++)
 		flag_to_cmdline_info(off_flag_def[i].short_name,
 				     off_flag_def[i].value,
 				     &off_flags_wanted, &off_flags_mask,
@@ -2314,9 +2269,9 @@ static int do_sfeatures(struct cmd_context *ctx)
 			defs->def[i].name, FEATURE_FIELD_FLAG(i),
 			&FEATURE_WORD(efeatures->features, i, requested),
 			&FEATURE_WORD(efeatures->features, i, valid),
-			&cmdline_features[ARRAY_SIZE(off_flag_def) + i]);
+			&cmdline_features[OFF_FLAG_DEF_SIZE + i]);
 	parse_generic_cmdline(ctx, &any_changed, cmdline_features,
-			      ARRAY_SIZE(off_flag_def) + defs->n_features);
+			      OFF_FLAG_DEF_SIZE + defs->n_features);
 	free(cmdline_features);
 
 	if (!any_changed) {
@@ -2336,7 +2291,7 @@ static int do_sfeatures(struct cmd_context *ctx)
 		 * related features that the user did not specify and that
 		 * are not fixed.  Warn if all related features are fixed.
 		 */
-		for (i = 0; i < ARRAY_SIZE(off_flag_def); i++) {
+		for (i = 0; i < OFF_FLAG_DEF_SIZE; i++) {
 			int fixed = 1;
 
 			if (!(off_flags_mask & off_flag_def[i].value))
@@ -2377,7 +2332,7 @@ static int do_sfeatures(struct cmd_context *ctx)
 			goto err;
 		}
 	} else {
-		for (i = 0; i < ARRAY_SIZE(off_flag_def); i++) {
+		for (i = 0; i < OFF_FLAG_DEF_SIZE; i++) {
 			if (!off_flag_def[i].set_cmd)
 				continue;
 			if (off_flags_mask & off_flag_def[i].value) {
@@ -5242,6 +5197,7 @@ static const struct option args[] = {
 	{
 		.opts	= "-k|--show-features|--show-offload",
 		.func	= do_gfeatures,
+		.nlfunc	= nl_gfeatures,
 		.help	= "Get state of protocol offload and other features"
 	},
 	{

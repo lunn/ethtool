@@ -47,6 +47,36 @@ const struct flag_info flags_msglvl[] = {
 };
 const unsigned int n_flags_msglvl = ARRAY_SIZE(flags_msglvl) - 1;
 
+const struct off_flag_def off_flag_def[] = {
+	{ "rx",     "rx-checksumming",		    "rx-checksum",
+	  ETHTOOL_GRXCSUM, ETHTOOL_SRXCSUM, ETH_FLAG_RXCSUM,	0 },
+	{ "tx",     "tx-checksumming",		    "tx-checksum-*",
+	  ETHTOOL_GTXCSUM, ETHTOOL_STXCSUM, ETH_FLAG_TXCSUM,	0 },
+	{ "sg",     "scatter-gather",		    "tx-scatter-gather*",
+	  ETHTOOL_GSG,	   ETHTOOL_SSG,     ETH_FLAG_SG,	0 },
+	{ "tso",    "tcp-segmentation-offload",	    "tx-tcp*-segmentation",
+	  ETHTOOL_GTSO,	   ETHTOOL_STSO,    ETH_FLAG_TSO,	0 },
+	{ "ufo",    "udp-fragmentation-offload",    "tx-udp-fragmentation",
+	  ETHTOOL_GUFO,	   ETHTOOL_SUFO,    ETH_FLAG_UFO,	0 },
+	{ "gso",    "generic-segmentation-offload", "tx-generic-segmentation",
+	  ETHTOOL_GGSO,	   ETHTOOL_SGSO,    ETH_FLAG_GSO,	0 },
+	{ "gro",    "generic-receive-offload",	    "rx-gro",
+	  ETHTOOL_GGRO,	   ETHTOOL_SGRO,    ETH_FLAG_GRO,	0 },
+	{ "lro",    "large-receive-offload",	    "rx-lro",
+	  0,		   0,		    ETH_FLAG_LRO,
+	  KERNEL_VERSION(2,6,24) },
+	{ "rxvlan", "rx-vlan-offload",		    "rx-vlan-hw-parse",
+	  0,		   0,		    ETH_FLAG_RXVLAN,
+	  KERNEL_VERSION(2,6,37) },
+	{ "txvlan", "tx-vlan-offload",		    "tx-vlan-hw-insert",
+	  0,		   0,		    ETH_FLAG_TXVLAN,
+	  KERNEL_VERSION(2,6,37) },
+	{ "ntuple", "ntuple-filters",		    "rx-ntuple-filter",
+	  0,		   0,		    ETH_FLAG_NTUPLE,	0 },
+	{ "rxhash", "receive-hashing",		    "rx-hashing",
+	  0,		   0,		    ETH_FLAG_RXHASH,	0 },
+};
+
 void print_flags(const struct flag_info *info, unsigned int n_info, u32 value)
 {
 	const char *sep = "";

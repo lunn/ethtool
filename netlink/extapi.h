@@ -18,6 +18,7 @@ void netlink_done(struct cmd_context *ctx);
 int nl_gset(struct cmd_context *ctx);
 int nl_sset(struct cmd_context *ctx);
 int nl_permaddr(struct cmd_context *ctx);
+int nl_gfeatures(struct cmd_context *ctx);
 int nl_monitor(struct cmd_context *ctx);
 
 void nl_monitor_usage(void);
@@ -40,6 +41,7 @@ static inline void nl_monitor_usage(void)
 #define nl_gset			NULL
 #define nl_sset			NULL
 #define nl_permaddr		NULL
+#define nl_gfeatures		NULL
 
 #endif /* ETHTOOL_ENABLE_NETLINK */
 
