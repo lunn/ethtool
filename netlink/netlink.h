@@ -31,6 +31,10 @@ struct nl_context {
 	uint32_t		filter_cmds[CMDMASK_WORDS];
 	const char		*filter_devname;
 	bool			no_banner;
+	const char		*cmd;
+	const char		*param;
+	char			**argp;
+	int			argc;
 };
 
 struct attr_tb_info {
