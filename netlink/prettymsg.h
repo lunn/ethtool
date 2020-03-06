@@ -98,6 +98,7 @@ struct pretty_nlmsg_desc {
 int pretty_print_genlmsg(const struct nlmsghdr *nlhdr,
 			 const struct pretty_nlmsg_desc *desc,
 			 unsigned int ndesc, unsigned int err_offset);
+int pretty_print_rtnlmsg(const struct nlmsghdr *nlhdr, unsigned int err_offset);
 
 /* message descriptions */
 
@@ -108,5 +109,10 @@ extern const unsigned int ethnl_kmsg_n_desc;
 
 extern const struct pretty_nlmsg_desc genlctrl_msg_desc[];
 extern const unsigned int genlctrl_msg_n_desc;
+
+extern const struct pretty_nlmsg_desc rtnl_msg_desc[];
+extern const unsigned int rtnl_msg_n_desc;
+extern const unsigned short rtnl_msghdr_lengths[];
+extern const unsigned int rtnl_msghdr_n_len;
 
 #endif /* ETHTOOL_NETLINK_PRETTYMSG_H__ */

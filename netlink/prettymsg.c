@@ -191,3 +191,47 @@ int pretty_print_genlmsg(const struct nlmsghdr *nlhdr,
 				  msg_desc ? msg_desc->attrs : NULL,
 				  msg_desc ? msg_desc->n_attrs : 0, err_offset);
 }
+
+static void rtm_link_summary(const struct ifinfomsg *ifinfo)
+{
+	if (ifinfo->ifi_family)
+		printf(" family=%u", ifinfo->ifi_family);
+	if (ifinfo->ifi_type)
+		printf(" type=0x%04x", ifinfo->ifi_type);
+	if (ifinfo->ifi_index)
+		printf(" ifindex=%d", ifinfo->ifi_index);
+	if (ifinfo->ifi_flags)
+		printf(" flags=0x%x", ifinfo->ifi_flags);
+	if (ifinfo->ifi_flags)
+		printf(" change=0x%x", ifinfo->ifi_change);
+}
+
+int pretty_print_rtnlmsg(const struct nlmsghdr *nlhdr, unsigned int err_offset)
+{
+	const unsigned int idx = (nlhdr->nlmsg_type - RTM_BASE) / 4;
+	const struct pretty_nlmsg_desc *msg_desc = NULL;
+	unsigned int hdrlen = USHRT_MAX;
+
+	if (nlhdr->nlmsg_type < rtnl_msg_n_desc)
+		msg_desc = &rtnl_msg_desc[nlhdr->nlmsg_type];
+	if (idx < rtnl_msghdr_n_len)
+		hdrlen = rtnl_msghdr_lengths[idx];
+	if (hdrlen < USHRT_MAX && mnl_nlmsg_get_payload_len(nlhdr) < hdrlen) {
+		fprintf(stderr, "ethtool: message too short (%u bytes)\n",
+			nlhdr->nlmsg_len);
+		return -EINVAL;
+	}
+	if (msg_desc && msg_desc->name)
+		printf("    %s", msg_desc->name);
+	else
+		printf("    [%u]", nlhdr->nlmsg_type);
+	if (idx == (RTM_NEWLINK - RTM_BASE) / 4)
+		rtm_link_summary(mnl_nlmsg_get_payload(nlhdr));
+	putchar('\n');
+	if (hdrlen == USHRT_MAX)
+		return 0;
+
+	return pretty_print_nlmsg(nlhdr, hdrlen,
+				  msg_desc ? msg_desc->attrs : NULL,
+				  msg_desc ? msg_desc->n_attrs : 0, err_offset);
+}
