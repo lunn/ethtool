@@ -99,4 +99,11 @@ int pretty_print_genlmsg(const struct nlmsghdr *nlhdr,
 			 const struct pretty_nlmsg_desc *desc,
 			 unsigned int ndesc, unsigned int err_offset);
 
+/* message descriptions */
+
+extern const struct pretty_nlmsg_desc ethnl_umsg_desc[];
+extern const unsigned int ethnl_umsg_n_desc;
+extern const struct pretty_nlmsg_desc ethnl_kmsg_desc[];
+extern const unsigned int ethnl_kmsg_n_desc;
+
 #endif /* ETHTOOL_NETLINK_PRETTYMSG_H__ */
