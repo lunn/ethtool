@@ -5189,6 +5189,7 @@ static const struct option args[] = {
 	{
 		.opts	= "-G|--set-ring",
 		.func	= do_sring,
+		.nlfunc	= nl_sring,
 		.help	= "Set RX/TX ring parameters",
 		.xhelp	= "		[ rx N ]\n"
 			  "		[ rx-mini N ]\n"
