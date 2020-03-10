@@ -5355,6 +5355,7 @@ static const struct option args[] = {
 	{
 		.opts	= "-L|--set-channels",
 		.func	= do_schannels,
+		.nlfunc	= nl_schannels,
 		.help	= "Set Channels",
 		.xhelp	= "               [ rx N ]\n"
 			  "               [ tx N ]\n"
