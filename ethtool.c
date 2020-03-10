@@ -5183,6 +5183,7 @@ static const struct option args[] = {
 	{
 		.opts	= "-g|--show-ring",
 		.func	= do_gring,
+		.nlfunc	= nl_gring,
 		.help	= "Query RX/TX ring parameters"
 	},
 	{
