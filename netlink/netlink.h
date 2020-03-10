@@ -59,6 +59,7 @@ int debug_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int features_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int privflags_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int rings_reply_cb(const struct nlmsghdr *nlhdr, void *data);
+int channels_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 
 /* dump helpers */
 

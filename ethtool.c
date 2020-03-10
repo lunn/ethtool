@@ -5349,6 +5349,7 @@ static const struct option args[] = {
 	{
 		.opts	= "-l|--show-channels",
 		.func	= do_gchannels,
+		.nlfunc	= nl_gchannels,
 		.help	= "Query Channels"
 	},
 	{
