@@ -5361,6 +5361,7 @@ static const struct option args[] = {
 	{
 		.opts	= "--show-priv-flags",
 		.func	= do_gprivflags,
+		.nlfunc	= nl_gprivflags,
 		.help	= "Query private flags"
 	},
 	{
