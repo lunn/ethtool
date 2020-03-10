@@ -1,7 +1,8 @@
 /*
  * privflags.c - netlink implementation of private flags commands
  *
- * Implementation of "ethtool --show-priv-flags <dev>"
+ * Implementation of "ethtool --show-priv-flags <dev>" and
+ * "ethtool --set-priv-flags <dev> ..."
  */
 
 #include <errno.h>
@@ -13,6 +14,7 @@
 #include "netlink.h"
 #include "strset.h"
 #include "bitset.h"
+#include "parser.h"
 
 /* PRIVFLAGS_GET */
 
@@ -98,4 +100,48 @@ int nl_gprivflags(struct cmd_context *ctx)
 	if (ret < 0)
 		return ret;
 	return nlsock_send_get_request(nlsk, privflags_reply_cb);
+}
+
+/* PRIVFLAGS_SET */
+
+static const struct bitset_parser_data privflags_parser_data = {
+	.force_hex	= false,
+	.no_mask	= false,
+};
+
+int nl_sprivflags(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	struct nl_msg_buff *msgbuff;
+	struct nl_socket *nlsk;
+	int ret;
+
+	nlctx->cmd = "--set-priv-flags";
+	nlctx->argp = ctx->argp;
+	nlctx->argc = ctx->argc;
+	nlctx->devname = ctx->devname;
+	nlsk = nlctx->ethnl_socket;
+	msgbuff = &nlsk->msgbuff;
+
+	ret = msg_init(nlctx, msgbuff, ETHTOOL_MSG_PRIVFLAGS_SET,
+		       NLM_F_REQUEST | NLM_F_ACK);
+	if (ret < 0)
+		return 2;
+	if (ethnla_fill_header(msgbuff, ETHTOOL_A_PRIVFLAGS_HEADER,
+			       ctx->devname, 0))
+		return -EMSGSIZE;
+
+	ret = nl_parse_bitset(nlctx, ETHTOOL_A_PRIVFLAGS_FLAGS,
+			      &privflags_parser_data, msgbuff, NULL);
+	if (ret < 0)
+		return -EINVAL;
+
+	ret = nlsock_sendmsg(nlsk, NULL);
+	if (ret < 0)
+		return 2;
+	ret = nlsock_process_reply(nlsk, nomsg_reply_cb, nlctx);
+	if (ret == 0)
+		return 0;
+	else
+		return nlctx->exit_code ?: 1;
 }
