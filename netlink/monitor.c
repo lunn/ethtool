@@ -47,6 +47,10 @@ static struct {
 		.cmd	= ETHTOOL_MSG_CHANNELS_NTF,
 		.cb	= channels_reply_cb,
 	},
+	{
+		.cmd	= ETHTOOL_MSG_COALESCE_NTF,
+		.cb	= coalesce_reply_cb,
+	},
 };
 
 static void clear_filter(struct nl_context *nlctx)
@@ -133,6 +137,10 @@ static struct monitor_option monitor_opts[] = {
 	{
 		.pattern	= "-l|--show-channels|-L|--set-channels",
 		.cmd		= ETHTOOL_MSG_CHANNELS_NTF,
+	},
+	{
+		.pattern	= "-c|--show-coalesce|-C|--coalesce",
+		.cmd		= ETHTOOL_MSG_COALESCE_NTF,
 	},
 };
 
