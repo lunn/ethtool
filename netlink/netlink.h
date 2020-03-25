@@ -61,6 +61,7 @@ int privflags_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int rings_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int channels_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int coalesce_reply_cb(const struct nlmsghdr *nlhdr, void *data);
+int pause_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 
 /* dump helpers */
 
@@ -78,6 +79,11 @@ static inline const char *u8_to_bool(const struct nlattr *attr)
 		return mnl_attr_get_u8(attr) ? "on" : "off";
 	else
 		return "n/a";
+}
+
+static inline void show_bool(const struct nlattr *attr, const char *label)
+{
+	printf("%s%s\n", label, u8_to_bool(attr));
 }
 
 /* misc */

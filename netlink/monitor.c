@@ -51,6 +51,10 @@ static struct {
 		.cmd	= ETHTOOL_MSG_COALESCE_NTF,
 		.cb	= coalesce_reply_cb,
 	},
+	{
+		.cmd	= ETHTOOL_MSG_PAUSE_NTF,
+		.cb	= pause_reply_cb,
+	},
 };
 
 static void clear_filter(struct nl_context *nlctx)
@@ -141,6 +145,10 @@ static struct monitor_option monitor_opts[] = {
 	{
 		.pattern	= "-c|--show-coalesce|-C|--coalesce",
 		.cmd		= ETHTOOL_MSG_COALESCE_NTF,
+	},
+	{
+		.pattern	= "-a|--show-pause|-A|--pause",
+		.cmd		= ETHTOOL_MSG_PAUSE_NTF,
 	},
 };
 
