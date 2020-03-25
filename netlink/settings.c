@@ -17,15 +17,6 @@
 
 /* GET_SETTINGS */
 
-enum link_mode_class {
-	LM_CLASS_UNKNOWN,
-	LM_CLASS_REAL,
-	LM_CLASS_AUTONEG,
-	LM_CLASS_PORT,
-	LM_CLASS_PAUSE,
-	LM_CLASS_FEC,
-};
-
 struct link_mode_info {
 	enum link_mode_class	class;
 	u32			speed;
@@ -261,11 +252,9 @@ static void print_banner(struct nl_context *nlctx)
 	nlctx->no_banner = true;
 }
 
-static int dump_link_modes(struct nl_context *nlctx,
-			   const struct nlattr *bitset, bool mask,
-			   unsigned int class, const char *before,
-			   const char *between, const char *after,
-			   const char *if_none)
+int dump_link_modes(struct nl_context *nlctx, const struct nlattr *bitset,
+		    bool mask, unsigned int class, const char *before,
+		    const char *between, const char *after, const char *if_none)
 {
 	const struct nlattr *bitset_tb[ETHTOOL_A_BITSET_MAX + 1] = {};
 	DECLARE_ATTR_TB_INFO(bitset_tb);
