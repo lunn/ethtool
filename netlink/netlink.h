@@ -16,6 +16,15 @@
 #define WILDCARD_DEVNAME "*"
 #define CMDMASK_WORDS DIV_ROUND_UP(__ETHTOOL_MSG_KERNEL_CNT, 32)
 
+enum link_mode_class {
+	LM_CLASS_UNKNOWN,
+	LM_CLASS_REAL,
+	LM_CLASS_AUTONEG,
+	LM_CLASS_PORT,
+	LM_CLASS_PAUSE,
+	LM_CLASS_FEC,
+};
+
 struct nl_context {
 	struct cmd_context	*ctx;
 	void			*cmd_private;
@@ -62,8 +71,14 @@ int rings_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int channels_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int coalesce_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int pause_reply_cb(const struct nlmsghdr *nlhdr, void *data);
+int eee_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 
 /* dump helpers */
+
+int dump_link_modes(struct nl_context *nlctx, const struct nlattr *bitset,
+		    bool mask, unsigned int class, const char *before,
+		    const char *between, const char *after,
+		    const char *if_none);
 
 static inline void show_u32(const struct nlattr *attr, const char *label)
 {
