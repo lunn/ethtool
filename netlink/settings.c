@@ -207,6 +207,8 @@ static const struct link_mode_info link_modes[] = {
 		{ LM_CLASS_REAL,	400000,	DUPLEX_FULL },
 	[ETHTOOL_LINK_MODE_400000baseCR8_Full_BIT] =
 		{ LM_CLASS_REAL,	400000,	DUPLEX_FULL },
+	[ETHTOOL_LINK_MODE_FEC_LLRS_BIT] =
+		{ LM_CLASS_FEC },
 };
 const unsigned int link_modes_count = ARRAY_SIZE(link_modes);
 

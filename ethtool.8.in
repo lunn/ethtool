@@ -420,7 +420,7 @@ ethtool \- query or control network driver and hardware settings
 .B ethtool \-\-set\-fec
 .I devname
 .B encoding
-.BR auto | off | rs | baser \ [...]
+.BR auto | off | rs | baser | llrs \ [...]
 .HP
 .B ethtool \-Q|\-\-per\-queue
 .I devname
@@ -1228,7 +1228,7 @@ current FEC mode, the driver or firmware must take the link down
 administratively and report the problem in the system logs for users to correct.
 .RS 4
 .TP
-.BR encoding\ auto | off | rs | baser \ [...]
+.BR encoding\ auto | off | rs | baser | llrs \ [...]
 
 Sets the FEC encoding for the device.  Combinations of options are specified as
 e.g.
@@ -1241,6 +1241,7 @@ auto	Use the driver's default encoding
 off	Turn off FEC
 RS	Force RS-FEC encoding
 BaseR	Force BaseR encoding
+LLRS	Force LLRS-FEC encoding
 .TE
 .RE
 .TP

@@ -502,6 +502,7 @@ static void init_global_link_mode_masks(void)
 		ETHTOOL_LINK_MODE_FEC_NONE_BIT,
 		ETHTOOL_LINK_MODE_FEC_RS_BIT,
 		ETHTOOL_LINK_MODE_FEC_BASER_BIT,
+		ETHTOOL_LINK_MODE_FEC_LLRS_BIT,
 	};
 	unsigned int i;
 
@@ -754,6 +755,12 @@ static void dump_link_caps(const char *prefix, const char *an_prefix,
 			fprintf(stdout, " RS");
 			fecreported = 1;
 		}
+		if (ethtool_link_mode_test_bit(ETHTOOL_LINK_MODE_FEC_LLRS_BIT,
+					       mask)) {
+			fprintf(stdout, " LLRS");
+			fecreported = 1;
+		}
+
 		if (!fecreported)
 			fprintf(stdout, " Not reported");
 		fprintf(stdout, "\n");
@@ -1562,6 +1569,8 @@ static void dump_fec(u32 fec)
 		fprintf(stdout, " BaseR");
 	if (fec & ETHTOOL_FEC_RS)
 		fprintf(stdout, " RS");
+	if (fec & ETHTOOL_FEC_LLRS)
+		fprintf(stdout, " LLRS");
 }
 
 #define N_SOTS 7
@@ -5074,7 +5083,8 @@ static int fecmode_str_to_type(const char *str)
 		return ETHTOOL_FEC_RS;
 	if (!strcasecmp(str, "baser"))
 		return ETHTOOL_FEC_BASER;
-
+	if (!strcasecmp(str, "llrs"))
+		return ETHTOOL_FEC_LLRS;
 	return 0;
 }
 
@@ -5486,7 +5496,7 @@ static const struct option args[] = {
 		.opts	= "--set-fec",
 		.func	= do_sfec,
 		.help	= "Set FEC settings",
-		.xhelp	= "		[ encoding auto|off|rs|baser [...]]\n"
+		.xhelp	= "		[ encoding auto|off|rs|baser|llrs [...]]\n"
 	},
 	{
 		.opts	= "-Q|--per-queue",
