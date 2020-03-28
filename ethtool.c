@@ -5466,6 +5466,11 @@ static const struct option args[] = {
 			  "             [queue_mask %x] SUB_COMMAND\n",
 	},
 	{
+		.opts	= "--cable-test",
+		.nlfunc	= nl_cable_test,
+		.help	= "Perform a cable test",
+	},
+	{
 		.opts	= "-h|--help",
 		.no_dev	= true,
 		.func	= show_usage,
