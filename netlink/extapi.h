@@ -36,6 +36,7 @@ int nl_geee(struct cmd_context *ctx);
 int nl_seee(struct cmd_context *ctx);
 int nl_tsinfo(struct cmd_context *ctx);
 int nl_cable_test(struct cmd_context *ctx);
+int nl_cable_test_tdr(struct cmd_context *ctx);
 int nl_monitor(struct cmd_context *ctx);
 
 void nl_monitor_usage(void);
@@ -76,6 +77,7 @@ static inline void nl_monitor_usage(void)
 #define nl_seee			NULL
 #define nl_tsinfo		NULL
 #define nl_cable_test		NULL
+#define nl_cable_test_tdr	NULL
 
 #endif /* ETHTOOL_ENABLE_NETLINK */
 

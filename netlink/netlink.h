@@ -80,6 +80,8 @@ int pause_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int eee_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int cable_test_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int cable_test_ntf_cb(const struct nlmsghdr *nlhdr, void *data);
+int cable_test_tdr_reply_cb(const struct nlmsghdr *nlhdr, void *data);
+int cable_test_tdr_ntf_cb(const struct nlmsghdr *nlhdr, void *data);
 
 /* dump helpers */
 
