@@ -255,3 +255,200 @@ int nl_cable_test(struct cmd_context *ctx)
 		ret = nl_cable_test_process_results(ctx);
 	return ret;
 }
+
+static int nl_cable_test_tdr_results_cb(const struct nlmsghdr *nlhdr,
+					void *data)
+{
+	const struct genlmsghdr *ghdr = (const struct genlmsghdr *)(nlhdr + 1);
+
+	if (ghdr->cmd != ETHTOOL_MSG_CABLE_TEST_TDR_NTF) {
+		return MNL_CB_OK;
+	}
+
+	cable_test_tdr_ntf_cb(nlhdr, data);
+
+	return MNL_CB_STOP;
+}
+
+/* Receive the broadcasted messages until we get the cable test
+ * results
+ */
+static int nl_cable_test_tdr_process_results(struct cmd_context *ctx)
+{
+        struct nl_context *nlctx = ctx->nlctx;
+	struct nl_socket *nlsk = nlctx->ethnl_socket;
+
+        nlctx->is_monitor = true;
+        nlsk->port = 0;
+	nlsk->seq = 0;
+
+        return nlsock_process_reply(nlsk, nl_cable_test_tdr_results_cb, nlctx);
+}
+
+int nl_cable_test_tdr(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	struct nl_socket *nlsk = nlctx->ethnl_socket;
+        uint32_t grpid = nlctx->ethnl_mongrp;
+	int ret;
+
+	/* Join the multicast group so we can receive the results in a
+	 * race free way.
+	 */
+        if (!grpid) {
+                fprintf(stderr, "multicast group 'monitor' not found\n");
+                return -EOPNOTSUPP;
+        }
+
+        ret = mnl_socket_setsockopt(nlsk->sk, NETLINK_ADD_MEMBERSHIP,
+                                    &grpid, sizeof(grpid));
+        if (ret < 0)
+                return ret;
+
+	ret = nlsock_prep_get_request(nlsk, ETHTOOL_MSG_CABLE_TEST_TDR_ACT,
+				      ETHTOOL_A_CABLE_TEST_TDR_HEADER, 0);
+	if (ret < 0)
+		return ret;
+
+	ret = nlsock_send_get_request(nlsk, NULL);
+	if (ret)
+		fprintf(stderr, "Cannot start cable test TDR\n");
+	else
+		ret = nl_cable_test_tdr_process_results(ctx);
+	return ret;
+}
+
+static int nl_get_cable_test_tdr_amplitude(const struct nlattr *nest,
+					   uint8_t *pair, int16_t *mV)
+{
+	const struct nlattr *tb[ETHTOOL_A_CABLE_AMPLITUDE_MAX+1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	uint16_t mV_unsigned;
+	int ret;
+
+	ret = mnl_attr_parse_nested(nest, attr_cb, &tb_info);
+	if (ret < 0 ||
+	    !tb[ETHTOOL_A_CABLE_AMPLITUDE_PAIR] ||
+	    !tb[ETHTOOL_A_CABLE_AMPLITUDE_mV])
+		return -EFAULT;
+
+	*pair = mnl_attr_get_u8(tb[ETHTOOL_A_CABLE_AMPLITUDE_PAIR]);
+	mV_unsigned = mnl_attr_get_u16(tb[ETHTOOL_A_CABLE_AMPLITUDE_mV]);
+	*mV = (int16_t)(mV_unsigned);
+
+	return 0;
+}
+
+static int nl_get_cable_test_tdr_pulse(const struct nlattr *nest, int16_t *mV)
+{
+	const struct nlattr *tb[ETHTOOL_A_CABLE_PULSE_MAX+1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	uint16_t mV_unsigned;
+	int ret;
+
+	ret = mnl_attr_parse_nested(nest, attr_cb, &tb_info);
+	if (ret < 0 ||
+	    !tb[ETHTOOL_A_CABLE_PULSE_mV])
+		return -EFAULT;
+
+	mV_unsigned = mnl_attr_get_u16(tb[ETHTOOL_A_CABLE_PULSE_mV]);
+	*mV = (int16_t)(mV_unsigned);
+
+	return 0;
+}
+
+static int nl_get_cable_test_tdr_step(const struct nlattr *nest,
+				      uint16_t *first, uint16_t *last,
+				      uint16_t *step)
+{
+	const struct nlattr *tb[ETHTOOL_A_CABLE_STEP_MAX+1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	int ret;
+
+	ret = mnl_attr_parse_nested(nest, attr_cb, &tb_info);
+	if (ret < 0 ||
+	    !tb[ETHTOOL_A_CABLE_STEP_FIRST_DISTANCE] ||
+	    !tb[ETHTOOL_A_CABLE_STEP_LAST_DISTANCE] ||
+	    !tb[ETHTOOL_A_CABLE_STEP_STEP_DISTANCE])
+		return -EFAULT;
+
+	*first = mnl_attr_get_u16(tb[ETHTOOL_A_CABLE_STEP_FIRST_DISTANCE]);
+	*last = mnl_attr_get_u16(tb[ETHTOOL_A_CABLE_STEP_LAST_DISTANCE]);
+	*step = mnl_attr_get_u16(tb[ETHTOOL_A_CABLE_STEP_STEP_DISTANCE]);
+
+	return 0;
+}
+
+static int nl_cable_test_tdr_ntf_attr(struct nlattr *evattr)
+{
+	uint16_t first, last, step;
+	uint8_t pair;
+	int16_t mV;
+	int ret;
+
+	switch (mnl_attr_get_type(evattr)) {
+	case ETHTOOL_A_CABLE_TEST_TDR_NTF_AMPLITUDE:
+		ret = nl_get_cable_test_tdr_amplitude(
+			evattr, &pair, &mV);
+		if (ret < 0)
+			return ret;
+
+		printf("Pair: %d, amplitude %4d\n", pair, mV);
+		break;
+
+	case ETHTOOL_A_CABLE_TEST_TDR_NTF_PULSE:
+		ret = nl_get_cable_test_tdr_pulse(evattr, &mV);
+		if (ret < 0)
+			return ret;
+
+		printf("TDR pulse %dmV\n", mV);
+		break;
+	case ETHTOOL_A_CABLE_TEST_TDR_NTF_STEP:
+		ret = nl_get_cable_test_tdr_step(evattr, &first, &last, &step);
+		if (ret < 0)
+			return ret;
+
+		printf("Step configuration, %d-%d meters in %dm steps\n",
+		       first, last, step);
+		break;
+	}
+	return 0;
+}
+
+static void cable_test_tdr_ntf_nest(const struct nlattr *nest)
+{
+	struct nlattr *pos;
+	int ret;
+
+	mnl_attr_for_each_nested(pos, nest) {
+		ret = nl_cable_test_tdr_ntf_attr(pos);
+		if (ret < 0)
+			return;
+	}
+}
+
+int cable_test_tdr_ntf_cb(const struct nlmsghdr *nlhdr, void *data)
+{
+	const struct nlattr *tb[ETHTOOL_A_CABLE_TEST_TDR_NTF_MAX + 1] = {};
+	struct nl_context *nlctx = data;
+	DECLARE_ATTR_TB_INFO(tb);
+	bool silent;
+	int err_ret;
+	int ret;
+
+	silent = nlctx->is_dump || nlctx->is_monitor;
+	err_ret = silent ? MNL_CB_OK : MNL_CB_ERROR;
+	ret = mnl_attr_parse(nlhdr, GENL_HDRLEN, attr_cb, &tb_info);
+	if (ret < 0)
+		return err_ret;
+
+	nlctx->devname = get_dev_name(tb[ETHTOOL_A_CABLE_TEST_TDR_HEADER]);
+	if (!dev_ok(nlctx))
+		return err_ret;
+
+	printf("Cable test TDR results for device %s.\n", nlctx->devname);
+
+	cable_test_tdr_ntf_nest(tb[ETHTOOL_A_CABLE_TEST_TDR_NTF_NEST]);
+
+	return MNL_CB_OK;
+}
