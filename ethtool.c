@@ -2506,8 +2506,8 @@ do_ioctl_glinksettings(struct cmd_context *ctx)
 	if (link_usettings == NULL)
 		return NULL;
 
-	/* keep transceiver 0 */
 	memcpy(&link_usettings->base, &ecmd.req, sizeof(link_usettings->base));
+	link_usettings->deprecated.transceiver = ecmd.req.transceiver;
 
 	/* copy link mode bitmaps */
 	u32_offs = 0;
