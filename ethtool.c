@@ -5474,6 +5474,9 @@ static const struct option args[] = {
 		.opts	= "--cable-test-tdr",
 		.nlfunc	= nl_cable_test_tdr,
 		.help	= "Print cable test time domain reflectrometery data",
+		.xhelp	= "		[ first N ]\n"
+			  "		[ last N ]\n"
+			  "		[ step N ]\n"
 	},
 	{
 		.opts	= "-h|--help",

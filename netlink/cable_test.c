@@ -11,6 +11,7 @@
 #include "../internal.h"
 #include "../common.h"
 #include "netlink.h"
+#include "parser.h"
 
 static bool breakout;
 
@@ -285,12 +286,40 @@ static int nl_cable_test_tdr_process_results(struct cmd_context *ctx)
         return nlsock_process_reply(nlsk, nl_cable_test_tdr_results_cb, nlctx);
 }
 
+static const struct param_parser tdr_params[] = {
+	{
+		.arg		= "first",
+		.type		= ETHTOOL_A_CABLE_TEST_TDR_FIRST,
+		.handler	= nl_parse_direct_u16,
+	},
+	{
+		.arg		= "last",
+		.type		= ETHTOOL_A_CABLE_TEST_TDR_LAST,
+		.handler	= nl_parse_direct_u16,
+	},
+	{
+		.arg		= "step",
+		.type		= ETHTOOL_A_CABLE_TEST_TDR_STEP,
+		.handler	= nl_parse_direct_u16,
+	},
+	{
+		.arg		= "pair",
+		.type		= ETHTOOL_A_CABLE_TEST_TDR_PAIR,
+		.handler	= nl_parse_direct_u8,
+	},
+	{}
+};
+
 int nl_cable_test_tdr(struct cmd_context *ctx)
 {
 	struct nl_context *nlctx = ctx->nlctx;
 	struct nl_socket *nlsk = nlctx->ethnl_socket;
         uint32_t grpid = nlctx->ethnl_mongrp;
 	int ret;
+
+	nlctx->argp = ctx->argp;
+	nlctx->argc = ctx->argc;
+	nlctx->devname = ctx->devname;
 
 	/* Join the multicast group so we can receive the results in a
 	 * race free way.
@@ -307,6 +336,10 @@ int nl_cable_test_tdr(struct cmd_context *ctx)
 
 	ret = nlsock_prep_get_request(nlsk, ETHTOOL_MSG_CABLE_TEST_TDR_ACT,
 				      ETHTOOL_A_CABLE_TEST_TDR_HEADER, 0);
+	if (ret < 0)
+		return ret;
+
+	ret = nl_parser(nlctx, tdr_params, NULL, PARSER_GROUP_NONE);
 	if (ret < 0)
 		return ret;
 
@@ -393,7 +426,7 @@ static int nl_cable_test_tdr_ntf_attr(struct nlattr *evattr)
 		if (ret < 0)
 			return ret;
 
-		printf("Pair: %d, amplitude %4d\n", pair, mV);
+		printf("Pair: %s, amplitude %4d\n", nl_pair2txt(pair), mV);
 		break;
 
 	case ETHTOOL_A_CABLE_TEST_TDR_NTF_PULSE:
