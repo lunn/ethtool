@@ -90,6 +90,20 @@ int parse_u32(const char *arg, uint32_t *result)
 		return parse_u32d(arg, result);
 }
 
+static int parse_u16(const char *arg, uint16_t *result)
+{
+	uint32_t val;
+	int ret = parse_u32(arg, &val);
+
+	if (ret < 0)
+		return ret;
+	if (val > UINT16_MAX)
+		return -EINVAL;
+
+	*result = (uint16_t)val;
+	return 0;
+}
+
 static int parse_u8(const char *arg, uint8_t *result)
 {
 	uint32_t val;
@@ -185,6 +199,30 @@ int nl_parse_direct_u32(struct nl_context *nlctx, uint16_t type,
 	if (dest)
 		*(uint32_t *)dest = val;
 	return (type && ethnla_put_u32(msgbuff, type, val)) ? -EMSGSIZE : 0;
+}
+
+/* Parser handler for unsigned 16-bit integer. Expects a numeric argument
+ * (may use 0x prefix), generates NLA_U16 or fills an uint16_t.
+ */
+int nl_parse_direct_u16(struct nl_context *nlctx, uint16_t type,
+			const void *data, struct nl_msg_buff *msgbuff,
+			void *dest)
+{
+	const char *arg = *nlctx->argp;
+	uint16_t val;
+	int ret;
+
+	nlctx->argp++;
+	nlctx->argc--;
+	ret = parse_u16(arg, &val);
+	if (ret < 0) {
+		parser_err_invalid_value(nlctx, arg);
+		return ret;
+	}
+
+	if (dest)
+		*(uint16_t *)dest = val;
+	return (type && ethnla_put_u16(msgbuff, type, val)) ? -EMSGSIZE : 0;
 }
 
 /* Parser handler for unsigned 32-bit integer. Expects a numeric argument
