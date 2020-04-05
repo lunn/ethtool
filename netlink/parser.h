@@ -107,6 +107,10 @@ int nl_parse_string(struct nl_context *nlctx, uint16_t type, const void *data,
 int nl_parse_direct_u32(struct nl_context *nlctx, uint16_t type,
 			const void *data, struct nl_msg_buff *msgbuff,
 			void *dest);
+/* NLA_U16 represented as numeric argument */
+int nl_parse_direct_u16(struct nl_context *nlctx, uint16_t type,
+			const void *data, struct nl_msg_buff *msgbuff,
+			void *dest);
 /* NLA_U8 represented as numeric argument */
 int nl_parse_direct_u8(struct nl_context *nlctx, uint16_t type,
 		       const void *data, struct nl_msg_buff *msgbuff,

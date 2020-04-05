@@ -81,6 +81,12 @@ static inline bool ethnla_put_u32(struct nl_msg_buff *msgbuff, uint16_t type,
 	return ethnla_put(msgbuff, type, sizeof(uint32_t), &data);
 }
 
+static inline bool ethnla_put_u16(struct nl_msg_buff *msgbuff, uint16_t type,
+				  uint16_t data)
+{
+	return ethnla_put(msgbuff, type, sizeof(uint16_t), &data);
+}
+
 static inline bool ethnla_put_u8(struct nl_msg_buff *msgbuff, uint16_t type,
 				 uint8_t data)
 {
