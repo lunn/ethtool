@@ -86,8 +86,10 @@ static char *nl_pair2txt(uint8_t pair)
 	}
 }
 
-static int nl_cable_test_ntf_attr(struct nlattr *evattr)
+static int nl_cable_test_ntf_attr(struct nlattr *evattr,
+				  struct nl_context *nlctx)
 {
+	struct cmd_context *ctx =  nlctx->ctx;
 	unsigned int cm;
 	uint16_t code;
 	uint8_t pair;
@@ -99,29 +101,44 @@ static int nl_cable_test_ntf_attr(struct nlattr *evattr)
 		if (ret < 0)
 			return ret;
 
-		printf("Pair: %s, result: %s\n", nl_pair2txt(pair),
-		       nl_code2txt(code));
+		if (ctx->jw) {
+			jsonw_start_object(ctx->jw);
+			jsonw_string_field(ctx->jw, "pair", nl_pair2txt(pair));
+			jsonw_string_field(ctx->jw, "code", nl_code2txt(code));
+			jsonw_end_object(ctx->jw);
+		} else {
+			printf("Pair: %s, result: %s\n", nl_pair2txt(pair),
+			       nl_code2txt(code));
+		}
+
 		break;
 
 	case ETHTOOL_A_CABLE_TEST_NTF_FAULT_LENGTH:
 		ret = nl_get_cable_test_fault_length(evattr, &pair, &cm);
 		if (ret < 0)
 			return ret;
-
-		printf("Pair: %s, fault length: %0.2fm\n",
-		       nl_pair2txt(pair), (float)cm / 100);
+		if (ctx->jw) {
+			jsonw_start_object(ctx->jw);
+			jsonw_string_field(ctx->jw, "pair", nl_pair2txt(pair));
+			jsonw_float_field(ctx->jw, "length", (float)cm / 100);
+			jsonw_end_object(ctx->jw);
+		} else {
+			printf("Pair: %s, fault length: %0.2fm\n",
+			       nl_pair2txt(pair), (float)cm / 100);
+		}
 		break;
 	}
 	return 0;
 }
 
-static void cable_test_ntf_nest(const struct nlattr *nest)
+static void cable_test_ntf_nest(const struct nlattr *nest,
+				struct nl_context *nlctx)
 {
 	struct nlattr *pos;
 	int ret;
 
 	mnl_attr_for_each_nested(pos, nest) {
-		ret = nl_cable_test_ntf_attr(pos);
+		ret = nl_cable_test_ntf_attr(pos, nlctx);
 		if (ret < 0)
 			return;
 	}
@@ -134,6 +151,7 @@ static int cable_test_ntf_stop_cb(const struct nlmsghdr *nlhdr, void *data)
 	const struct nlattr *tb[ETHTOOL_A_CABLE_TEST_NTF_MAX + 1] = {};
 	u8 status = ETHTOOL_A_CABLE_TEST_NTF_STATUS_UNSPEC;
 	struct nl_context *nlctx = data;
+	struct cmd_context *ctx =  nlctx->ctx;
 	DECLARE_ATTR_TB_INFO(tb);
 	bool silent;
 	int err_ret;
@@ -152,21 +170,22 @@ static int cable_test_ntf_stop_cb(const struct nlmsghdr *nlhdr, void *data)
 	if (tb[ETHTOOL_A_CABLE_TEST_NTF_STATUS])
 		status = mnl_attr_get_u8(tb[ETHTOOL_A_CABLE_TEST_NTF_STATUS]);
 	
-	switch (status) {
-	case ETHTOOL_A_CABLE_TEST_NTF_STATUS_STARTED:
-		printf("Cable test started for device %s.\n",
-		       nlctx->devname);
-		break;
-	case ETHTOOL_A_CABLE_TEST_NTF_STATUS_COMPLETED:
-		printf("Cable test completed for device %s.\n",
-		       nlctx->devname);
-		break;
-	default:
-		break;
+	if (!ctx->json) {
+		switch (status) {
+		case ETHTOOL_A_CABLE_TEST_NTF_STATUS_STARTED:
+			printf("Cable test started for device %s.\n",
+			       nlctx->devname);
+			break;
+		case ETHTOOL_A_CABLE_TEST_NTF_STATUS_COMPLETED:
+			printf("Cable test completed for device %s.\n",
+			       nlctx->devname);
+			break;
+		default:
+			break;
+		}
 	}
-
 	if (tb[ETHTOOL_A_CABLE_TEST_NTF_NEST])
-		cable_test_ntf_nest(tb[ETHTOOL_A_CABLE_TEST_NTF_NEST]);
+		cable_test_ntf_nest(tb[ETHTOOL_A_CABLE_TEST_NTF_NEST], nlctx);
 
 	if (status == ETHTOOL_A_CABLE_TEST_NTF_STATUS_COMPLETED) {
 		breakout = true;
@@ -252,8 +271,21 @@ int nl_cable_test(struct cmd_context *ctx)
 	ret = nlsock_sendmsg(nlsk, NULL);
 	if (ret < 0)
 		fprintf(stderr, "Cannot start cable test\n");
-	else
+	else {
+		if (ctx->json) {
+			ctx->jw =  jsonw_new(stdout);
+			jsonw_pretty(ctx->jw, true);
+			jsonw_start_array(ctx->jw);
+		}
+
 		ret = nl_cable_test_process_results(ctx);
+
+		if (ctx->json) {
+			jsonw_end_array(ctx->jw);
+			jsonw_destroy(&ctx->jw);
+		}
+	}
+
 	return ret;
 }
 
@@ -412,8 +444,10 @@ static int nl_get_cable_test_tdr_step(const struct nlattr *nest,
 	return 0;
 }
 
-static int nl_cable_test_tdr_ntf_attr(struct nlattr *evattr)
+static int nl_cable_test_tdr_ntf_attr(struct nlattr *evattr,
+				      struct nl_context *nlctx)
 {
+	struct cmd_context *ctx =  nlctx->ctx;
 	uint16_t first, last, step;
 	uint8_t pair;
 	int16_t mV;
@@ -426,7 +460,16 @@ static int nl_cable_test_tdr_ntf_attr(struct nlattr *evattr)
 		if (ret < 0)
 			return ret;
 
-		printf("Pair: %s, amplitude %4d\n", nl_pair2txt(pair), mV);
+		if (ctx->jw) {
+			jsonw_start_object(ctx->jw);
+			jsonw_string_field(ctx->jw, "pair", nl_pair2txt(pair));
+			jsonw_int_field(ctx->jw, "amplitude", mV);
+			jsonw_end_object(ctx->jw);
+		} else {
+			printf("Pair: %s, amplitude %4d\n",
+			       nl_pair2txt(pair), mV);
+		}
+
 		break;
 
 	case ETHTOOL_A_CABLE_TEST_TDR_NTF_PULSE:
@@ -434,27 +477,43 @@ static int nl_cable_test_tdr_ntf_attr(struct nlattr *evattr)
 		if (ret < 0)
 			return ret;
 
-		printf("TDR pulse %dmV\n", mV);
+		if (ctx->jw) {
+			jsonw_start_object(ctx->jw);
+			jsonw_uint_field(ctx->jw, "pulse", mV);
+			jsonw_end_object(ctx->jw);
+		} else {
+			printf("TDR pulse %dmV\n", mV);
+		}
+
 		break;
 	case ETHTOOL_A_CABLE_TEST_TDR_NTF_STEP:
 		ret = nl_get_cable_test_tdr_step(evattr, &first, &last, &step);
 		if (ret < 0)
 			return ret;
 
-		printf("Step configuration, %d-%d meters in %dm steps\n",
-		       first, last, step);
+		if (ctx->jw) {
+			jsonw_start_object(ctx->jw);
+			jsonw_uint_field(ctx->jw, "first", first);
+			jsonw_uint_field(ctx->jw, "last", last);
+			jsonw_uint_field(ctx->jw, "step", step);
+			jsonw_end_object(ctx->jw);
+		} else {
+			printf("Step configuration %d-%d meters in %dm steps\n",
+			       first, last, step);
+		}
 		break;
 	}
 	return 0;
 }
 
-static void cable_test_tdr_ntf_nest(const struct nlattr *nest)
+static void cable_test_tdr_ntf_nest(const struct nlattr *nest,
+				    struct nl_context *nlctx)
 {
 	struct nlattr *pos;
 	int ret;
 
 	mnl_attr_for_each_nested(pos, nest) {
-		ret = nl_cable_test_tdr_ntf_attr(pos);
+		ret = nl_cable_test_tdr_ntf_attr(pos, nlctx);
 		if (ret < 0)
 			return;
 	}
@@ -464,6 +523,8 @@ int cable_test_tdr_ntf_cb(const struct nlmsghdr *nlhdr, void *data)
 {
 	const struct nlattr *tb[ETHTOOL_A_CABLE_TEST_TDR_NTF_MAX + 1] = {};
 	struct nl_context *nlctx = data;
+	struct cmd_context *ctx =  nlctx->ctx;
+
 	DECLARE_ATTR_TB_INFO(tb);
 	bool silent;
 	int err_ret;
@@ -479,9 +540,21 @@ int cable_test_tdr_ntf_cb(const struct nlmsghdr *nlhdr, void *data)
 	if (!dev_ok(nlctx))
 		return err_ret;
 
-	printf("Cable test TDR results for device %s.\n", nlctx->devname);
+	if (ctx->json) {
+		ctx->jw =  jsonw_new(stdout);
+		jsonw_pretty(ctx->jw, true);
+		jsonw_start_array(ctx->jw);
+	} else {
+		printf("Cable test TDR results for device %s.\n",
+		       nlctx->devname);
+	}
 
-	cable_test_tdr_ntf_nest(tb[ETHTOOL_A_CABLE_TEST_TDR_NTF_NEST]);
+	cable_test_tdr_ntf_nest(tb[ETHTOOL_A_CABLE_TEST_TDR_NTF_NEST], nlctx);
+
+	if (ctx->json) {
+		jsonw_end_array(ctx->jw);
+		jsonw_destroy(&ctx->jw);
+	}
 
 	return MNL_CB_OK;
 }
