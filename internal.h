@@ -23,6 +23,8 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 
+#include "json_writer.h"
+
 #define maybe_unused __attribute__((__unused__))
 
 /* internal for netlink interface */
@@ -221,6 +223,8 @@ struct cmd_context {
 	int argc;		/* number of arguments to the sub-command */
 	char **argp;		/* arguments to the sub-command */
 	unsigned long debug;	/* debugging mask */
+	bool json;		/* Output JSON, if supported */
+	json_writer_t *jw;      /* JSON writer instance */
 #ifdef ETHTOOL_ENABLE_NETLINK
 	struct nl_context *nlctx;	/* netlink context (opaque) */
 #endif
