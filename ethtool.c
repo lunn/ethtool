@@ -2306,26 +2306,33 @@ static int do_sfeatures(struct cmd_context *ctx)
 	/* Generate cmdline_info for legacy flags and kernel-named
 	 * features, and parse our arguments.
 	 */
-	cmdline_features = calloc(ARRAY_SIZE(off_flag_def) + defs->n_features,
+	cmdline_features = calloc(2 * ARRAY_SIZE(off_flag_def) +
+				  defs->n_features,
 				  sizeof(cmdline_features[0]));
 	if (!cmdline_features) {
 		perror("Cannot parse arguments");
 		rc = 1;
 		goto err;
 	}
-	for (i = 0; i < ARRAY_SIZE(off_flag_def); i++)
+	j = 0;
+	for (i = 0; i < ARRAY_SIZE(off_flag_def); i++) {
 		flag_to_cmdline_info(off_flag_def[i].short_name,
 				     off_flag_def[i].value,
 				     &off_flags_wanted, &off_flags_mask,
-				     &cmdline_features[i]);
+				     &cmdline_features[j++]);
+		flag_to_cmdline_info(off_flag_def[i].long_name,
+				     off_flag_def[i].value,
+				     &off_flags_wanted, &off_flags_mask,
+				     &cmdline_features[j++]);
+	}
 	for (i = 0; i < defs->n_features; i++)
 		flag_to_cmdline_info(
 			defs->def[i].name, FEATURE_FIELD_FLAG(i),
 			&FEATURE_WORD(efeatures->features, i, requested),
 			&FEATURE_WORD(efeatures->features, i, valid),
-			&cmdline_features[ARRAY_SIZE(off_flag_def) + i]);
+			&cmdline_features[j++]);
 	parse_generic_cmdline(ctx, &any_changed, cmdline_features,
-			      ARRAY_SIZE(off_flag_def) + defs->n_features);
+			      2 * ARRAY_SIZE(off_flag_def) + defs->n_features);
 	free(cmdline_features);
 
 	if (!any_changed) {
