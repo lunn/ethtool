@@ -167,16 +167,25 @@ static int parse_monitor(struct cmd_context *ctx)
 
 int nl_monitor(struct cmd_context *ctx)
 {
-	struct nl_context *nlctx = ctx->nlctx;
-	struct nl_socket *nlsk = nlctx->ethnl_socket;
-	uint32_t grpid = nlctx->ethnl_mongrp;
+	struct nl_context *nlctx;
+	struct nl_socket *nlsk;
+	uint32_t grpid;
 	bool is_dev;
 	int ret;
 
+	ret = netlink_init(ctx);
+	if (ret < 0) {
+		fprintf(stderr, "Netlink interface initialization failed, option --monitor not supported.\n");
+		return ret;
+	}
+	nlctx = ctx->nlctx;
+	nlsk = nlctx->ethnl_socket;
+	grpid = nlctx->ethnl_mongrp;
 	if (!grpid) {
 		fprintf(stderr, "multicast group 'monitor' not found\n");
 		return -EOPNOTSUPP;
 	}
+
 	if (parse_monitor(ctx) < 0)
 		return 1;
 	is_dev = ctx->devname && strcmp(ctx->devname, WILDCARD_DEVNAME);

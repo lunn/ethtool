@@ -5174,7 +5174,7 @@ struct option {
 	const char	*opts;
 	bool		no_dev;
 	int		(*func)(struct cmd_context *);
-	int		(*nlfunc)(struct cmd_context *);
+	nl_func_t	nlfunc;
 	const char	*help;
 	const char	*xhelp;
 };
@@ -5748,6 +5748,11 @@ static int ioctl_init(struct cmd_context *ctx, bool no_dev)
 		ctx->fd = -1;
 		return 0;
 	}
+	if (strlen(ctx->devname) >= IFNAMSIZ) {
+		fprintf(stderr, "Device name longer than %u characters\n",
+			IFNAMSIZ - 1);
+		exit_bad_args();
+	}
 
 	/* Setup our control structures. */
 	memset(&ctx->ifr, 0, sizeof(ctx->ifr));
@@ -5767,9 +5772,9 @@ static int ioctl_init(struct cmd_context *ctx, bool no_dev)
 
 int main(int argc, char **argp)
 {
-	int (*nlfunc)(struct cmd_context *) = NULL;
 	int (*func)(struct cmd_context *);
 	struct cmd_context ctx = {};
+	nl_func_t nlfunc = NULL;
 	bool no_dev;
 	int ret;
 	int k;
@@ -5792,19 +5797,12 @@ int main(int argc, char **argp)
 		argp += 2;
 		argc -= 2;
 	}
-#ifdef ETHTOOL_ENABLE_NETLINK
 	if (*argp && !strcmp(*argp, "--monitor")) {
-		if (netlink_init(&ctx)) {
-			fprintf(stderr,
-				"Option --monitor is only available with netlink.\n");
-			return 1;
-		} else {
-			ctx.argp = ++argp;
-			ctx.argc = --argc;
-			return nl_monitor(&ctx);
-		}
+		ctx.argp = ++argp;
+		ctx.argc = --argc;
+		ret = nl_monitor(&ctx);
+		return ret ? 1 : 0;
 	}
-#endif
 
 	/* First argument must be either a valid option or a device
 	 * name to get settings for (which we don't expect to begin
@@ -5829,40 +5827,17 @@ int main(int argc, char **argp)
 	no_dev = false;
 
 opt_found:
-	if (nlfunc) {
-		if (netlink_init(&ctx))
-			nlfunc = NULL;		/* fallback to ioctl() */
-	}
-
 	if (!no_dev) {
 		ctx.devname = *argp++;
 		argc--;
 
-		/* netlink supports altnames, we will have to recheck against
-		 * IFNAMSIZ later in case of fallback to ioctl
-		 */
-		if (!ctx.devname || strlen(ctx.devname) >= ALTIFNAMSIZ) {
-			netlink_done(&ctx);
+		if (!ctx.devname)
 			exit_bad_args();
-		}
 	}
-
 	ctx.argc = argc;
 	ctx.argp = argp;
+	netlink_run_handler(&ctx, nlfunc, !func);
 
-	if (nlfunc) {
-		ret = nlfunc(&ctx);
-		netlink_done(&ctx);
-		if ((ret != -EOPNOTSUPP) || !func)
-			return (ret >= 0) ? ret : 1;
-	}
-
-	if (ctx.devname && strlen(ctx.devname) >= IFNAMSIZ) {
-		fprintf(stderr,
-			"ethtool: device names longer than %u characters are only allowed with netlink\n",
-			IFNAMSIZ - 1);
-		exit_bad_args();
-	}
 	ret = ioctl_init(&ctx, no_dev);
 	if (ret)
 		return ret;

@@ -10,10 +10,12 @@
 struct cmd_context;
 struct nl_context;
 
+typedef int (*nl_func_t)(struct cmd_context *);
+
 #ifdef ETHTOOL_ENABLE_NETLINK
 
-int netlink_init(struct cmd_context *ctx);
-void netlink_done(struct cmd_context *ctx);
+void netlink_run_handler(struct cmd_context *ctx, nl_func_t nlfunc,
+			 bool no_fallback);
 
 int nl_gset(struct cmd_context *ctx);
 int nl_sset(struct cmd_context *ctx);
@@ -24,13 +26,15 @@ void nl_monitor_usage(void);
 
 #else /* ETHTOOL_ENABLE_NETLINK */
 
-static inline int netlink_init(struct cmd_context *ctx maybe_unused)
+static inline void netlink_run_handler(struct cmd_context *ctx,
+				       nl_func_t nlfunc, bool no_fallback)
 {
-	return -EOPNOTSUPP;
 }
 
-static inline void netlink_done(struct cmd_context *ctx maybe_unused)
+static inline int nl_monitor(struct cmd_context *ctx)
 {
+	fprintf(stderr, "Netlink not supported by ethtool, option --monitor unsupported.\n");
+	return -EOPNOTSUPP;
 }
 
 static inline void nl_monitor_usage(void)

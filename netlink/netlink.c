@@ -205,7 +205,7 @@ out_free:
 	return ret;
 }
 
-void netlink_done(struct cmd_context *ctx)
+static void netlink_done(struct cmd_context *ctx)
 {
 	if (!ctx->nlctx)
 		return;
@@ -213,4 +213,61 @@ void netlink_done(struct cmd_context *ctx)
 	free(ctx->nlctx);
 	ctx->nlctx = NULL;
 	cleanup_all_strings();
+}
+
+/**
+ * netlink_run_handler() - run netlink handler for subcommand
+ * @ctx:         command context
+ * @nlfunc:      subcommand netlink handler to call
+ * @no_fallback: there is no ioctl fallback handler
+ *
+ * This function returns only if ioctl() handler should be run as fallback.
+ * Otherwise it exits with appropriate return code.
+ */
+void netlink_run_handler(struct cmd_context *ctx, nl_func_t nlfunc,
+			 bool no_fallback)
+{
+	bool wildcard = ctx->devname && !strcmp(ctx->devname, WILDCARD_DEVNAME);
+	const char *reason;
+	int ret;
+
+	if (ctx->devname && strlen(ctx->devname) >= ALTIFNAMSIZ) {
+		fprintf(stderr, "device name '%s' longer than %u characters\n",
+			ctx->devname, ALTIFNAMSIZ - 1);
+		exit(1);
+	}
+
+	if (!nlfunc) {
+		reason = "ethtool netlink support for subcommand missing";
+		goto no_support;
+	}
+	if (netlink_init(ctx)) {
+		reason = "netlink interface initialization failed";
+		goto no_support;
+	}
+
+	ret = nlfunc(ctx);
+	netlink_done(ctx);
+	if (ret != -EOPNOTSUPP || no_fallback)
+		exit(ret >= 0 ? ret : 1);
+	reason = "kernel netlink support for subcommand missing";
+
+no_support:
+	if (no_fallback) {
+		fprintf(stderr, "%s, subcommand not supported by ioctl\n",
+			reason);
+		exit(1);
+	}
+	if (wildcard) {
+		fprintf(stderr, "%s, wildcard dump not supported\n", reason);
+		exit(1);
+	}
+	if (ctx->devname && strlen(ctx->devname) >= IFNAMSIZ) {
+		fprintf(stderr,
+			"%s, device name longer than %u not supported\n",
+			reason, IFNAMSIZ - 1);
+		exit(1);
+	}
+
+	/* fallback to ioctl() */
 }
