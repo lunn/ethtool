@@ -92,16 +92,88 @@ int get_dev_info(const struct nlattr *nest, int *ifindex, char *ifname)
 	return 0;
 }
 
+/**
+ * netlink_cmd_check() - check support for netlink command
+ * @ctx:            ethtool command context
+ * @cmd:            netlink command id
+ * @devname:        device name from user
+ * @allow_wildcard: wildcard dumps supported
+ *
+ * Check if command @cmd is known to be unsupported based on ops information
+ * from genetlink family id request. Set nlctx->ioctl_fallback if ethtool
+ * should fall back to ioctl, i.e. when we do not know in advance that
+ * netlink request is supported. Set nlctx->wildcard_unsupported if "*" was
+ * used as device name but the request does not support wildcards (on either
+ * side).
+ *
+ * Return: true if we know the netlink request is not supported and should
+ * fail (and possibly fall back) without actually sending it to kernel.
+ */
+bool netlink_cmd_check(struct cmd_context *ctx, unsigned int cmd,
+		       bool allow_wildcard)
+{
+	bool is_dump = !strcmp(ctx->devname, WILDCARD_DEVNAME);
+	uint32_t cap = is_dump ? GENL_CMD_CAP_DUMP : GENL_CMD_CAP_DO;
+	struct nl_context *nlctx = ctx->nlctx;
+
+	if (is_dump && !allow_wildcard) {
+		nlctx->wildcard_unsupported = true;
+		return true;
+	}
+	if (!nlctx->ops_flags) {
+		nlctx->ioctl_fallback = true;
+		return false;
+	}
+	if (cmd > ETHTOOL_MSG_USER_MAX || !nlctx->ops_flags[cmd]) {
+		nlctx->ioctl_fallback = true;
+		return true;
+	}
+
+	if (is_dump && !(nlctx->ops_flags[cmd] & GENL_CMD_CAP_DUMP))
+		nlctx->wildcard_unsupported = true;
+
+	return !(nlctx->ops_flags[cmd] & cap);
+}
+
 /* initialization */
 
-struct fam_info {
-	const char	*fam_name;
-	const char	*grp_name;
-	uint16_t	fam_id;
-	uint32_t	grp_id;
-};
+static int genl_read_ops(struct nl_context *nlctx,
+			 const struct nlattr *ops_attr)
+{
+	struct nlattr *op_attr;
+	uint32_t *ops_flags;
+	int ret;
 
-static void find_mc_group(struct nlattr *nest, struct fam_info *info)
+	ops_flags = calloc(__ETHTOOL_MSG_USER_CNT, sizeof(ops_flags[0]));
+	if (!ops_flags)
+		return -ENOMEM;
+
+	mnl_attr_for_each_nested(op_attr, ops_attr) {
+		const struct nlattr *tb[CTRL_ATTR_OP_MAX + 1] = {};
+		DECLARE_ATTR_TB_INFO(tb);
+		uint32_t op_id;
+
+		ret = mnl_attr_parse_nested(op_attr, attr_cb, &tb_info);
+		if (ret < 0)
+			goto err;
+
+		if (!tb[CTRL_ATTR_OP_ID] || !tb[CTRL_ATTR_OP_FLAGS])
+			continue;
+		op_id = mnl_attr_get_u32(tb[CTRL_ATTR_OP_ID]);
+		if (op_id >= __ETHTOOL_MSG_USER_CNT)
+			continue;
+
+		ops_flags[op_id] = mnl_attr_get_u32(tb[CTRL_ATTR_OP_FLAGS]);
+	}
+
+	nlctx->ops_flags = ops_flags;
+	return 0;
+err:
+	free(ops_flags);
+	return ret;
+}
+
+static void find_mc_group(struct nl_context *nlctx, struct nlattr *nest)
 {
 	const struct nlattr *grp_tb[CTRL_ATTR_MCAST_GRP_MAX + 1] = {};
 	DECLARE_ATTR_TB_INFO(grp_tb);
@@ -116,9 +188,9 @@ static void find_mc_group(struct nlattr *nest, struct fam_info *info)
 		    !grp_tb[CTRL_ATTR_MCAST_GRP_ID])
 			continue;
 		if (strcmp(mnl_attr_get_str(grp_tb[CTRL_ATTR_MCAST_GRP_NAME]),
-			   info->grp_name))
+			   ETHTOOL_MCGRP_MONITOR_NAME))
 			continue;
-		info->grp_id =
+		nlctx->ethnl_mongrp =
 			mnl_attr_get_u32(grp_tb[CTRL_ATTR_MCAST_GRP_ID]);
 		return;
 	}
@@ -126,16 +198,21 @@ static void find_mc_group(struct nlattr *nest, struct fam_info *info)
 
 static int family_info_cb(const struct nlmsghdr *nlhdr, void *data)
 {
-	struct fam_info *info = data;
+	struct nl_context *nlctx = data;
 	struct nlattr *attr;
+	int ret;
 
 	mnl_attr_for_each(attr, nlhdr, GENL_HDRLEN) {
 		switch (mnl_attr_get_type(attr)) {
 		case CTRL_ATTR_FAMILY_ID:
-			info->fam_id = mnl_attr_get_u16(attr);
+			nlctx->ethnl_fam = mnl_attr_get_u16(attr);
 			break;
+		case CTRL_ATTR_OPS:
+			ret = genl_read_ops(nlctx, attr);
+			if (ret < 0)
+				return MNL_CB_ERROR;
 		case CTRL_ATTR_MCAST_GROUPS:
-			find_mc_group(attr, info);
+			find_mc_group(nlctx, attr);
 			break;
 		}
 	}
@@ -144,41 +221,37 @@ static int family_info_cb(const struct nlmsghdr *nlhdr, void *data)
 }
 
 #ifdef TEST_ETHTOOL
-static int get_genl_family(struct nl_socket *nlsk, struct fam_info *info)
+static int get_genl_family(struct nl_context *nlctx, struct nl_socket *nlsk)
 {
 	return 0;
 }
 #else
-static int get_genl_family(struct nl_socket *nlsk, struct fam_info *info)
+static int get_genl_family(struct nl_context *nlctx, struct nl_socket *nlsk)
 {
 	struct nl_msg_buff *msgbuff = &nlsk->msgbuff;
 	int ret;
 
-	nlsk->nlctx->suppress_nlerr = 2;
+	nlctx->suppress_nlerr = 2;
 	ret = __msg_init(msgbuff, GENL_ID_CTRL, CTRL_CMD_GETFAMILY,
 			 NLM_F_REQUEST | NLM_F_ACK, 1);
 	if (ret < 0)
 		goto out;
 	ret = -EMSGSIZE;
-	if (ethnla_put_strz(msgbuff, CTRL_ATTR_FAMILY_NAME, info->fam_name))
+	if (ethnla_put_strz(msgbuff, CTRL_ATTR_FAMILY_NAME, ETHTOOL_GENL_NAME))
 		goto out;
 
 	nlsock_sendmsg(nlsk, NULL);
-	nlsock_process_reply(nlsk, family_info_cb, info);
-	ret = info->fam_id ? 0 : -EADDRNOTAVAIL;
+	nlsock_process_reply(nlsk, family_info_cb, nlctx);
+	ret = nlctx->ethnl_fam ? 0 : -EADDRNOTAVAIL;
 
 out:
-	nlsk->nlctx->suppress_nlerr = 0;
+	nlctx->suppress_nlerr = 0;
 	return ret;
 }
 #endif
 
 int netlink_init(struct cmd_context *ctx)
 {
-	struct fam_info info = {
-		.fam_name	= ETHTOOL_GENL_NAME,
-		.grp_name	= ETHTOOL_MCGRP_MONITOR_NAME,
-	};
 	struct nl_context *nlctx;
 	int ret;
 
@@ -189,11 +262,9 @@ int netlink_init(struct cmd_context *ctx)
 	ret = nlsock_init(nlctx, &nlctx->ethnl_socket, NETLINK_GENERIC);
 	if (ret < 0)
 		goto out_free;
-	ret = get_genl_family(nlctx->ethnl_socket, &info);
+	ret = get_genl_family(nlctx, nlctx->ethnl_socket);
 	if (ret < 0)
 		goto out_nlsk;
-	nlctx->ethnl_fam = info.fam_id;
-	nlctx->ethnl_mongrp = info.grp_id;
 
 	ctx->nlctx = nlctx;
 	return 0;
@@ -201,6 +272,7 @@ int netlink_init(struct cmd_context *ctx)
 out_nlsk:
 	nlsock_done(nlctx->ethnl_socket);
 out_free:
+	free(nlctx->ops_flags);
 	free(nlctx);
 	return ret;
 }
@@ -210,6 +282,7 @@ static void netlink_done(struct cmd_context *ctx)
 	if (!ctx->nlctx)
 		return;
 
+	free(ctx->nlctx->ops_flags);
 	free(ctx->nlctx);
 	ctx->nlctx = NULL;
 	cleanup_all_strings();
@@ -228,6 +301,7 @@ void netlink_run_handler(struct cmd_context *ctx, nl_func_t nlfunc,
 			 bool no_fallback)
 {
 	bool wildcard = ctx->devname && !strcmp(ctx->devname, WILDCARD_DEVNAME);
+	struct nl_context *nlctx;
 	const char *reason;
 	int ret;
 
@@ -245,12 +319,20 @@ void netlink_run_handler(struct cmd_context *ctx, nl_func_t nlfunc,
 		reason = "netlink interface initialization failed";
 		goto no_support;
 	}
+	nlctx = ctx->nlctx;
 
 	ret = nlfunc(ctx);
 	netlink_done(ctx);
-	if (ret != -EOPNOTSUPP || no_fallback)
+	if (no_fallback || ret != -EOPNOTSUPP || !nlctx->ioctl_fallback) {
+		if (nlctx->wildcard_unsupported)
+			fprintf(stderr, "%s\n",
+				"subcommand does not support wildcard dump");
 		exit(ret >= 0 ? ret : 1);
-	reason = "kernel netlink support for subcommand missing";
+	}
+	if (nlctx->wildcard_unsupported)
+		reason = "subcommand does not support wildcard dump";
+	else
+		reason = "kernel netlink support for subcommand missing";
 
 no_support:
 	if (no_fallback) {

@@ -728,6 +728,13 @@ int nl_gset(struct cmd_context *ctx)
 	struct nl_socket *nlsk = nlctx->ethnl_socket;
 	int ret;
 
+	if (netlink_cmd_check(ctx, ETHTOOL_MSG_LINKMODES_GET, true) ||
+	    netlink_cmd_check(ctx, ETHTOOL_MSG_LINKINFO_GET, true) ||
+	    netlink_cmd_check(ctx, ETHTOOL_MSG_WOL_GET, true) ||
+	    netlink_cmd_check(ctx, ETHTOOL_MSG_DEBUG_GET, true) ||
+	    netlink_cmd_check(ctx, ETHTOOL_MSG_LINKSTATE_GET, true))
+		return -EOPNOTSUPP;
+
 	nlctx->suppress_nlerr = 1;
 
 	ret = gset_request(nlsk, ETHTOOL_MSG_LINKMODES_GET,

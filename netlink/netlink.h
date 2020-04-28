@@ -25,6 +25,7 @@ struct nl_context {
 	unsigned int		suppress_nlerr;
 	uint16_t		ethnl_fam;
 	uint32_t		ethnl_mongrp;
+	uint32_t		*ops_flags;
 	struct nl_socket	*ethnl_socket;
 	struct nl_socket	*ethnl2_socket;
 	struct nl_socket	*rtnl_socket;
@@ -36,6 +37,8 @@ struct nl_context {
 	const char		*param;
 	char			**argp;
 	int			argc;
+	bool			ioctl_fallback;
+	bool			wildcard_unsupported;
 };
 
 struct attr_tb_info {
@@ -50,6 +53,8 @@ int nomsg_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int attr_cb(const struct nlattr *attr, void *data);
 
 int netlink_init(struct cmd_context *ctx);
+bool netlink_cmd_check(struct cmd_context *ctx, unsigned int cmd,
+		       bool allow_wildcard);
 const char *get_dev_name(const struct nlattr *nest);
 int get_dev_info(const struct nlattr *nest, int *ifindex, char *ifname);
 

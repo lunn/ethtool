@@ -1023,6 +1023,13 @@ int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
 			goto out_free;
 	}
 
+	if (group_style == PARSER_GROUP_MSG) {
+		ret = -EOPNOTSUPP;
+		for (buff = buffs; buff; buff = buff->next)
+			if (msgbuff_len(&buff->msgbuff) > buff->orig_len &&
+			    netlink_cmd_check(nlctx->ctx, buff->id, false))
+				goto out_free;
+	}
 	for (buff = buffs; buff; buff = buff->next) {
 		struct nl_msg_buff *msgbuff = &buff->msgbuff;
 
