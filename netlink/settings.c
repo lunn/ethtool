@@ -375,7 +375,7 @@ static int dump_link_modes(struct nl_context *nlctx,
 after:
 	if (first && if_none)
 		printf("%s", if_none);
-	printf(after);
+	printf("%s", after);
 
 	return 0;
 err:
