@@ -957,6 +957,10 @@ int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
 		if (!buff)
 			goto out_free_buffs;
 		msgbuff = &buff->msgbuff;
+		ret = msg_init(nlctx, msgbuff, parser->group,
+			       NLM_F_REQUEST | NLM_F_ACK);
+		if (ret < 0)
+			goto out_free_buffs;
 
 		switch (group_style) {
 		case PARSER_GROUP_NEST:
@@ -966,10 +970,6 @@ int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
 				goto out_free_buffs;
 			break;
 		case PARSER_GROUP_MSG:
-			ret = msg_init(nlctx, msgbuff, parser->group,
-				       NLM_F_REQUEST | NLM_F_ACK);
-			if (ret < 0)
-				goto out_free_buffs;
 			if (ethnla_fill_header(msgbuff,
 					       ETHTOOL_A_LINKINFO_HEADER,
 					       nlctx->devname, 0))
