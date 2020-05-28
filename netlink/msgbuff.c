@@ -79,6 +79,7 @@ int msgbuff_append(struct nl_msg_buff *dest, struct nl_msg_buff *src)
 	unsigned int dest_len = MNL_ALIGN(msgbuff_len(dest));
 	int ret;
 
+	src_len -= GENL_HDRLEN;
 	ret = msgbuff_realloc(dest, dest_len + src_len);
 	if (ret < 0)
 		return ret;
