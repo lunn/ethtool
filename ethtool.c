@@ -5383,6 +5383,7 @@ static const struct option args[] = {
 	{
 		.opts	= "--set-priv-flags",
 		.func	= do_sprivflags,
+		.nlfunc	= nl_sprivflags,
 		.help	= "Set private flags",
 		.xhelp	= "		FLAG on|off ...\n"
 	},
