@@ -1,7 +1,7 @@
 /*
  * coalesce.c - netlink implementation of coalescing commands
  *
- * Implementation of "ethtool -c <dev>"
+ * Implementation of "ethtool -c <dev>" and "ethtool -C <dev> ..."
  */
 
 #include <errno.h>
@@ -11,6 +11,7 @@
 #include "../internal.h"
 #include "../common.h"
 #include "netlink.h"
+#include "parser.h"
 
 /* COALESCE_GET */
 
@@ -88,4 +89,181 @@ int nl_gcoalesce(struct cmd_context *ctx)
 	if (ret < 0)
 		return ret;
 	return nlsock_send_get_request(nlsk, coalesce_reply_cb);
+}
+
+/* COALESCE_SET */
+
+static const struct param_parser scoalesce_params[] = {
+	{
+		.arg		= "adaptive-rx",
+		.type		= ETHTOOL_A_COALESCE_USE_ADAPTIVE_RX,
+		.handler	= nl_parse_u8bool,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "adaptive-tx",
+		.type		= ETHTOOL_A_COALESCE_USE_ADAPTIVE_TX,
+		.handler	= nl_parse_u8bool,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "sample-interval",
+		.type		= ETHTOOL_A_COALESCE_RATE_SAMPLE_INTERVAL,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "stats-block-usecs",
+		.type		= ETHTOOL_A_COALESCE_STATS_BLOCK_USECS,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "pkt-rate-low",
+		.type		= ETHTOOL_A_COALESCE_PKT_RATE_LOW,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "pkt-rate-high",
+		.type		= ETHTOOL_A_COALESCE_PKT_RATE_HIGH,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-usecs",
+		.type		= ETHTOOL_A_COALESCE_RX_USECS,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-frames",
+		.type		= ETHTOOL_A_COALESCE_RX_MAX_FRAMES,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-usecs-irq",
+		.type		= ETHTOOL_A_COALESCE_RX_USECS_IRQ,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-frames-irq",
+		.type		= ETHTOOL_A_COALESCE_RX_MAX_FRAMES_IRQ,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-usecs",
+		.type		= ETHTOOL_A_COALESCE_TX_USECS,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-frames",
+		.type		= ETHTOOL_A_COALESCE_TX_MAX_FRAMES,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-usecs-irq",
+		.type		= ETHTOOL_A_COALESCE_TX_USECS_IRQ,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-frames-irq",
+		.type		= ETHTOOL_A_COALESCE_TX_MAX_FRAMES_IRQ,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-usecs-low",
+		.type		= ETHTOOL_A_COALESCE_RX_USECS_LOW,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-frames-low",
+		.type		= ETHTOOL_A_COALESCE_RX_MAX_FRAMES_LOW,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-usecs-low",
+		.type		= ETHTOOL_A_COALESCE_TX_USECS_LOW,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-frames-low",
+		.type		= ETHTOOL_A_COALESCE_TX_MAX_FRAMES_LOW,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-usecs-high",
+		.type		= ETHTOOL_A_COALESCE_RX_USECS_HIGH,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx-frames-high",
+		.type		= ETHTOOL_A_COALESCE_RX_MAX_FRAMES_HIGH,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-usecs-high",
+		.type		= ETHTOOL_A_COALESCE_TX_USECS_HIGH,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-frames-high",
+		.type		= ETHTOOL_A_COALESCE_TX_MAX_FRAMES_HIGH,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{}
+};
+
+int nl_scoalesce(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	struct nl_msg_buff *msgbuff;
+	struct nl_socket *nlsk;
+	int ret;
+
+	if (netlink_cmd_check(ctx, ETHTOOL_MSG_COALESCE_SET, false))
+		return -EOPNOTSUPP;
+
+	nlctx->cmd = "-C";
+	nlctx->argp = ctx->argp;
+	nlctx->argc = ctx->argc;
+	nlctx->devname = ctx->devname;
+	nlsk = nlctx->ethnl_socket;
+	msgbuff = &nlsk->msgbuff;
+
+	ret = msg_init(nlctx, msgbuff, ETHTOOL_MSG_COALESCE_SET,
+		       NLM_F_REQUEST | NLM_F_ACK);
+	if (ret < 0)
+		return 2;
+	if (ethnla_fill_header(msgbuff, ETHTOOL_A_COALESCE_HEADER,
+			       ctx->devname, 0))
+		return -EMSGSIZE;
+
+	ret = nl_parser(nlctx, scoalesce_params, NULL, PARSER_GROUP_NONE);
+	if (ret < 0)
+		return 1;
+
+	ret = nlsock_sendmsg(nlsk, NULL);
+	if (ret < 0)
+		return 1;
+	ret = nlsock_process_reply(nlsk, nomsg_reply_cb, nlctx);
+	if (ret == 0)
+		return 0;
+	else
+		return nlctx->exit_code ?: 1;
 }

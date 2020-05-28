@@ -5173,6 +5173,7 @@ static const struct option args[] = {
 	{
 		.opts	= "-C|--coalesce",
 		.func	= do_scoalesce,
+		.nlfunc	= nl_scoalesce,
 		.help	= "Set coalesce options",
 		.xhelp	= "		[adaptive-rx on|off]\n"
 			  "		[adaptive-tx on|off]\n"
