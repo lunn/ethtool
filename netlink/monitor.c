@@ -55,6 +55,10 @@ static struct {
 		.cmd	= ETHTOOL_MSG_PAUSE_NTF,
 		.cb	= pause_reply_cb,
 	},
+	{
+		.cmd	= ETHTOOL_MSG_EEE_NTF,
+		.cb	= eee_reply_cb,
+	},
 };
 
 static void clear_filter(struct nl_context *nlctx)
@@ -149,6 +153,10 @@ static struct monitor_option monitor_opts[] = {
 	{
 		.pattern	= "-a|--show-pause|-A|--pause",
 		.cmd		= ETHTOOL_MSG_PAUSE_NTF,
+	},
+	{
+		.pattern	= "--show-eee|--set-eee",
+		.cmd		= ETHTOOL_MSG_EEE_NTF,
 	},
 };
 
