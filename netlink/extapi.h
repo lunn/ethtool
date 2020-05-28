@@ -27,6 +27,7 @@ int nl_sprivflags(struct cmd_context *ctx);
 int nl_gring(struct cmd_context *ctx);
 int nl_sring(struct cmd_context *ctx);
 int nl_gchannels(struct cmd_context *ctx);
+int nl_schannels(struct cmd_context *ctx);
 int nl_monitor(struct cmd_context *ctx);
 
 void nl_monitor_usage(void);
@@ -58,6 +59,7 @@ static inline void nl_monitor_usage(void)
 #define nl_gring		NULL
 #define nl_sring		NULL
 #define nl_gchannels		NULL
+#define nl_schannels		NULL
 
 #endif /* ETHTOOL_ENABLE_NETLINK */
 
