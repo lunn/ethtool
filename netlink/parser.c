@@ -1016,7 +1016,7 @@ int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
 			buff = tmp_buff_find(buffs, parser->group);
 		msgbuff = buff ? &buff->msgbuff : &nlsk->msgbuff;
 
-		param_dest = dest ? (dest + parser->dest_offset) : NULL;
+		param_dest = dest ? ((char *)dest + parser->dest_offset) : NULL;
 		ret = parser->handler(nlctx, parser->type, parser->handler_data,
 				      msgbuff, param_dest);
 		if (ret < 0)

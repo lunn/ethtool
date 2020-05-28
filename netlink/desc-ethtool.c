@@ -4,9 +4,9 @@
  * Descriptions of ethtool netlink messages and attributes for pretty print.
  */
 
+#include "../internal.h"
 #include <linux/ethtool_netlink.h>
 
-#include "../internal.h"
 #include "prettymsg.h"
 
 static const struct pretty_nla_desc __header_desc[] = {
