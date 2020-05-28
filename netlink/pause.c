@@ -1,7 +1,7 @@
 /*
  * pause.c - netlink implementation of pause commands
  *
- * Implementation of "ethtool -a <dev>"
+ * Implementation of "ethtool -a <dev>" and "ethtool -A <dev> ..."
  */
 
 #include <errno.h>
@@ -12,6 +12,7 @@
 #include "../common.h"
 #include "netlink.h"
 #include "bitset.h"
+#include "parser.h"
 
 /* PAUSE_GET */
 
@@ -155,4 +156,67 @@ int nl_gpause(struct cmd_context *ctx)
 	if (ret < 0)
 		return ret;
 	return nlsock_send_get_request(nlsk, pause_reply_cb);
+}
+
+/* PAUSE_SET */
+
+static const struct param_parser spause_params[] = {
+	{
+		.arg		= "autoneg",
+		.type		= ETHTOOL_A_PAUSE_AUTONEG,
+		.handler	= nl_parse_u8bool,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "rx",
+		.type		= ETHTOOL_A_PAUSE_RX,
+		.handler	= nl_parse_u8bool,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx",
+		.type		= ETHTOOL_A_PAUSE_TX,
+		.handler	= nl_parse_u8bool,
+		.min_argc	= 1,
+	},
+	{}
+};
+
+int nl_spause(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	struct nl_msg_buff *msgbuff;
+	struct nl_socket *nlsk;
+	int ret;
+
+	if (netlink_cmd_check(ctx, ETHTOOL_MSG_PAUSE_SET, false))
+		return -EOPNOTSUPP;
+
+	nlctx->cmd = "-A";
+	nlctx->argp = ctx->argp;
+	nlctx->argc = ctx->argc;
+	nlctx->devname = ctx->devname;
+	nlsk = nlctx->ethnl_socket;
+	msgbuff = &nlsk->msgbuff;
+
+	ret = msg_init(nlctx, msgbuff, ETHTOOL_MSG_PAUSE_SET,
+		       NLM_F_REQUEST | NLM_F_ACK);
+	if (ret < 0)
+		return 2;
+	if (ethnla_fill_header(msgbuff, ETHTOOL_A_PAUSE_HEADER,
+			       ctx->devname, 0))
+		return -EMSGSIZE;
+
+	ret = nl_parser(nlctx, spause_params, NULL, PARSER_GROUP_NONE);
+	if (ret < 0)
+		return 1;
+
+	ret = nlsock_sendmsg(nlsk, NULL);
+	if (ret < 0)
+		return 76;
+	ret = nlsock_process_reply(nlsk, nomsg_reply_cb, nlctx);
+	if (ret == 0)
+		return 0;
+	else
+		return nlctx->exit_code ?: 76;
 }

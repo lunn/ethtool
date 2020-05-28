@@ -5160,6 +5160,7 @@ static const struct option args[] = {
 	{
 		.opts	= "-A|--pause",
 		.func	= do_spause,
+		.nlfunc	= nl_spause,
 		.help	= "Set pause options",
 		.xhelp	= "		[ autoneg on|off ]\n"
 			  "		[ rx on|off ]\n"

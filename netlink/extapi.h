@@ -31,6 +31,7 @@ int nl_schannels(struct cmd_context *ctx);
 int nl_gcoalesce(struct cmd_context *ctx);
 int nl_scoalesce(struct cmd_context *ctx);
 int nl_gpause(struct cmd_context *ctx);
+int nl_spause(struct cmd_context *ctx);
 int nl_monitor(struct cmd_context *ctx);
 
 void nl_monitor_usage(void);
@@ -66,6 +67,7 @@ static inline void nl_monitor_usage(void)
 #define nl_gcoalesce		NULL
 #define nl_scoalesce		NULL
 #define nl_gpause		NULL
+#define nl_spause		NULL
 
 #endif /* ETHTOOL_ENABLE_NETLINK */
 
