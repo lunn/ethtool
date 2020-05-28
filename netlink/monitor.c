@@ -31,6 +31,10 @@ static struct {
 		.cmd	= ETHTOOL_MSG_DEBUG_NTF,
 		.cb	= debug_reply_cb,
 	},
+	{
+		.cmd	= ETHTOOL_MSG_FEATURES_NTF,
+		.cb	= features_reply_cb,
+	},
 };
 
 static void clear_filter(struct nl_context *nlctx)
@@ -101,6 +105,10 @@ static struct monitor_option monitor_opts[] = {
 	{
 		.pattern	= "-s|--change",
 		.cmd		= ETHTOOL_MSG_DEBUG_NTF,
+	},
+	{
+		.pattern	= "-k|--show-features|--show-offload|-K|--features|--offload",
+		.cmd		= ETHTOOL_MSG_FEATURES_NTF,
 	},
 };
 
