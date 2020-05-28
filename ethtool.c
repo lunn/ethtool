@@ -5413,6 +5413,7 @@ static const struct option args[] = {
 	{
 		.opts	= "--set-eee",
 		.func	= do_seee,
+		.nlfunc	= nl_seee,
 		.help	= "Set EEE settings",
 		.xhelp	= "		[ eee on|off ]\n"
 			  "		[ advertise %x ]\n"

@@ -1,7 +1,8 @@
 /*
  * eee.c - netlink implementation of eee commands
  *
- * Implementation of "ethtool --show-eee <dev>"
+ * Implementation of "ethtool --show-eee <dev>" and
+ * "ethtool --set-eee <dev> ..."
  */
 
 #include <errno.h>
@@ -12,6 +13,7 @@
 #include "../common.h"
 #include "netlink.h"
 #include "bitset.h"
+#include "parser.h"
 
 /* EEE_GET */
 
@@ -105,4 +107,83 @@ int nl_geee(struct cmd_context *ctx)
 	if (ret < 0)
 		return ret;
 	return nlsock_send_get_request(nlsk, eee_reply_cb);
+}
+
+/* EEE_SET */
+
+static const struct bitset_parser_data advertise_parser_data = {
+	.no_mask	= false,
+	.force_hex	= true,
+};
+
+static const struct param_parser seee_params[] = {
+	{
+		.arg		= "advertise",
+		.type		= ETHTOOL_A_EEE_MODES_OURS,
+		.handler	= nl_parse_bitset,
+		.handler_data	= &advertise_parser_data,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-lpi",
+		.type		= ETHTOOL_A_EEE_TX_LPI_ENABLED,
+		.handler	= nl_parse_u8bool,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "tx-timer",
+		.type		= ETHTOOL_A_EEE_TX_LPI_TIMER,
+		.handler	= nl_parse_direct_u32,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "eee",
+		.type		= ETHTOOL_A_EEE_ENABLED,
+		.handler	= nl_parse_u8bool,
+		.min_argc	= 1,
+	},
+	{}
+};
+
+int nl_seee(struct cmd_context *ctx)
+{
+	struct nl_context *nlctx = ctx->nlctx;
+	struct nl_msg_buff *msgbuff;
+	struct nl_socket *nlsk;
+	int ret;
+
+	if (netlink_cmd_check(ctx, ETHTOOL_MSG_EEE_SET, false))
+		return -EOPNOTSUPP;
+	if (!ctx->argc) {
+		fprintf(stderr, "ethtool (--set-eee): parameters missing\n");
+		return 1;
+	}
+
+	nlctx->cmd = "--set-eee";
+	nlctx->argp = ctx->argp;
+	nlctx->argc = ctx->argc;
+	nlctx->devname = ctx->devname;
+	nlsk = nlctx->ethnl_socket;
+	msgbuff = &nlsk->msgbuff;
+
+	ret = msg_init(nlctx, msgbuff, ETHTOOL_MSG_EEE_SET,
+		       NLM_F_REQUEST | NLM_F_ACK);
+	if (ret < 0)
+		return 2;
+	if (ethnla_fill_header(msgbuff, ETHTOOL_A_EEE_HEADER,
+			       ctx->devname, 0))
+		return -EMSGSIZE;
+
+	ret = nl_parser(nlctx, seee_params, NULL, PARSER_GROUP_NONE);
+	if (ret < 0)
+		return 1;
+
+	ret = nlsock_sendmsg(nlsk, NULL);
+	if (ret < 0)
+		return 76;
+	ret = nlsock_process_reply(nlsk, nomsg_reply_cb, nlctx);
+	if (ret == 0)
+		return 0;
+	else
+		return nlctx->exit_code ?: 76;
 }
