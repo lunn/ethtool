@@ -64,6 +64,19 @@ int wol_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int debug_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int features_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int privflags_reply_cb(const struct nlmsghdr *nlhdr, void *data);
+int rings_reply_cb(const struct nlmsghdr *nlhdr, void *data);
+
+/* dump helpers */
+
+static inline void show_u32(const struct nlattr *attr, const char *label)
+{
+	if (attr)
+		printf("%s%u\n", label, mnl_attr_get_u32(attr));
+	else
+		printf("%sn/a\n", label);
+}
+
+/* misc */
 
 static inline void copy_devname(char *dst, const char *src)
 {

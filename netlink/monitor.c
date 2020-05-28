@@ -39,6 +39,10 @@ static struct {
 		.cmd	= ETHTOOL_MSG_PRIVFLAGS_NTF,
 		.cb	= privflags_reply_cb,
 	},
+	{
+		.cmd	= ETHTOOL_MSG_RINGS_NTF,
+		.cb	= rings_reply_cb,
+	},
 };
 
 static void clear_filter(struct nl_context *nlctx)
@@ -117,6 +121,10 @@ static struct monitor_option monitor_opts[] = {
 	{
 		.pattern	= "--show-priv-flags|--set-priv-flags",
 		.cmd		= ETHTOOL_MSG_PRIVFLAGS_NTF,
+	},
+	{
+		.pattern	= "-g|--show-ring|-G|--set-ring",
+		.cmd		= ETHTOOL_MSG_RINGS_NTF,
 	},
 };
 
