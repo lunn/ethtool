@@ -5219,6 +5219,7 @@ static const struct option args[] = {
 	{
 		.opts	= "-K|--features|--offload",
 		.func	= do_sfeatures,
+		.nlfunc	= nl_sfeatures,
 		.help	= "Set protocol offload and other features",
 		.xhelp	= "		FEATURE on|off ...\n"
 	},
