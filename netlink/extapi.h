@@ -22,6 +22,7 @@ int nl_sset(struct cmd_context *ctx);
 int nl_permaddr(struct cmd_context *ctx);
 int nl_gfeatures(struct cmd_context *ctx);
 int nl_sfeatures(struct cmd_context *ctx);
+int nl_gprivflags(struct cmd_context *ctx);
 int nl_monitor(struct cmd_context *ctx);
 
 void nl_monitor_usage(void);
@@ -48,6 +49,7 @@ static inline void nl_monitor_usage(void)
 #define nl_permaddr		NULL
 #define nl_gfeatures		NULL
 #define nl_sfeatures		NULL
+#define nl_gprivflags		NULL
 
 #endif /* ETHTOOL_ENABLE_NETLINK */
 
