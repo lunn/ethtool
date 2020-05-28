@@ -5154,6 +5154,7 @@ static const struct option args[] = {
 	{
 		.opts	= "-a|--show-pause",
 		.func	= do_gpause,
+		.nlfunc	= nl_gpause,
 		.help	= "Show pause options"
 	},
 	{
