@@ -5324,6 +5324,7 @@ static const struct option args[] = {
 	{
 		.opts	= "-T|--show-time-stamping",
 		.func	= do_tsinfo,
+		.nlfunc	= nl_tsinfo,
 		.help	= "Show time stamping capabilities"
 	},
 	{
