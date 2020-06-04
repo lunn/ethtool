@@ -1,3 +1,13 @@
+Version 5.7 - Jun 4, 2020
+	* Feature: ethtool: Add support for Low Latency Reed Solomon
+	* Fix: ethtool.c: Report transceiver correctly
+	* Feature: features: accept long legacy flag names when setting features
+	* Feature: refactor interface between ioctl and netlink code
+	* Feature: netlink: use genetlink ops information to decide about fallback
+	* Feature: netlink: show netlink error even without extack
+	* Feature: ethtool: add support for newer SFF-8024 compliance codes
+	* Feature: Rewrite printf() due to -Werror=format-security
+
 Version 5.6 - May 12, 2020
 	* Feature: add --debug option to control debugging messages
 	* Feature: use named initializers in command line option list
