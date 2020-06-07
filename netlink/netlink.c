@@ -211,6 +211,7 @@ static int family_info_cb(const struct nlmsghdr *nlhdr, void *data)
 			ret = genl_read_ops(nlctx, attr);
 			if (ret < 0)
 				return MNL_CB_ERROR;
+			break;
 		case CTRL_ATTR_MCAST_GROUPS:
 			find_mc_group(nlctx, attr);
 			break;
