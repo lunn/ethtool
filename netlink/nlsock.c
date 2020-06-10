@@ -255,12 +255,12 @@ int nlsock_process_reply(struct nl_socket *nlsk, mnl_cb_t reply_cb, void *data)
 
 		nlhdr = (struct nlmsghdr *)buff;
 		if (nlhdr->nlmsg_type == NLMSG_ERROR) {
-			bool silent = nlsk->nlctx->suppress_nlerr;
+			unsigned int suppress = nlsk->nlctx->suppress_nlerr;
 			bool pretty;
 
 			pretty = debug_on(nlsk->nlctx->ctx->debug,
 					  DEBUG_NL_PRETTY_MSG);
-			return nlsock_process_ack(nlhdr, len, silent, pretty);
+			return nlsock_process_ack(nlhdr, len, suppress, pretty);
 		}
 
 		msgbuff->nlhdr = nlhdr;
