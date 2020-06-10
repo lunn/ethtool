@@ -28,6 +28,21 @@ static const char *const names_duplex[] = {
 	[DUPLEX_FULL]		= "Full",
 };
 
+static const char *const names_master_slave_state[] = {
+	[MASTER_SLAVE_STATE_UNKNOWN]	= "unknown",
+	[MASTER_SLAVE_STATE_MASTER]	= "master",
+	[MASTER_SLAVE_STATE_SLAVE]	= "slave",
+	[MASTER_SLAVE_STATE_ERR]	= "resolution error",
+};
+
+static const char *const names_master_slave_cfg[] = {
+	[MASTER_SLAVE_CFG_UNKNOWN]		= "unknown",
+	[MASTER_SLAVE_CFG_MASTER_PREFERRED]	= "preferred master",
+	[MASTER_SLAVE_CFG_SLAVE_PREFERRED]	= "preferred slave",
+	[MASTER_SLAVE_CFG_MASTER_FORCE]		= "forced master",
+	[MASTER_SLAVE_CFG_SLAVE_FORCE]		= "forced slave",
+};
+
 static const char *const names_port[] = {
 	[PORT_TP]		= "Twisted Pair",
 	[PORT_AUI]		= "AUI",
@@ -509,6 +524,25 @@ int linkmodes_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 		printf("\tAuto-negotiation: %s\n",
 		       (autoneg == AUTONEG_DISABLE) ? "off" : "on");
 	}
+	if (tb[ETHTOOL_A_LINKMODES_MASTER_SLAVE_CFG]) {
+		uint8_t val;
+
+		val = mnl_attr_get_u8(tb[ETHTOOL_A_LINKMODES_MASTER_SLAVE_CFG]);
+
+		print_banner(nlctx);
+		print_enum(names_master_slave_cfg,
+			   ARRAY_SIZE(names_master_slave_cfg), val,
+			   "master-slave cfg");
+	}
+	if (tb[ETHTOOL_A_LINKMODES_MASTER_SLAVE_STATE]) {
+		uint8_t val;
+
+		val = mnl_attr_get_u8(tb[ETHTOOL_A_LINKMODES_MASTER_SLAVE_STATE]);
+		print_banner(nlctx);
+		print_enum(names_master_slave_state,
+			   ARRAY_SIZE(names_master_slave_state), val,
+			   "master-slave status");
+	}
 
 	return MNL_CB_OK;
 err:
@@ -816,6 +850,14 @@ static const struct lookup_entry_u32 duplex_values[] = {
 	{}
 };
 
+static const struct lookup_entry_u8 master_slave_values[] = {
+	{ .arg = "preferred-master", .val = MASTER_SLAVE_CFG_MASTER_PREFERRED },
+	{ .arg = "preferred-slave",  .val = MASTER_SLAVE_CFG_SLAVE_PREFERRED },
+	{ .arg = "forced-master",    .val = MASTER_SLAVE_CFG_MASTER_FORCE },
+	{ .arg = "forced-slave",     .val = MASTER_SLAVE_CFG_SLAVE_FORCE },
+	{}
+};
+
 char wol_bit_chars[WOL_MODE_COUNT] = {
 	[WAKE_PHY_BIT]		= 'p',
 	[WAKE_UCAST_BIT]	= 'u',
@@ -904,6 +946,14 @@ static const struct param_parser sset_params[] = {
 		.type		= ETHTOOL_A_LINKMODES_DUPLEX,
 		.handler	= nl_parse_lookup_u8,
 		.handler_data	= duplex_values,
+		.min_argc	= 1,
+	},
+	{
+		.arg		= "master-slave",
+		.group		= ETHTOOL_MSG_LINKMODES_SET,
+		.type		= ETHTOOL_A_LINKMODES_MASTER_SLAVE_CFG,
+		.handler	= nl_parse_lookup_u8,
+		.handler_data	= master_slave_values,
 		.min_argc	= 1,
 	},
 	{

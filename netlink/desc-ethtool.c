@@ -85,6 +85,8 @@ static const struct pretty_nla_desc __linkmodes_desc[] = {
 	NLATTR_DESC_NESTED(ETHTOOL_A_LINKMODES_PEER, bitset),
 	NLATTR_DESC_U32(ETHTOOL_A_LINKMODES_SPEED),
 	NLATTR_DESC_U8(ETHTOOL_A_LINKMODES_DUPLEX),
+	NLATTR_DESC_U8(ETHTOOL_A_LINKMODES_MASTER_SLAVE_CFG),
+	NLATTR_DESC_U8(ETHTOOL_A_LINKMODES_MASTER_SLAVE_STATE),
 };
 
 static const struct pretty_nla_desc __linkstate_desc[] = {

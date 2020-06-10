@@ -52,6 +52,10 @@
 .\"
 .ds MA \fIxx\fP\fB:\fP\fIyy\fP\fB:\fP\fIzz\fP\fB:\fP\fIaa\fP\fB:\fP\fIbb\fP\fB:\fP\fIcc\fP
 .\"
+.\"	\(*MS - master-slave property
+.\"
+.ds MS \fBpreferred-master\fP|\fBpreferred-slave\fP|\fBforced-master\fP|\fBforced-slave\fP
+.\"
 .\"	\(*PA - IP address
 .\"
 .ds PA \fIip-address\fP
@@ -255,6 +259,7 @@ ethtool \- query or control network driver and hardware settings
 .RB [ wol \ \fIN\fP[\fB/\fP\fIM\fP]
 .RB | \ wol \ \*(WO]
 .RB [ sopass \ \*(MA]
+.RB [ master-slave \ \*(MS]
 .RB [ msglvl
 .IR N\fP[/\fIM\fP] \ |
 .BI msglvl \ type
@@ -645,6 +650,20 @@ Sets full or half duplex mode.
 .TP
 .A4 port tp aui bnc mii fibre da
 Selects device port.
+.TP
+.BR master-slave \ \*(MS
+Configure MASTER/SLAVE role of the PHY. When the PHY is configured as MASTER,
+the PMA Transmit function shall source TX_TCLK from a local clock source. When
+configured as SLAVE, the PMA Transmit function shall source TX_TCLK from the
+clock recovered from data stream provided by MASTER. Not all devices support this.
+.TS
+nokeep;
+lB	l.
+preferred-master	Prefer MASTER role on autonegotiation
+preferred-slave	Prefer SLAVE role on autonegotiation
+forced-master	Force the PHY in MASTER role. Can be used without autonegotiation
+forced-slave	Force the PHY in SLAVE role. Can be used without autonegotiation
+.TE
 .TP
 .A3 mdix auto on off
 Selects MDI-X mode for port. May be used to override the automatic
