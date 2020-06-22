@@ -137,6 +137,9 @@ ethtool \- query or control network driver and hardware settings
 .BN --debug
 .I args
 .HP
+.B ethtool [--json]
+.I args
+.HP
 .B ethtool \-\-monitor
 [
 .I command
@@ -475,6 +478,11 @@ nokeep;
 lB	l.
 0x01  Parser information
 .TE
+.TP
+.BI \-\-json
+Output results in JavaScript Object Notation (JSON). Only a subset of
+options support this. Those which do not will continue to output
+plain text in the presence of this option.
 .TP
 .B \-a \-\-show\-pause
 Queries the specified Ethernet device for pause parameter information.
