@@ -434,6 +434,16 @@ ethtool \- query or control network driver and hardware settings
 .I sub_command
 .RB ...
  .
+.HP
+.B ethtool \-\-cable\-test
+.I devname
+.HP
+.B ethtool \-\-cable\-test\-tdr
+.I devname
+.BN first N
+.BN last N
+.BN step N
+.BN pair N
 .
 .\" Adjust lines (i.e. full justification) and hyphenate.
 .ad
@@ -1275,6 +1285,41 @@ If queue_mask is not set, the sub command will be applied to all queues.
 .B sub_command
 Sub command to apply. The supported sub commands include --show-coalesce and
 --coalesce.
+.RE
+.TP
+q.B \-\-cable\-test
+Perform a cable test and report the results. What results are returned depends
+on the capabilities of the network interface. Typically open pairs and shorted
+pair can be reported, along with pairs being O.K. When a fault is detected
+the approximate distance to the fault me be reported.
+.TP
+.B \-\-cable\-test\-tdr
+Perform a cable test and report the raw Time Domain Reflectometer
+data.  A pulse is sent down a cable pair and the amplitude of the
+reflect, for a given distance is reported. A break in the cable
+returns a big reflection. Minor damage to the cable returns a small
+deflection. If the cable is shorted, the amplitude of the reflection
+can be negative. By default, data is returned for lengths between 0
+and 150m at 1m steps, for all pairs. However parameters can be passed
+to restrict the collection of data. It should be noted, that the
+interface will round the distances to whatever granularity is actually
+implements. This is often 0.8 of a meter. The results should include
+the actual rounded first and last distance and step size.
+.RS 4
+.TP
+.B first \ N
+Distance along the cable, in meters, where the first measurement
+should be made.
+.TP
+.B last \ N
+Distance along the cable, in meters, where the last measurement should
+be made.
+.TP
+.B step \ N
+Distance, in meters, between each measurement.
+.TP
+.B pair \ N
+Which pair should be measured. Typically a cable has 4 pairs. 0 = Pair A, 1 = Pair B, ...
 .RE
 .TP
 .B \-\-monitor
