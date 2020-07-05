@@ -54,6 +54,22 @@ static bool __prefix_0x(const char *p)
 	return p[0] == '0' && (p[1] == 'x' || p[1] == 'X');
 }
 
+static float parse_float(const char *arg, float *result, float min,
+			 float max)
+{
+	char *endptr;
+	float val;
+
+	if (!arg || !arg[0])
+		return -EINVAL;
+	val = strtof(arg, &endptr);
+	if (*endptr || val < min || val > max)
+		return -EINVAL;
+
+	*result = val;
+	return 0;
+}
+
 static int __parse_u32(const char *arg, uint32_t *result, uint32_t min,
 		       uint32_t max, int base)
 {
@@ -209,6 +225,32 @@ int nl_parse_direct_u8(struct nl_context *nlctx, uint16_t type,
 	if (dest)
 		*(uint8_t *)dest = val;
 	return (type && ethnla_put_u8(msgbuff, type, val)) ? -EMSGSIZE : 0;
+}
+
+/* Parser handler for float meters and convert it to cm. Generates
+ * NLA_U32 or fills an uint32_t.
+ */
+int nl_parse_direct_m2cm(struct nl_context *nlctx, uint16_t type,
+			 const void *data, struct nl_msg_buff *msgbuff,
+			 void *dest)
+{
+	const char *arg = *nlctx->argp;
+	float meters;
+	uint32_t cm;
+	int ret;
+
+	nlctx->argp++;
+	nlctx->argc--;
+	ret = parse_float(arg, &meters, 0, 150);
+	if (ret < 0) {
+		parser_err_invalid_value(nlctx, arg);
+		return ret;
+	}
+
+	cm = (uint32_t)(meters * 100 + 0.5);
+	if (dest)
+		*(uint32_t *)dest = cm;
+	return (type && ethnla_put_u32(msgbuff, type, cm)) ? -EMSGSIZE : 0;
 }
 
 /* Parser handler for (tri-state) bool. Expects "name on|off", generates
