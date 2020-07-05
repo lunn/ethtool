@@ -206,6 +206,84 @@ static const struct pretty_nla_desc __tsinfo_desc[] = {
 	NLATTR_DESC_U32(ETHTOOL_A_TSINFO_PHC_INDEX),
 };
 
+static const struct pretty_nla_desc __cable_test_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_CABLE_TEST_UNSPEC),
+	NLATTR_DESC_NESTED(ETHTOOL_A_CABLE_TEST_HEADER, header),
+};
+
+static const struct pretty_nla_desc __cable_test_result_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_CABLE_RESULT_UNSPEC),
+	NLATTR_DESC_U8(ETHTOOL_A_CABLE_RESULT_PAIR),
+	NLATTR_DESC_U8(ETHTOOL_A_CABLE_RESULT_CODE),
+};
+
+static const struct pretty_nla_desc __cable_test_flength_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_CABLE_FAULT_LENGTH_UNSPEC),
+	NLATTR_DESC_U8(ETHTOOL_A_CABLE_FAULT_LENGTH_PAIR),
+	NLATTR_DESC_U32(ETHTOOL_A_CABLE_FAULT_LENGTH_CM),
+};
+
+static const struct pretty_nla_desc __cable_nest_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_CABLE_NEST_UNSPEC),
+	NLATTR_DESC_NESTED(ETHTOOL_A_CABLE_NEST_RESULT, cable_test_result),
+	NLATTR_DESC_NESTED(ETHTOOL_A_CABLE_NEST_FAULT_LENGTH,
+			   cable_test_flength),
+};
+
+static const struct pretty_nla_desc __cable_test_ntf_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_CABLE_TEST_NTF_UNSPEC),
+	NLATTR_DESC_NESTED(ETHTOOL_A_CABLE_TEST_NTF_HEADER, header),
+	NLATTR_DESC_U8(ETHTOOL_A_CABLE_TEST_NTF_STATUS),
+	NLATTR_DESC_NESTED(ETHTOOL_A_CABLE_TEST_NTF_NEST, cable_nest),
+};
+
+static const struct pretty_nla_desc __cable_test_tdr_cfg_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_CABLE_TEST_TDR_CFG_UNSPEC),
+	NLATTR_DESC_U32(ETHTOOL_A_CABLE_TEST_TDR_CFG_FIRST),
+	NLATTR_DESC_U32(ETHTOOL_A_CABLE_TEST_TDR_CFG_LAST),
+	NLATTR_DESC_U32(ETHTOOL_A_CABLE_TEST_TDR_CFG_STEP),
+	NLATTR_DESC_U8(ETHTOOL_A_CABLE_TEST_TDR_CFG_PAIR),
+};
+
+static const struct pretty_nla_desc __cable_test_tdr_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_CABLE_TEST_TDR_UNSPEC),
+	NLATTR_DESC_NESTED(ETHTOOL_A_CABLE_TEST_TDR_HEADER, header),
+	NLATTR_DESC_NESTED(ETHTOOL_A_CABLE_TEST_TDR_CFG, cable_test_tdr_cfg),
+};
+
+static const struct pretty_nla_desc __cable_step_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_CABLE_STEP_UNSPEC),
+	NLATTR_DESC_U32(ETHTOOL_A_CABLE_STEP_FIRST_DISTANCE),
+	NLATTR_DESC_U32(ETHTOOL_A_CABLE_STEP_LAST_DISTANCE),
+	NLATTR_DESC_U32(ETHTOOL_A_CABLE_STEP_STEP_DISTANCE),
+};
+
+static const struct pretty_nla_desc __cable_amplitude_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_CABLE_AMPLITUDE_UNSPEC),
+	NLATTR_DESC_U8(ETHTOOL_A_CABLE_AMPLITUDE_PAIR),
+	NLATTR_DESC_S16(ETHTOOL_A_CABLE_AMPLITUDE_mV),
+};
+
+static const struct pretty_nla_desc __cable_pulse_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_CABLE_PULSE_UNSPEC),
+	NLATTR_DESC_S16(ETHTOOL_A_CABLE_PULSE_mV),
+};
+
+static const struct pretty_nla_desc __cable_test_tdr_nest_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_CABLE_TDR_NEST_UNSPEC),
+	NLATTR_DESC_NESTED(ETHTOOL_A_CABLE_TDR_NEST_STEP, cable_step),
+	NLATTR_DESC_NESTED(ETHTOOL_A_CABLE_TDR_NEST_AMPLITUDE, cable_amplitude),
+	NLATTR_DESC_NESTED(ETHTOOL_A_CABLE_TDR_NEST_PULSE, cable_pulse),
+};
+
+static const struct pretty_nla_desc __cable_test_tdr_ntf_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_CABLE_TEST_TDR_UNSPEC),
+	NLATTR_DESC_NESTED(ETHTOOL_A_CABLE_TEST_TDR_NTF_HEADER, header),
+	NLATTR_DESC_U8(ETHTOOL_A_CABLE_TEST_TDR_NTF_STATUS),
+	NLATTR_DESC_NESTED(ETHTOOL_A_CABLE_TEST_TDR_NTF_NEST,
+			   cable_test_tdr_nest),
+};
+
 const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
 	NLMSG_DESC_INVALID(ETHTOOL_MSG_USER_NONE),
 	NLMSG_DESC(ETHTOOL_MSG_STRSET_GET, strset),
@@ -233,6 +311,8 @@ const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
 	NLMSG_DESC(ETHTOOL_MSG_EEE_GET, eee),
 	NLMSG_DESC(ETHTOOL_MSG_EEE_SET, eee),
 	NLMSG_DESC(ETHTOOL_MSG_TSINFO_GET, tsinfo),
+	NLMSG_DESC(ETHTOOL_MSG_CABLE_TEST_ACT, cable_test),
+	NLMSG_DESC(ETHTOOL_MSG_CABLE_TEST_TDR_ACT, cable_test_tdr),
 };
 
 const unsigned int ethnl_umsg_n_desc = ARRAY_SIZE(ethnl_umsg_desc);
@@ -265,6 +345,8 @@ const struct pretty_nlmsg_desc ethnl_kmsg_desc[] = {
 	NLMSG_DESC(ETHTOOL_MSG_EEE_GET_REPLY, eee),
 	NLMSG_DESC(ETHTOOL_MSG_EEE_NTF, eee),
 	NLMSG_DESC(ETHTOOL_MSG_TSINFO_GET_REPLY, tsinfo),
+	NLMSG_DESC(ETHTOOL_MSG_CABLE_TEST_NTF, cable_test_ntf),
+	NLMSG_DESC(ETHTOOL_MSG_CABLE_TEST_TDR_NTF, cable_test_tdr_ntf),
 };
 
 const unsigned int ethnl_kmsg_n_desc = ARRAY_SIZE(ethnl_kmsg_desc);
