@@ -5519,10 +5519,10 @@ static int show_usage(struct cmd_context *ctx maybe_unused)
 	fprintf(stdout, PACKAGE " version " VERSION "\n");
 	fprintf(stdout,
 		"Usage:\n"
-		"        ethtool [ --debug MASK ] DEVNAME\t"
+		"        ethtool [ --debug MASK ][ --json ] DEVNAME\t"
 		"Display standard information about device\n");
 	for (i = 0; args[i].opts; i++) {
-		fputs("        ethtool [ --debug MASK ] ", stdout);
+		fputs("        ethtool [ --debug MASK ][ --json ] ", stdout);
 		fprintf(stdout, "%s %s\t%s\n",
 			args[i].opts,
 			args[i].no_dev ? "\t" : "DEVNAME",
@@ -5531,6 +5531,7 @@ static int show_usage(struct cmd_context *ctx maybe_unused)
 			fputs(args[i].xhelp, stdout);
 	}
 	nl_monitor_usage();
+	fprintf(stdout, "Not all options support JSON output\n");
 
 	return 0;
 }
@@ -5769,17 +5770,27 @@ int main(int argc, char **argp)
 	argp++;
 	argc--;
 
-	if (*argp && !strcmp(*argp, "--debug")) {
-		char *eptr;
+	while (true) {
+		if (*argp && !strcmp(*argp, "--debug")) {
+			char *eptr;
 
-		if (argc < 2)
-			exit_bad_args();
-		ctx.debug = strtoul(argp[1], &eptr, 0);
-		if (!argp[1][0] || *eptr)
-			exit_bad_args();
+			if (argc < 2)
+				exit_bad_args();
+			ctx.debug = strtoul(argp[1], &eptr, 0);
+			if (!argp[1][0] || *eptr)
+				exit_bad_args();
 
-		argp += 2;
-		argc -= 2;
+			argp += 2;
+			argc -= 2;
+			continue;
+		}
+		if (*argp && !strcmp(*argp, "--json")) {
+			ctx.json = true;
+			argp += 1;
+			argc -= 1;
+			continue;
+		}
+		break;
 	}
 	if (*argp && !strcmp(*argp, "--monitor")) {
 		ctx.argp = ++argp;
