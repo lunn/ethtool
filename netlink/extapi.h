@@ -46,6 +46,12 @@ void nl_monitor_usage(void);
 static inline void netlink_run_handler(struct cmd_context *ctx,
 				       nl_func_t nlfunc, bool no_fallback)
 {
+	if (no_fallback) {
+		fprintf(stderr,
+			"Command requires kernel netlink support which is not "
+			"enabled in this ethtool binary\n");
+		exit(1);
+	}
 }
 
 static inline int nl_monitor(struct cmd_context *ctx)
