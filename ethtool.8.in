@@ -398,6 +398,18 @@ ethtool \- query or control network driver and hardware settings
 .RB [ fast-link-down ]
 .RB [ energy-detect-power-down ]
 .HP
+.B ethtool \-\-get\-tunable
+.I devname
+.RB [ rx-copybreak ]
+.RB [ tx-copybreak ]
+.RB [ pfc-prevention-tout ]
+.HP
+.B ethtool \-\-set\-tunable
+.I devname
+.BN rx\-copybreak
+.BN tx\-copybreak
+.BN pfc\-prevention\-tout
+.HP
 .B ethtool \-\-reset
 .I devname
 .BN flags
@@ -1211,6 +1223,34 @@ Gets the PHY Fast Link Down status / period.
 .B energy\-detect\-power\-down
 Gets the current configured setting for Energy Detect Power Down (if supported).
 
+.RE
+.TP
+.B \-\-get\-tunable
+Get the tunable parameters.
+.RS 4
+.TP
+.B rx\-copybreak
+Get the current rx copybreak value in bytes.
+.TP
+.B tx\-copybreak
+Get the current tx copybreak value in bytes.
+.TP
+.B pfc\-prevention\-tout
+Get the current pfc prevention timeout value in msecs.
+.RE
+.TP
+.B \-\-set\-tunable
+Set driver's tunable parameters.
+.RS 4
+.TP
+.BI rx\-copybreak \ N
+Set the rx copybreak value in bytes.
+.TP
+.BI tx\-copybreak \ N
+Set the tx copybreak value in bytes.
+.TP
+.BI pfc\-prevention\-tout \ N
+Set pfc prevention timeout in msecs. Value of 0 means disable and 65535 means auto.
 .RE
 .TP
 .B \-\-reset
