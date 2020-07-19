@@ -40,6 +40,7 @@
 #include <sys/utsname.h>
 #include <limits.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -4686,6 +4687,183 @@ static int do_seee(struct cmd_context *ctx)
 	return 0;
 }
 
+/* copy of net/ethtool/common.c */
+char
+tunable_strings[__ETHTOOL_TUNABLE_COUNT][ETH_GSTRING_LEN] = {
+	[ETHTOOL_ID_UNSPEC]		= "Unspec",
+	[ETHTOOL_RX_COPYBREAK]		= "rx-copybreak",
+	[ETHTOOL_TX_COPYBREAK]		= "tx-copybreak",
+	[ETHTOOL_PFC_PREVENTION_TOUT]	= "pfc-prevention-tout",
+};
+
+union ethtool_tunable_info_val {
+	uint8_t u8;
+	uint16_t u16;
+	uint32_t u32;
+	uint64_t u64;
+	int8_t s8;
+	int16_t s16;
+	int32_t s32;
+	int64_t s64;
+};
+
+struct ethtool_tunable_info {
+	enum tunable_id t_id;
+	enum tunable_type_id t_type_id;
+	size_t size;
+	cmdline_type_t type;
+	union ethtool_tunable_info_val wanted;
+	int seen;
+};
+
+static struct ethtool_tunable_info tunables_info[] = {
+	{ .t_id		= ETHTOOL_RX_COPYBREAK,
+	  .t_type_id	= ETHTOOL_TUNABLE_U32,
+	  .size		= sizeof(u32),
+	  .type		= CMDL_U32,
+	},
+	{ .t_id		= ETHTOOL_TX_COPYBREAK,
+	  .t_type_id	= ETHTOOL_TUNABLE_U32,
+	  .size		= sizeof(u32),
+	  .type		= CMDL_U32,
+	},
+	{ .t_id		= ETHTOOL_PFC_PREVENTION_TOUT,
+	  .t_type_id	= ETHTOOL_TUNABLE_U16,
+	  .size		= sizeof(u16),
+	  .type		= CMDL_U16,
+	},
+};
+#define TUNABLES_INFO_SIZE	ARRAY_SIZE(tunables_info)
+
+static int do_stunable(struct cmd_context *ctx)
+{
+	struct cmdline_info cmdline_tunable[TUNABLES_INFO_SIZE];
+	struct ethtool_tunable_info *tinfo = tunables_info;
+	int changed = 0;
+	int i;
+
+	for (i = 0; i < TUNABLES_INFO_SIZE; i++) {
+		cmdline_tunable[i].name = tunable_strings[tinfo[i].t_id];
+		cmdline_tunable[i].type = tinfo[i].type;
+		cmdline_tunable[i].wanted_val = &tinfo[i].wanted;
+		cmdline_tunable[i].seen_val = &tinfo[i].seen;
+	}
+
+	parse_generic_cmdline(ctx, &changed, cmdline_tunable, TUNABLES_INFO_SIZE);
+	if (!changed)
+		exit_bad_args();
+
+	for (i = 0; i < TUNABLES_INFO_SIZE; i++) {
+		struct ethtool_tunable *tuna;
+		size_t size;
+		int ret;
+
+		if (!tinfo[i].seen)
+			continue;
+
+		size = sizeof(*tuna) + tinfo[i].size;
+		tuna = calloc(1, size);
+		if (!tuna) {
+			perror(tunable_strings[tinfo[i].t_id]);
+			return 1;
+		}
+		tuna->cmd = ETHTOOL_STUNABLE;
+		tuna->id = tinfo[i].t_id;
+		tuna->type_id = tinfo[i].t_type_id;
+		tuna->len = tinfo[i].size;
+		memcpy(tuna->data, &tinfo[i].wanted, tuna->len);
+		ret = send_ioctl(ctx, tuna);
+		if (ret) {
+			perror(tunable_strings[tuna->id]);
+			return ret;
+		}
+		free(tuna);
+	}
+	return 0;
+}
+
+static void print_tunable(struct ethtool_tunable *tuna)
+{
+	char *name = tunable_strings[tuna->id];
+	union ethtool_tunable_info_val *val;
+
+	val = (union ethtool_tunable_info_val *)tuna->data;
+	switch (tuna->type_id) {
+	case ETHTOOL_TUNABLE_U8:
+		fprintf(stdout, "%s: %" PRIu8 "\n", name, val->u8);
+		break;
+	case ETHTOOL_TUNABLE_U16:
+		fprintf(stdout, "%s: %" PRIu16 "\n", name, val->u16);
+		break;
+	case ETHTOOL_TUNABLE_U32:
+		fprintf(stdout, "%s: %" PRIu32 "\n", name, val->u32);
+		break;
+	case ETHTOOL_TUNABLE_U64:
+		fprintf(stdout, "%s: %" PRIu64 "\n", name, val->u64);
+		break;
+	case ETHTOOL_TUNABLE_S8:
+		fprintf(stdout, "%s: %" PRId8 "\n", name, val->s8);
+		break;
+	case ETHTOOL_TUNABLE_S16:
+		fprintf(stdout, "%s: %" PRId16 "\n", name, val->s16);
+		break;
+	case ETHTOOL_TUNABLE_S32:
+		fprintf(stdout, "%s: %" PRId32 "\n", name, val->s32);
+		break;
+	case ETHTOOL_TUNABLE_S64:
+		fprintf(stdout, "%s: %" PRId64 "\n", name, val->s64);
+		break;
+	default:
+		fprintf(stdout, "%s: Unknown format\n", name);
+	}
+}
+
+static int do_gtunable(struct cmd_context *ctx)
+{
+	struct ethtool_tunable_info *tinfo = tunables_info;
+	char **argp = ctx->argp;
+	int argc = ctx->argc;
+	int i;
+	int j;
+
+	if (argc < 1)
+		exit_bad_args();
+
+	for (i = 0; i < argc; i++) {
+		int valid = 0;
+
+		for (j = 0; j < TUNABLES_INFO_SIZE; j++) {
+			char *ts = tunable_strings[tinfo[j].t_id];
+			struct ethtool_tunable *tuna;
+			int ret;
+
+			if (strcmp(argp[i], ts))
+				continue;
+			valid = 1;
+
+			tuna = calloc(1, sizeof(*tuna) + tinfo[j].size);
+			if (!tuna) {
+				perror(ts);
+				return 1;
+			}
+			tuna->cmd = ETHTOOL_GTUNABLE;
+			tuna->id = tinfo[j].t_id;
+			tuna->type_id = tinfo[j].t_type_id;
+			tuna->len = tinfo[j].size;
+			ret = send_ioctl(ctx, tuna);
+			if (ret) {
+				fprintf(stderr, "%s: Cannot get tunable\n", ts);
+				return ret;
+			}
+			print_tunable(tuna);
+			free(tuna);
+		}
+		if (!valid)
+			exit_bad_args();
+	}
+	return 0;
+}
+
 static int do_get_phy_tunable(struct cmd_context *ctx)
 {
 	int argc = ctx->argc;
@@ -5438,6 +5616,22 @@ static const struct option args[] = {
 		.xhelp	= "		[ downshift ]\n"
 			  "		[ fast-link-down ]\n"
 			  "		[ energy-detect-power-down ]\n"
+	},
+	{
+		.opts	= "--get-tunable",
+		.func	= do_gtunable,
+		.help	= "Get tunable",
+		.xhelp	= "		[ rx-copybreak ]\n"
+			  "		[ tx-copybreak ]\n"
+			  "		[ pfc-precention-tout ]\n"
+	},
+	{
+		.opts	= "--set-tunable",
+		.func	= do_stunable,
+		.help	= "Set tunable",
+		.xhelp	= "		[ rx-copybreak N]\n"
+			  "		[ tx-copybreak N]\n"
+			  "		[ pfc-precention-tout N]\n"
 	},
 	{
 		.opts	= "--reset",
