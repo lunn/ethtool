@@ -1049,6 +1049,7 @@ static const struct {
 	{ "lan78xx", lan78xx_dump_regs },
 	{ "dsa", dsa_dump_regs },
 	{ "fec", fec_dump_regs },
+	{ "igc", igc_dump_regs },
 #endif
 };
 
