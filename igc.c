@@ -81,17 +81,17 @@
 
 static const char *bit_to_boolean(u32 val)
 {
-	return val ? "True" : "False";
+	return val ? "yes" : "no";
 }
 
 static const char *bit_to_enable(u32 val)
 {
-	return val ? "Enabled" : "Disabled";
+	return val ? "enabled" : "disabled";
 }
 
 static const char *bit_to_prio(u32 val)
 {
-	return val ? "Low" : "High";
+	return val ? "low" : "high";
 }
 
 int igc_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs)
@@ -138,23 +138,23 @@ int igc_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs)
 	       bit_to_enable(reg & RCTL_LPE),
 	       (reg & RCTL_LBM) == RCTL_LBM_PHY ? "PHY" :
 	       (reg & RCTL_LBM) == RCTL_LBM_MAC ? "MAC" :
-	       "Undefined",
-	       (reg & RCTL_HSEL) == RCTL_HSEL_MULTICAST ? "Multicast Only" :
-	       (reg & RCTL_HSEL) == RCTL_HSEL_UNICAST ? "Unicast Only" :
-	       (reg & RCTL_HSEL) == RCTL_HSEL_BOTH ? "Multicast and Unicast" :
-	       "Reserved",
-	       (reg & RCTL_MO) == RCTL_MO_47_36 ? "Bits [47:36]" :
-	       (reg & RCTL_MO) == RCTL_MO_43_32 ? "Bits [43:32]" :
-	       (reg & RCTL_MO) == RCTL_MO_39_28 ? "Bits [39:28]" :
-	       "Bits [35:24]",
+	       "undefined",
+	       (reg & RCTL_HSEL) == RCTL_HSEL_MULTICAST ? "multicast only" :
+	       (reg & RCTL_HSEL) == RCTL_HSEL_UNICAST ? "unicast only" :
+	       (reg & RCTL_HSEL) == RCTL_HSEL_BOTH ? "multicast and unicast" :
+	       "reserved",
+	       (reg & RCTL_MO) == RCTL_MO_47_36 ? "bits [47:36]" :
+	       (reg & RCTL_MO) == RCTL_MO_43_32 ? "bits [43:32]" :
+	       (reg & RCTL_MO) == RCTL_MO_39_28 ? "bits [39:28]" :
+	       "bits [35:24]",
 	       bit_to_enable(reg & RCTL_BAM),
-	       (reg & RCTL_BSIZE) == RCTL_BSIZE_2048 ? "2048 Bytes" :
-	       (reg & RCTL_BSIZE) == RCTL_BSIZE_1024 ? "1024 Bytes" :
-	       (reg & RCTL_BSIZE) == RCTL_BSIZE_512 ? "512 Bytes" :
-	       "256 Bytes",
+	       (reg & RCTL_BSIZE) == RCTL_BSIZE_2048 ? "2048 bytes" :
+	       (reg & RCTL_BSIZE) == RCTL_BSIZE_1024 ? "1024 bytes" :
+	       (reg & RCTL_BSIZE) == RCTL_BSIZE_512 ? "512 bytes" :
+	       "256 bytes",
 	       bit_to_enable(reg & RCTL_VFE),
 	       bit_to_enable(reg & RCTL_CFIEN),
-	       reg & RCTL_CFI ? "Discarded" : "Accepted",
+	       reg & RCTL_CFI ? "discarded" : "accepted",
 	       bit_to_enable(reg & RCTL_PSP),
 	       bit_to_enable(reg & RCTL_DPF),
 	       bit_to_enable(reg & RCTL_PMCF),
@@ -187,7 +187,7 @@ int igc_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs)
 		       "    Address Valid:                             %s\n",
 		       offset + i, i,
 		       reg & RAH_RAH,
-		       reg & RAH_ASEL ? "Source" : "Destination",
+		       reg & RAH_ASEL ? "source" : "destination",
 		       (reg & RAH_QSEL) >> RAH_QSEL_SHIFT,
 		       bit_to_boolean(reg & RAH_QSEL_EN),
 		       bit_to_boolean(reg & RAH_AV));
