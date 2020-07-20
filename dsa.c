@@ -3,6 +3,8 @@
 
 #include "internal.h"
 
+#define SERDES_OFFSET 32
+
 /* Macros and dump functions for the 16-bit mv88e6xxx per-port registers */
 
 #define REG(_reg, _name, _val) \
@@ -405,8 +407,14 @@ static void dsa_mv88e6352(int reg, u16 val)
 	case 19:
 		REG(reg, "Rx Frame Counter", val);
 		break;
+	case 20 ... 21:
+		REG(reg, "Reserved", val);
+		break;
 	case 22:
 		REG(reg, "LED Control", val);
+		break;
+	case 23:
+		REG(reg, "Reserved", val);
 		break;
 	case 24:
 		REG(reg, "Tag Remap 0-3", val);
@@ -414,11 +422,188 @@ static void dsa_mv88e6352(int reg, u16 val)
 	case 25:
 		REG(reg, "Tag Remap 4-7", val);
 		break;
+	case 26:
+		REG(reg, "Reserved", val);
+		break;
 	case 27:
 		REG(reg, "Queue Counters", val);
 		break;
-	default:
+	case 28 ... 31:
 		REG(reg, "Reserved", val);
+		break;
+	case SERDES_OFFSET + 0:
+		REG(reg - SERDES_OFFSET, "Fiber Control", val);
+		FIELD("Fiber Reset", "%u", !!(val & 0x8000));
+		FIELD("Loopback", "%u", !!(val & 0x4000));
+		FIELD("Speed", "%s",
+		      (val & (0x2000 | 0x0040)) == 0x0000 ? "10 Mbps" :
+		      (val & (0x2000 | 0x0040)) == 0x2000 ? "100 Mbps" :
+		      (val & (0x2000 | 0x0040)) == 0x0040 ? "1000 Mbps" :
+		      (val & (0x2000 | 0x0040)) == (0x2000 | 0x0040) ?
+		      "Reserved" : "?");
+		FIELD("Autoneg Enable", "%u", !!(val & 0x1000));
+		FIELD("Power down", "%u", !!(val & 0x0800));
+		FIELD("Isolate", "%u", !!(val & 0x0400));
+		FIELD("Restart Autoneg", "%u", !!(val & 0x0200));
+		FIELD("Duplex", "%s", val & 0x0100 ? "Full" : "Half");
+		break;
+	case SERDES_OFFSET + 1:
+		REG(reg - SERDES_OFFSET, "Fiber Status", val);
+		FIELD("100Base-X FD",  "%u", !!(val & 0x4000));
+		FIELD("100Base-X HD",  "%u", !!(val & 0x2000));
+		FIELD("Autoneg Complete", "%u", !!(val & 0x0020));
+		FIELD("Remote Fault", "%u", !!(val & 0x0010));
+		FIELD("Autoneg Ability", "%u", !!(val & 0x0008));
+		FIELD("Link Status", "%s", val & 0x0004 ? "Up" : "Down");
+		break;
+	case SERDES_OFFSET + 2:
+		REG(reg - SERDES_OFFSET, "PHY ID 1", val);
+		break;
+	case SERDES_OFFSET + 3:
+		REG(reg - SERDES_OFFSET, "PHY ID 2", val);
+		break;
+	case SERDES_OFFSET + 4:
+		REG(reg - SERDES_OFFSET, "Fiber Autoneg Advertisement", val);
+		FIELD("Remote Fault", "%s",
+		      (val & 0x3000) == 0x0000 ? "No error, link OK" :
+		      (val & 0x3000) == 0x1000 ? "Link failure" :
+		      (val & 0x3000) == 0x2000 ? "Offline" :
+		      (val & 0x3000) == 0x3000 ? "Autoneg Error" : "?");
+		FIELD("Pause", "%s",
+		      (val & 0x0180) == 0x0000 ? "No Pause" :
+		      (val & 0x0180) == 0x0080 ? "Symmetric Pause" :
+		      (val & 0x0180) == 0x0100 ? "Asymmetric Pause" :
+		      (val & 0x0180) == 0x0180 ? "Symmetric & Asymmetric Pause" :
+		      "?");
+		FIELD("1000BaseX HD", "%u", !!(val & 0x0040));
+		FIELD("1000BaseX FD", "%u", !!(val & 0x0020));
+		break;
+	case SERDES_OFFSET + 5:
+		REG(reg - SERDES_OFFSET, "Fiber Link Autoneg Ability", val);
+		FIELD("Acknowledge", "%u", !!(val & 0x4000));
+		FIELD("Remote Fault", "%s",
+		      (val & 0x3000) == 0x0000 ? "No error, link OK" :
+		      (val & 0x3000) == 0x1000 ? "Link failure" :
+		      (val & 0x3000) == 0x2000 ? "Offline" :
+		      (val & 0x3000) == 0x3000 ? "Autoneg Error" : "?");
+		FIELD("Pause", "%s",
+		      (val & 0x0180) == 0x0000 ? "No Pause" :
+		      (val & 0x0180) == 0x0080 ? "Symmetric Pause" :
+		      (val & 0x0180) == 0x0100 ? "Asymmetric Pause" :
+		      (val & 0x0180) == 0x0180 ? "Symmetric & Asymmetric Pause" :
+		      "?");
+		FIELD("1000BaseX HD", "%u", !!(val & 0x0040));
+		FIELD("1000BaseX FD", "%u", !!(val & 0x0020));
+		break;
+	case SERDES_OFFSET + 6:
+		REG(reg - SERDES_OFFSET, "Fiber Autoneg Expansion", val);
+		FIELD("Link Partner Next Page Ability", "%u", !!(val & 0x0008));
+		FIELD("Page Received", "%u", !!(val & 0x0002));
+		FIELD("Link Partner Autoneg Ability", "%u", !!(val & 0x0001));
+		break;
+	case SERDES_OFFSET + 7:
+		REG(reg - SERDES_OFFSET, "Fiber Next Page Transmit", val);
+		break;
+	case SERDES_OFFSET + 8:
+		REG(reg - SERDES_OFFSET, "Fiber Link Partner Next Page", val);
+		break;
+	case SERDES_OFFSET + 9 ... SERDES_OFFSET + 14:
+		REG(reg - SERDES_OFFSET, "Reserved", val);
+		break;
+	case SERDES_OFFSET + 15:
+		REG(reg - SERDES_OFFSET, "Extended Status", val);
+		break;
+	case SERDES_OFFSET + 16:
+		REG(reg - SERDES_OFFSET, "Fiber Specific Control", val);
+		FIELD("Fiber Transmit FIFO Depth", "%s",
+		      (val & 0xc000) == 0x0000 ? "16 Bits" :
+		      (val & 0xc000) == 0x4000 ? "24 Bits" :
+		      (val & 0xc000) == 0x8000 ? "32 Bits" :
+		      (val & 0xc000) == 0xc000 ? "40 Bits" : "?");
+		FIELD("SERDES Loopback", "%u", !!(val & 0x1000));
+		FIELD("Force Link Good", "%u", !!(val & 0x0400));
+		FIELD("MAC Interface Power Down", "%u", !!(val & 0x0008));
+		FIELD("Mode", "%s",
+		      (val & 0x0003) == 0x0000 ? "100BaseFX" :
+		      (val & 0x0003) == 0x0001 ? "1000BaseX" :
+		      (val & 0x0003) == 0x0002 ? "SGMII System" :
+		      (val & 0x0003) == 0x0003 ? "SGMII Media" : "?");
+		break;
+	case SERDES_OFFSET + 17:
+		REG(reg - SERDES_OFFSET, "Fiber Specific Status", val);
+		FIELD("Speed", "%s",
+		      (val & 0xc000) == 0x0000 ? "10 Mbps" :
+		      (val & 0xc000) == 0x4000 ? "100 Mbps" :
+		      (val & 0xc000) == 0x8000 ? "1000 Mbps" :
+		      (val & 0xc000) == 0xc000 ? "Reserved" : "?");
+		FIELD("Duplex", "%s", val & 0x2000 ? "Full" : "Half");
+		FIELD("Page Received", "%u", !!(val & 0x1000));
+		FIELD("Speed/Duplex Resolved", "%u", !!(val & 0x0800));
+		FIELD("Link", "%s", val & 0x0400 ? "Up" : "Down");
+		FIELD("Sync", "%u", !!(val & 0x0020));
+		FIELD("Energy Detect", "%s", val & 0x010 ? "False" : "True");
+		FIELD("Transmit Pause", "%u", !!(val & 0x0008));
+		FIELD("Receive Pause", "%u", !!(val & 0x00004));
+		break;
+	case SERDES_OFFSET + 18:
+		REG(reg - SERDES_OFFSET, "Fiber Interrupt Enable", val);
+		FIELD("Speed Changed", "%u", !!(val & 0x4000));
+		FIELD("Duplex Changed", "%u", !!(val & 0x2000));
+		FIELD("Page Received", "%u", !!(val & 0x1000));
+		FIELD("Autoneg Complete", "%u", !!(val & 0x0800));
+		FIELD("Link Status Change", "%u", !!(val & 0x0400));
+		FIELD("Symbol Error", "%u", !!(val & 0x0200));
+		FIELD("False Carrier", "%u", !!(val & 0x0100));
+		FIELD("Energy Detect", "%u", !!(val & 0x0010));
+		break;
+	case SERDES_OFFSET + 19:
+		REG(reg - SERDES_OFFSET, "Fiber Interrupt Status", val);
+		FIELD("Speed Changed", "%u", !!(val & 0x4000));
+		FIELD("Duplex Changed", "%u", !!(val & 0x2000));
+		FIELD("Page Received", "%u", !!(val & 0x1000));
+		FIELD("Autoneg Complete", "%u", !!(val & 0x0800));
+		FIELD("Link Status Change", "%u", !!(val & 0x0400));
+		FIELD("Symbol Error", "%u", !!(val & 0x0200));
+		FIELD("False Carrier", "%u", !!(val & 0x0100));
+		FIELD("Energy Detect", "%u", !!(val & 0x0010));
+		break;
+	case SERDES_OFFSET + 20:
+		REG(reg - SERDES_OFFSET, "Reserved", val);
+		break;
+	case SERDES_OFFSET + 21:
+		REG(reg - SERDES_OFFSET, "Fiber Receive Error Counter", val);
+		break;
+	case SERDES_OFFSET + 22:
+		REG(reg - SERDES_OFFSET, "Reserved", val);
+		break;
+	case SERDES_OFFSET + 23:
+		REG(reg - SERDES_OFFSET, "PRBS Control", val);
+		break;
+	case SERDES_OFFSET + 24:
+		REG(reg - SERDES_OFFSET, "PRBS Error Counter LSB", val);
+		break;
+	case SERDES_OFFSET + 25:
+		REG(reg - SERDES_OFFSET, "PRBS Error Counter MSB", val);
+		break;
+	case SERDES_OFFSET + 26:
+		REG(reg - SERDES_OFFSET, "Fiber Specific Control 2", val);
+		FIELD("1000BaseX Noise Filtering", "%u", !!(val & 0x4000));
+		FIELD("1000BaseFX Noise Filtering", "%u", !!(val & 0x2000));
+		FIELD("SERDES Autoneg Bypass Enable", "%u", !!(val & 0x0040));
+		FIELD("SERDES Autoneg Bypass Status", "%u", !!(val & 0x0020));
+		FIELD("Fiber Transmitter Disable", "%u", !!(val & 0x0008));
+		FIELD("SGMII/Fiber Output Amplitude", "%s",
+		      (val & 0x0007) == 0x0000 ? "14mV" :
+		      (val & 0x0007) == 0x0001 ? "112mV" :
+		      (val & 0x0007) == 0x0002 ? "210mV" :
+		      (val & 0x0007) == 0x0003 ? "308mV" :
+		      (val & 0x0007) == 0x0004 ? "406mV" :
+		      (val & 0x0007) == 0x0005 ? "504mV" :
+		      (val & 0x0007) == 0x0006 ? "602mV" :
+		      (val & 0x0007) == 0x0007 ? "700mV" : "?");
+		break;
+	default:
+		REG(reg - SERDES_OFFSET, "Reserved", val);
 		break;
 	}
 };
@@ -643,7 +828,7 @@ static int dsa_mv88e6xxx_dump_regs(struct ethtool_regs *regs)
 	int i;
 
 	/* Marvell chips have 32 per-port 16-bit registers */
-	if (regs->len < 32 * 2)
+	if (regs->len < 32 * sizeof(u16))
 		return 1;
 
 	id = regs->version & 0xfff0;
@@ -666,6 +851,17 @@ static int dsa_mv88e6xxx_dump_regs(struct ethtool_regs *regs)
 			sw->dump(i, data[i]);
 		else
 			REG(i, "", data[i]);
+
+	/* Dump the SERDES registers, if provided */
+	if (regs->len > SERDES_OFFSET * sizeof(u16)) {
+		printf("\n%s Switch Port SERDES Registers\n", sw->name);
+		printf("-------------------------------------\n");
+		for (i = SERDES_OFFSET; i < regs->len / 2; i++)
+			if (sw->dump)
+				sw->dump(i, data[i]);
+			else
+				REG(i - SERDES_OFFSET, "", data[i]);
+	}
 
 	return 0;
 }
