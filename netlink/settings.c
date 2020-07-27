@@ -280,12 +280,22 @@ int dump_link_modes(struct nl_context *nlctx, const struct nlattr *bitset,
 	const struct nlattr *bit;
 	bool first = true;
 	int prev = -2;
+	bool nomask;
 	int ret;
 
 	ret = mnl_attr_parse_nested(bitset, attr_cb, &bitset_tb_info);
-	bits = bitset_tb[ETHTOOL_A_BITSET_BITS];
 	if (ret < 0)
 		goto err_nonl;
+
+	nomask = bitset_tb[ETHTOOL_A_BITSET_NOMASK];
+	/* Trying to print the mask of a "no mask" bitset doesn't make sense */
+	if (mask && nomask) {
+		ret = -EFAULT;
+		goto err_nonl;
+	}
+
+	bits = bitset_tb[ETHTOOL_A_BITSET_BITS];
+
 	if (!bits) {
 		const struct stringset *lm_strings;
 		unsigned int count;
@@ -354,7 +364,7 @@ int dump_link_modes(struct nl_context *nlctx, const struct nlattr *bitset,
 		if (!tb[ETHTOOL_A_BITSET_BIT_INDEX] ||
 		    !tb[ETHTOOL_A_BITSET_BIT_NAME])
 			goto err;
-		if (!mask && !tb[ETHTOOL_A_BITSET_BIT_VALUE])
+		if (!mask && !nomask && !tb[ETHTOOL_A_BITSET_BIT_VALUE])
 			continue;
 
 		idx = mnl_attr_get_u32(tb[ETHTOOL_A_BITSET_BIT_INDEX]);
@@ -469,7 +479,7 @@ static int dump_peer_modes(struct nl_context *nlctx, const struct nlattr *attr)
 	printf("\tLink partner advertised auto-negotiation: %s\n",
 	       autoneg ? "Yes" : "No");
 
-	ret = dump_link_modes(nlctx, attr, true, LM_CLASS_FEC,
+	ret = dump_link_modes(nlctx, attr, false, LM_CLASS_FEC,
 			      "Link partner advertised FEC modes: ",
 			      " ", "\n", "No");
 	return ret;

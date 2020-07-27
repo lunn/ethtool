@@ -50,12 +50,22 @@ bool bitset_get_bit(const struct nlattr *bitset, bool mask, unsigned int idx,
 	DECLARE_ATTR_TB_INFO(bitset_tb);
 	const struct nlattr *bits;
 	const struct nlattr *bit;
+	bool nomask;
 	int ret;
 
 	*retptr = 0;
 	ret = mnl_attr_parse_nested(bitset, attr_cb, &bitset_tb_info);
 	if (ret < 0)
 		goto err;
+
+	nomask = bitset_tb[ETHTOOL_A_BITSET_NOMASK];
+	if (mask && nomask) {
+		/* Trying to determine if a bit is set in the mask of a "no
+		 * mask" bitset doesn't make sense.
+		 */
+		ret = -EFAULT;
+		goto err;
+	}
 
 	bits = mask ? bitset_tb[ETHTOOL_A_BITSET_MASK] :
 		      bitset_tb[ETHTOOL_A_BITSET_VALUE];
@@ -87,7 +97,7 @@ bool bitset_get_bit(const struct nlattr *bitset, bool mask, unsigned int idx,
 
 		my_idx = mnl_attr_get_u32(tb[ETHTOOL_A_BITSET_BIT_INDEX]);
 		if (my_idx == idx)
-			return mask || tb[ETHTOOL_A_BITSET_BIT_VALUE];
+			return mask || nomask || tb[ETHTOOL_A_BITSET_BIT_VALUE];
 	}
 
 	return false;
