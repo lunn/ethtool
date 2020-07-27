@@ -481,7 +481,7 @@ static int dump_peer_modes(struct nl_context *nlctx, const struct nlattr *attr)
 
 	ret = dump_link_modes(nlctx, attr, false, LM_CLASS_FEC,
 			      "Link partner advertised FEC modes: ",
-			      " ", "\n", "No");
+			      " ", "\n", "Not reported");
 	return ret;
 }
 
