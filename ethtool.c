@@ -2906,6 +2906,8 @@ static int do_sset(struct cmd_context *ctx)
 		struct ethtool_link_usettings *link_usettings;
 
 		link_usettings = do_ioctl_glinksettings(ctx);
+		memset(&link_usettings->deprecated, 0,
+		       sizeof(link_usettings->deprecated));
 		if (link_usettings == NULL)
 			link_usettings = do_ioctl_gset(ctx);
 		if (link_usettings == NULL) {
