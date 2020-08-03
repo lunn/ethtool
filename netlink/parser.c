@@ -155,8 +155,9 @@ static int lookup_u8(const char *arg, uint8_t *result,
 /* Parser handler for a flag. Expects a name (with no additional argument),
  * generates NLA_FLAG or sets a bool (if the name was present).
  */
-int nl_parse_flag(struct nl_context *nlctx, uint16_t type, const void *data,
-		  struct nl_msg_buff *msgbuff, void *dest)
+int nl_parse_flag(struct nl_context *nlctx __maybe_unused, uint16_t type,
+		  const void *data __maybe_unused, struct nl_msg_buff *msgbuff,
+		  void *dest)
 {
 	if (dest)
 		*(bool *)dest = true;
@@ -166,7 +167,8 @@ int nl_parse_flag(struct nl_context *nlctx, uint16_t type, const void *data,
 /* Parser handler for null terminated string. Expects a string argument,
  * generates NLA_NUL_STRING or fills const char *
  */
-int nl_parse_string(struct nl_context *nlctx, uint16_t type, const void *data,
+int nl_parse_string(struct nl_context *nlctx, uint16_t type,
+		    const void *data __maybe_unused,
 		    struct nl_msg_buff *msgbuff, void *dest)
 {
 	const char *arg = *nlctx->argp;
@@ -183,8 +185,8 @@ int nl_parse_string(struct nl_context *nlctx, uint16_t type, const void *data,
  * (may use 0x prefix), generates NLA_U32 or fills an uint32_t.
  */
 int nl_parse_direct_u32(struct nl_context *nlctx, uint16_t type,
-			const void *data, struct nl_msg_buff *msgbuff,
-			void *dest)
+			const void *data __maybe_unused,
+			struct nl_msg_buff *msgbuff, void *dest)
 {
 	const char *arg = *nlctx->argp;
 	uint32_t val;
@@ -207,8 +209,8 @@ int nl_parse_direct_u32(struct nl_context *nlctx, uint16_t type,
  * (may use 0x prefix), generates NLA_U32 or fills an uint32_t.
  */
 int nl_parse_direct_u8(struct nl_context *nlctx, uint16_t type,
-		       const void *data, struct nl_msg_buff *msgbuff,
-		       void *dest)
+		       const void *data __maybe_unused,
+		       struct nl_msg_buff *msgbuff, void *dest)
 {
 	const char *arg = *nlctx->argp;
 	uint8_t val;
@@ -231,8 +233,8 @@ int nl_parse_direct_u8(struct nl_context *nlctx, uint16_t type,
  * NLA_U32 or fills an uint32_t.
  */
 int nl_parse_direct_m2cm(struct nl_context *nlctx, uint16_t type,
-			 const void *data, struct nl_msg_buff *msgbuff,
-			 void *dest)
+			 const void *data __maybe_unused,
+			 struct nl_msg_buff *msgbuff, void *dest)
 {
 	const char *arg = *nlctx->argp;
 	float meters;
@@ -256,7 +258,8 @@ int nl_parse_direct_m2cm(struct nl_context *nlctx, uint16_t type,
 /* Parser handler for (tri-state) bool. Expects "name on|off", generates
  * NLA_U8 which is 1 for "on" and 0 for "off".
  */
-int nl_parse_u8bool(struct nl_context *nlctx, uint16_t type, const void *data,
+int nl_parse_u8bool(struct nl_context *nlctx, uint16_t type,
+		    const void *data __maybe_unused,
 		    struct nl_msg_buff *msgbuff, void *dest)
 {
 	const char *arg = *nlctx->argp;
@@ -463,8 +466,9 @@ err:
  * error_parser_params (error message, return value and number of extra
  * arguments to skip).
  */
-int nl_parse_error(struct nl_context *nlctx, uint16_t type, const void *data,
-		   struct nl_msg_buff *msgbuff, void *dest)
+int nl_parse_error(struct nl_context *nlctx, uint16_t type __maybe_unused,
+		   const void *data, struct nl_msg_buff *msgbuff __maybe_unused,
+		   void *dest __maybe_unused)
 {
 	const struct error_parser_data *parser_data = data;
 	unsigned int skip = parser_data->extra_args;
