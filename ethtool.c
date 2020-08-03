@@ -366,7 +366,7 @@ static int rxflow_str_to_type(const char *str)
 	return flow_type;
 }
 
-static int do_version(struct cmd_context *ctx maybe_unused)
+static int do_version(struct cmd_context *ctx __maybe_unused)
 {
 	fprintf(stdout,
 		PACKAGE " version " VERSION
@@ -1106,7 +1106,7 @@ nested:
 }
 
 static int dump_eeprom(int geeprom_dump_raw,
-		       struct ethtool_drvinfo *info maybe_unused,
+		       struct ethtool_drvinfo *info __maybe_unused,
 		       struct ethtool_eeprom *ee)
 {
 	if (geeprom_dump_raw) {
@@ -5708,7 +5708,7 @@ static const struct option args[] = {
 	{}
 };
 
-static int show_usage(struct cmd_context *ctx maybe_unused)
+static int show_usage(struct cmd_context *ctx __maybe_unused)
 {
 	int i;
 

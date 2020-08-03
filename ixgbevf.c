@@ -3,7 +3,7 @@
 #include "internal.h"
 
 int
-ixgbevf_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+ixgbevf_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		  struct ethtool_regs *regs)
 {
 	u32 *regs_buff = (u32 *)regs->data;

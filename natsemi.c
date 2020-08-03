@@ -323,7 +323,7 @@ static void __print_intr(int d, int intr, const char *name,
 } while (0)
 
 int
-natsemi_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+natsemi_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		  struct ethtool_regs *regs)
 {
 	u32 *data = (u32 *)regs->data;
@@ -964,7 +964,7 @@ natsemi_dump_regs(struct ethtool_drvinfo *info maybe_unused,
 }
 
 int
-natsemi_dump_eeprom(struct ethtool_drvinfo *info maybe_unused,
+natsemi_dump_eeprom(struct ethtool_drvinfo *info __maybe_unused,
 		    struct ethtool_eeprom *ee)
 {
 	int i;

@@ -2,7 +2,7 @@
 #include <string.h>
 #include "internal.h"
 
-int lan78xx_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+int lan78xx_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		      struct ethtool_regs *regs)
 {
 	unsigned int *lan78xx_reg = (unsigned int *)regs->data;

@@ -241,7 +241,7 @@ print_intr_bits(u16 mask)
 }
 
 int
-realtek_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+realtek_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		  struct ethtool_regs *regs)
 {
 	u32 *data = (u32 *) regs->data;

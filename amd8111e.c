@@ -152,7 +152,7 @@ typedef enum {
 #define PHY_SPEED_100		0x3
 
 
-int amd8111e_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+int amd8111e_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		       struct ethtool_regs *regs)
 {
 

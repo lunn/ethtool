@@ -259,7 +259,7 @@ static void dump_control(u8 *r)
 	printf("General Purpose  I/O             0x%08X\n", *(u32 *) (r + 0x15c));
 }
 
-int skge_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+int skge_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		   struct ethtool_regs *regs)
 {
 	const u32 *r = (const u32 *) regs->data;
@@ -380,7 +380,7 @@ static void dump_prefetch(const char *name, const void *r)
 	}
 }
 
-int sky2_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+int sky2_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		   struct ethtool_regs *regs)
 {
 	const u16 *r16 = (const u16 *) regs->data;

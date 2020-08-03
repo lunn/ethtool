@@ -168,7 +168,7 @@ ixgbe_get_mac_type(u16 device_id)
 }
 
 int
-ixgbe_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+ixgbe_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		struct ethtool_regs *regs)
 {
 	u32 *regs_buff = (u32 *)regs->data;

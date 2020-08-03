@@ -4,7 +4,7 @@
 
 #define TG3_MAGIC 0x669955aa
 
-int tg3_dump_eeprom(struct ethtool_drvinfo *info maybe_unused,
+int tg3_dump_eeprom(struct ethtool_drvinfo *info __maybe_unused,
 		    struct ethtool_eeprom *ee)
 {
 	int i;
@@ -23,7 +23,7 @@ int tg3_dump_eeprom(struct ethtool_drvinfo *info maybe_unused,
 	return 0;
 }
 
-int tg3_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+int tg3_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		  struct ethtool_regs *regs)
 {
 	int i;

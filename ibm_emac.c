@@ -314,7 +314,7 @@ static void *print_tah_regs(void *buf)
 	return p + 1;
 }
 
-int ibm_emac_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+int ibm_emac_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		       struct ethtool_regs *regs)
 {
 	struct emac_ethtool_regs_hdr *hdr =
