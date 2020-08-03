@@ -94,7 +94,8 @@ static const char *bit_to_prio(u32 val)
 	return val ? "low" : "high";
 }
 
-int igc_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs)
+int igc_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
+		  struct ethtool_regs *regs)
 {
 	u32 reg;
 	int offset, i;
