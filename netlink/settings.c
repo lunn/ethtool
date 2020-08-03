@@ -656,7 +656,8 @@ int linkstate_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 	return MNL_CB_OK;
 }
 
-void wol_modes_cb(unsigned int idx, const char *name, bool val, void *data)
+void wol_modes_cb(unsigned int idx, const char *name __maybe_unused, bool val,
+		  void *data)
 {
 	struct ethtool_wolinfo *wol = data;
 
@@ -704,7 +705,8 @@ int wol_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 	return MNL_CB_OK;
 }
 
-void msgmask_cb(unsigned int idx, const char *name, bool val, void *data)
+void msgmask_cb(unsigned int idx, const char *name __maybe_unused, bool val,
+		void *data)
 {
 	u32 *msg_mask = data;
 
@@ -714,7 +716,8 @@ void msgmask_cb(unsigned int idx, const char *name, bool val, void *data)
 		*msg_mask |= (1U << idx);
 }
 
-void msgmask_cb2(unsigned int idx, const char *name, bool val, void *data)
+void msgmask_cb2(unsigned int idx __maybe_unused, const char *name,
+		 bool val, void *data __maybe_unused)
 {
 	if (val)
 		printf(" %s", name);

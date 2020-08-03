@@ -19,7 +19,7 @@
 /* PRIVFLAGS_GET */
 
 static void privflags_maxlen_walk_cb(unsigned int idx, const char *name,
-				     bool val, void *data)
+				     bool val __maybe_unused, void *data)
 {
 	unsigned int *maxlen = data;
 	unsigned int len, n;
