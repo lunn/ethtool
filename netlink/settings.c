@@ -717,7 +717,7 @@ static const char *link_ext_substate_get(uint8_t link_ext_state_val, uint8_t lin
 	}
 }
 
-static void linkstate_link_ext_substate_print(const struct nlattr *tb[], struct nl_context *nlctx,
+static void linkstate_link_ext_substate_print(const struct nlattr *tb[],
 					      uint8_t link_ext_state_val)
 {
 	uint8_t link_ext_substate_val;
@@ -735,7 +735,7 @@ static void linkstate_link_ext_substate_print(const struct nlattr *tb[], struct 
 		printf(", %s", link_ext_substate_str);
 }
 
-static void linkstate_link_ext_state_print(const struct nlattr *tb[], struct nl_context *nlctx)
+static void linkstate_link_ext_state_print(const struct nlattr *tb[])
 {
 	uint8_t link_ext_state_val;
 	const char *link_ext_state_str;
@@ -753,7 +753,7 @@ static void linkstate_link_ext_state_print(const struct nlattr *tb[], struct nl_
 	else
 		printf(" (%s", link_ext_state_str);
 
-	linkstate_link_ext_substate_print(tb, nlctx, link_ext_state_val);
+	linkstate_link_ext_substate_print(tb, link_ext_state_val);
 	printf(")");
 }
 
@@ -778,7 +778,7 @@ int linkstate_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 
 		print_banner(nlctx);
 		printf("\tLink detected: %s", val ? "yes" : "no");
-		linkstate_link_ext_state_print(tb, nlctx);
+		linkstate_link_ext_state_print(tb);
 		printf("\n");
 	}
 
