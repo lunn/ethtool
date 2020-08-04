@@ -1,3 +1,39 @@
+Version 5.8 - Aug 4, 2020
+	* Feature: more ethtool netlink message format descriptions
+	* Feature: omit test-features if netlink is enabled
+	* Feature: netlink handler for gfeatures (-k)
+	* Feature: netlink handler for sfeatures (-K)
+	* Feature: netlink handler for gprivflags (--show-priv-flags)
+	* Feature: netlink handler for sprivflags (--set-priv-flags)
+	* Feature: netlink handler for gring (-g)
+	* Feature: netlink handler for sring (-G)
+	* Feature: netlink handler for gchannels (-l)
+	* Feature: netlink handler for schannels (-L)
+	* Feature: netlink handler for gcoalesce (-c)
+	* Feature: netlink handler for scoalesce (-C)
+	* Feature: netlink handler for gpause (-a)
+	* Feature: netlink handler for spause (-A)
+	* Feature: netlink handler for geee (--show-eee)
+	* Feature: netlink handler for seee (--set-eee)
+	* Feature: netlink handler for tsinfo (-T)
+	* Feature: master/slave configuration support
+	* Feature: LINKSTATE SQI support
+	* Feature: cable test support
+	* Feature: cable test TDR support
+	* Feature: JSON output for cable test commands
+	* Feature: igc driver support
+	* Feature: support for get/set ethtool_tunable
+	* Feature: dsa: mv88e6xxx: add pretty dump for 88E6352 SERDES
+	* Fix: fix build warnings
+	* Fix: fix nest type grouping in parser
+	* Fix: fix msgbuff_append() helper
+	* Fix: fix unwanted switch fall through in family_info_cb()
+	* Fix: fix netlink error message suppression
+	* Fix: fix netlink bitmasks when sent as NOMASK
+	* Fix: use "Not reported" when no FEC modes are provided
+	* Fix: ioctl: do not pass transceiver value back to kernel
+	* Fix: ethtool.spec: Add bash completion script
+
 Version 5.7 - Jun 4, 2020
 	* Feature: ethtool: Add support for Low Latency Reed Solomon
 	* Fix: ethtool.c: Report transceiver correctly
