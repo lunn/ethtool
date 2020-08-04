@@ -88,8 +88,7 @@ static char *nl_pair2txt(uint8_t pair)
 	}
 }
 
-static int nl_cable_test_ntf_attr(struct nlattr *evattr,
-				  struct nl_context *nlctx)
+static int nl_cable_test_ntf_attr(struct nlattr *evattr)
 {
 	unsigned int cm;
 	uint16_t code;
@@ -122,14 +121,13 @@ static int nl_cable_test_ntf_attr(struct nlattr *evattr,
 	return 0;
 }
 
-static void cable_test_ntf_nest(const struct nlattr *nest,
-				struct nl_context *nlctx)
+static void cable_test_ntf_nest(const struct nlattr *nest)
 {
 	struct nlattr *pos;
 	int ret;
 
 	mnl_attr_for_each_nested(pos, nest) {
-		ret = nl_cable_test_ntf_attr(pos, nlctx);
+		ret = nl_cable_test_ntf_attr(pos);
 		if (ret < 0)
 			return;
 	}
@@ -180,7 +178,7 @@ static int cable_test_ntf_stop_cb(const struct nlmsghdr *nlhdr, void *data)
 	}
 
 	if (tb[ETHTOOL_A_CABLE_TEST_NTF_NEST])
-		cable_test_ntf_nest(tb[ETHTOOL_A_CABLE_TEST_NTF_NEST], nlctx);
+		cable_test_ntf_nest(tb[ETHTOOL_A_CABLE_TEST_NTF_NEST]);
 
 	if (status == ETHTOOL_A_CABLE_TEST_NTF_STATUS_COMPLETED) {
 		if (ctctx)
@@ -339,8 +337,7 @@ static int nl_get_cable_test_tdr_step(const struct nlattr *nest,
 	return 0;
 }
 
-static int nl_cable_test_tdr_ntf_attr(struct nlattr *evattr,
-				      struct nl_context *nlctx)
+static int nl_cable_test_tdr_ntf_attr(struct nlattr *evattr)
 {
 	uint32_t first, last, step;
 	uint8_t pair;
@@ -391,14 +388,13 @@ static int nl_cable_test_tdr_ntf_attr(struct nlattr *evattr,
 	return 0;
 }
 
-static void cable_test_tdr_ntf_nest(const struct nlattr *nest,
-				    struct nl_context *nlctx)
+static void cable_test_tdr_ntf_nest(const struct nlattr *nest)
 {
 	struct nlattr *pos;
 	int ret;
 
 	mnl_attr_for_each_nested(pos, nest) {
-		ret = nl_cable_test_tdr_ntf_attr(pos, nlctx);
+		ret = nl_cable_test_tdr_ntf_attr(pos);
 		if (ret < 0)
 			return;
 	}
@@ -450,8 +446,7 @@ int cable_test_tdr_ntf_stop_cb(const struct nlmsghdr *nlhdr, void *data)
 	}
 
 	if (tb[ETHTOOL_A_CABLE_TEST_TDR_NTF_NEST])
-		cable_test_tdr_ntf_nest(tb[ETHTOOL_A_CABLE_TEST_TDR_NTF_NEST],
-					nlctx);
+		cable_test_tdr_ntf_nest(tb[ETHTOOL_A_CABLE_TEST_TDR_NTF_NEST]);
 
 	if (status == ETHTOOL_A_CABLE_TEST_NTF_STATUS_COMPLETED) {
 		if (ctctx)

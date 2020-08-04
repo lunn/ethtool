@@ -36,7 +36,7 @@
 #define CU_CMD			0x00F0
 #define RU_CMD			0x0007
 
-int e100_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+int e100_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		   struct ethtool_regs *regs)
 {
 	u32 *regs_buff = (u32 *)regs->data;

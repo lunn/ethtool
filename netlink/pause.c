@@ -21,7 +21,8 @@ struct pause_autoneg_status {
 	bool	asym_pause;
 };
 
-static void pause_autoneg_walker(unsigned int idx, const char *name, bool val,
+static void pause_autoneg_walker(unsigned int idx,
+				 const char *name __maybe_unused, bool val,
 				 void *data)
 {
 	struct pause_autoneg_status *status = data;

@@ -16,7 +16,7 @@
 /* Used as reply callback for requests where no reply is expected (e.g. most
  * "set" type commands)
  */
-int nomsg_reply_cb(const struct nlmsghdr *nlhdr, void *data)
+int nomsg_reply_cb(const struct nlmsghdr *nlhdr, void *data __maybe_unused)
 {
 	const struct genlmsghdr *ghdr = (const struct genlmsghdr *)(nlhdr + 1);
 

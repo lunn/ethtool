@@ -363,7 +363,7 @@ static enum e1000_mac_type e1000_get_mac_type(u16 device_id)
 	return mac_type;
 }
 
-int e1000_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+int e1000_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		    struct ethtool_regs *regs)
 {
 	u32 *regs_buff = (u32 *)regs->data;

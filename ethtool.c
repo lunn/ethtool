@@ -366,7 +366,7 @@ static int rxflow_str_to_type(const char *str)
 	return flow_type;
 }
 
-static int do_version(struct cmd_context *ctx maybe_unused)
+static int do_version(struct cmd_context *ctx __maybe_unused)
 {
 	fprintf(stdout,
 		PACKAGE " version " VERSION
@@ -1106,7 +1106,7 @@ nested:
 }
 
 static int dump_eeprom(int geeprom_dump_raw,
-		       struct ethtool_drvinfo *info maybe_unused,
+		       struct ethtool_drvinfo *info __maybe_unused,
 		       struct ethtool_eeprom *ee)
 {
 	if (geeprom_dump_raw) {
@@ -1632,7 +1632,9 @@ get_stringset(struct cmd_context *ctx, enum ethtool_stringset set_id,
 	sset_info.hdr.reserved = 0;
 	sset_info.hdr.sset_mask = 1ULL << set_id;
 	if (send_ioctl(ctx, &sset_info) == 0) {
-		len = sset_info.hdr.sset_mask ? sset_info.hdr.data[0] : 0;
+		const u32 *sset_lengths = sset_info.hdr.data;
+
+		len = sset_info.hdr.sset_mask ? sset_lengths[0] : 0;
 	} else if (errno == EOPNOTSUPP && drvinfo_offset != 0) {
 		/* Fallback for old kernel versions */
 		drvinfo.cmd = ETHTOOL_GDRVINFO;
@@ -5708,7 +5710,7 @@ static const struct option args[] = {
 	{}
 };
 
-static int show_usage(struct cmd_context *ctx maybe_unused)
+static int show_usage(struct cmd_context *ctx __maybe_unused)
 {
 	int i;
 

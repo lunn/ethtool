@@ -16,7 +16,7 @@
 /* TSINFO_GET */
 
 static void tsinfo_dump_cb(unsigned int idx, const char *name, bool val,
-			   void *data)
+			   void *data __maybe_unused)
 {
 	if (!val)
 		return;

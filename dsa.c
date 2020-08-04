@@ -870,7 +870,7 @@ static int dsa_mv88e6xxx_dump_regs(struct ethtool_regs *regs)
 #undef FIELD
 #undef REG
 
-int dsa_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+int dsa_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		  struct ethtool_regs *regs)
 {
 	/* DSA per-driver register dump */

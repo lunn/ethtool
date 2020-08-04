@@ -26,7 +26,7 @@
 #include "json_writer.h"
 #include "json_print.h"
 
-#define maybe_unused __attribute__((__unused__))
+#define __maybe_unused __attribute__((__unused__))
 
 /* internal for netlink interface */
 #ifdef ETHTOOL_ENABLE_NETLINK

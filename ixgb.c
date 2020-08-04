@@ -38,7 +38,7 @@
 #define IXGB_RAH_ASEL_SRC         0x00010000
 #define IXGB_RAH_AV               0x80000000
 
-int ixgb_dump_regs(struct ethtool_drvinfo *info maybe_unused,
+int ixgb_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		   struct ethtool_regs *regs)
 {
 	u32 *regs_buff = (u32 *)regs->data;
