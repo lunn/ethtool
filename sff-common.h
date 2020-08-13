@@ -26,7 +26,17 @@
 #include <stdio.h>
 #include "internal.h"
 
-#define SFF8024_ID_OFFSET				0x00
+/* Revision compliance */
+#define  SFF8636_REV_UNSPECIFIED		0x00
+#define  SFF8636_REV_8436_48			0x01
+#define  SFF8636_REV_8436_8636			0x02
+#define  SFF8636_REV_8636_13			0x03
+#define  SFF8636_REV_8636_14			0x04
+#define  SFF8636_REV_8636_15			0x05
+#define  SFF8636_REV_8636_20			0x06
+#define  SFF8636_REV_8636_27			0x07
+
+#define  SFF8024_ID_OFFSET				0x00
 #define  SFF8024_ID_UNKNOWN				0x00
 #define  SFF8024_ID_GBIC				0x01
 #define  SFF8024_ID_SOLDERED_MODULE		0x02
@@ -51,7 +61,8 @@
 #define  SFF8024_ID_HD8X_FANOUT			0x15
 #define  SFF8024_ID_CDFP_S3				0x16
 #define  SFF8024_ID_MICRO_QSFP			0x17
-#define  SFF8024_ID_LAST				SFF8024_ID_MICRO_QSFP
+#define  SFF8024_ID_QSFP_DD				0x18
+#define  SFF8024_ID_LAST				SFF8024_ID_QSFP_DD
 #define  SFF8024_ID_UNALLOCATED_LAST	0x7F
 #define  SFF8024_ID_VENDOR_START		0x80
 #define  SFF8024_ID_VENDOR_LAST			0xFF
@@ -76,8 +87,14 @@
 #define  SFF8024_CTOR_RJ45				0x22
 #define  SFF8024_CTOR_NO_SEPARABLE		0x23
 #define  SFF8024_CTOR_MXC_2x16			0x24
-#define  SFF8024_CTOR_LAST				SFF8024_CTOR_MXC_2x16
-#define  SFF8024_CTOR_UNALLOCATED_LAST	0x7F
+#define  SFF8024_CTOR_CS_OPTICAL		0x25
+#define  SFF8024_CTOR_CS_OPTICAL_MINI		0x26
+#define  SFF8024_CTOR_MPO_2X12			0x27
+#define  SFF8024_CTOR_MPO_1X16			0x28
+#define  SFF8024_CTOR_LAST			SFF8024_CTOR_MPO_1X16
+
+#define  SFF8024_CTOR_NO_SEP_QSFP_DD		0x6F
+#define  SFF8024_CTOR_UNALLOCATED_LAST		0x7F
 #define  SFF8024_CTOR_VENDOR_START		0x80
 #define  SFF8024_CTOR_VENDOR_LAST		0xFF
 
@@ -185,5 +202,6 @@ void sff8024_show_oui(const __u8 *id, int id_offset);
 void sff8024_show_identifier(const __u8 *id, int id_offset);
 void sff8024_show_connector(const __u8 *id, int ctor_offset);
 void sff8024_show_encoding(const __u8 *id, int encoding_offset, int sff_type);
+void sff_show_revision_compliance(const __u8 *id, int rev_offset);
 
 #endif /* SFF_COMMON_H__ */

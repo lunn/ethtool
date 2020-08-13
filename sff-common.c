@@ -136,6 +136,9 @@ void sff8024_show_identifier(const __u8 *id, int id_offset)
 	case SFF8024_ID_MICRO_QSFP:
 		printf(" (microQSFP)\n");
 		break;
+	case SFF8024_ID_QSFP_DD:
+		printf(" (QSFP-DD Double Density 8X Pluggable Transceiver (INF-8628))\n");
+		break;
 	default:
 		printf(" (reserved or unknown)\n");
 		break;
@@ -202,6 +205,18 @@ void sff8024_show_connector(const __u8 *id, int ctor_offset)
 		break;
 	case SFF8024_CTOR_MXC_2x16:
 		printf(" (MXC 2x16)\n");
+		break;
+	case SFF8024_CTOR_CS_OPTICAL:
+		printf(" (CS optical connector)\n");
+		break;
+	case SFF8024_CTOR_CS_OPTICAL_MINI:
+		printf(" (Mini CS optical connector)\n");
+		break;
+	case SFF8024_CTOR_MPO_2X12:
+		printf(" (MPO 2x12)\n");
+		break;
+	case SFF8024_CTOR_MPO_1X16:
+		printf(" (MPO 1x16)\n");
 		break;
 	default:
 		printf(" (reserved or unknown)\n");
@@ -301,4 +316,40 @@ void sff_show_thresholds(struct sff_diags sd)
 		     sd.rx_power[HWARN]);
 	PRINT_xX_PWR("Laser rx power low warning threshold",
 		     sd.rx_power[LWARN]);
+}
+
+void sff_show_revision_compliance(const __u8 *id, int rev_offset)
+{
+	static const char *pfx =
+		"\tRevision Compliance                       :";
+
+	switch (id[rev_offset]) {
+	case SFF8636_REV_UNSPECIFIED:
+		printf("%s Revision not specified\n", pfx);
+		break;
+	case SFF8636_REV_8436_48:
+		printf("%s SFF-8436 Rev 4.8 or earlier\n", pfx);
+		break;
+	case SFF8636_REV_8436_8636:
+		printf("%s SFF-8436 Rev 4.8 or earlier\n", pfx);
+		break;
+	case SFF8636_REV_8636_13:
+		printf("%s SFF-8636 Rev 1.3 or earlier\n", pfx);
+		break;
+	case SFF8636_REV_8636_14:
+		printf("%s SFF-8636 Rev 1.4\n", pfx);
+		break;
+	case SFF8636_REV_8636_15:
+		printf("%s SFF-8636 Rev 1.5\n", pfx);
+		break;
+	case SFF8636_REV_8636_20:
+		printf("%s SFF-8636 Rev 2.0\n", pfx);
+		break;
+	case SFF8636_REV_8636_27:
+		printf("%s SFF-8636 Rev 2.5/2.6/2.7\n", pfx);
+		break;
+	default:
+		printf("%s Unallocated\n", pfx);
+		break;
+	}
 }

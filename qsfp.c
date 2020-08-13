@@ -58,6 +58,7 @@
 #include "internal.h"
 #include "sff-common.h"
 #include "qsfp.h"
+#include "qsfp-dd.h"
 
 #define MAX_DESC_SIZE	42
 
@@ -579,9 +580,9 @@ static void sff8636_show_rate_identifier(const __u8 *id)
 			id[SFF8636_EXT_RS_OFFSET]);
 }
 
-static void sff8636_show_oui(const __u8 *id)
+static void sff8636_show_oui(const __u8 *id, int id_offset)
 {
-	sff8024_show_oui(id, SFF8636_VENDOR_OUI_OFFSET);
+	sff8024_show_oui(id, id_offset);
 }
 
 static void sff8636_show_wavelength_or_copper_compliance(const __u8 *id)
@@ -662,38 +663,7 @@ static void sff8636_show_wavelength_or_copper_compliance(const __u8 *id)
 
 static void sff8636_show_revision_compliance(const __u8 *id)
 {
-	static const char *pfx =
-		"\tRevision Compliance                       :";
-
-	switch (id[SFF8636_REV_COMPLIANCE_OFFSET]) {
-	case SFF8636_REV_UNSPECIFIED:
-		printf("%s Revision not specified\n", pfx);
-		break;
-	case SFF8636_REV_8436_48:
-		printf("%s SFF-8436 Rev 4.8 or earlier\n", pfx);
-		break;
-	case SFF8636_REV_8436_8636:
-		printf("%s SFF-8436 Rev 4.8 or earlier\n", pfx);
-		break;
-	case SFF8636_REV_8636_13:
-		printf("%s SFF-8636 Rev 1.3 or earlier\n", pfx);
-		break;
-	case SFF8636_REV_8636_14:
-		printf("%s SFF-8636 Rev 1.4\n", pfx);
-		break;
-	case SFF8636_REV_8636_15:
-		printf("%s SFF-8636 Rev 1.5\n", pfx);
-		break;
-	case SFF8636_REV_8636_20:
-		printf("%s SFF-8636 Rev 2.0\n", pfx);
-		break;
-	case SFF8636_REV_8636_27:
-		printf("%s SFF-8636 Rev 2.5/2.6/2.7\n", pfx);
-		break;
-	default:
-		printf("%s Unallocated\n", pfx);
-		break;
-	}
+	sff_show_revision_compliance(id, SFF8636_REV_COMPLIANCE_OFFSET);
 }
 
 /*
@@ -846,10 +816,15 @@ static void sff8636_show_dom(const __u8 *id, __u32 eeprom_len)
 
 		sff_show_thresholds(sd);
 	}
-
 }
+
 void sff8636_show_all(const __u8 *id, __u32 eeprom_len)
 {
+	if (id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP_DD) {
+		qsfp_dd_show_all(id);
+		return;
+	}
+
 	sff8636_show_identifier(id);
 	if ((id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP) ||
 		(id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP_PLUS) ||
@@ -874,7 +849,7 @@ void sff8636_show_all(const __u8 *id, __u32 eeprom_len)
 		sff8636_show_wavelength_or_copper_compliance(id);
 		sff_show_ascii(id, SFF8636_VENDOR_NAME_START_OFFSET,
 			       SFF8636_VENDOR_NAME_END_OFFSET, "Vendor name");
-		sff8636_show_oui(id);
+		sff8636_show_oui(id, SFF8636_VENDOR_OUI_OFFSET);
 		sff_show_ascii(id, SFF8636_VENDOR_PN_START_OFFSET,
 			       SFF8636_VENDOR_PN_END_OFFSET, "Vendor PN");
 		sff_show_ascii(id, SFF8636_VENDOR_REV_START_OFFSET,
