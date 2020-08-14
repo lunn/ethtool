@@ -413,7 +413,7 @@ static void show_feature_changes(struct nl_context *nlctx,
 
 	diff = false;
 	for (i = 0; i < words; i++)
-		if (wanted_mask[i] || active_mask[i])
+		if (wanted_mask[i] || (active_mask[i] & ~sfctx->req_mask[i]))
 			diff = true;
 	if (!diff)
 		return;
