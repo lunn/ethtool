@@ -354,7 +354,7 @@ static int nl_cable_test_tdr_ntf_attr(struct nlattr *evattr)
 
 		open_json_object(NULL);
 		print_string(PRINT_ANY, "pair", "%s ", nl_pair2txt(pair));
-		print_uint(PRINT_ANY, "amplitude", "Amplitude %4d\n", mV);
+		print_int(PRINT_ANY, "amplitude", "Amplitude %4d\n", mV);
 		close_json_object();
 		break;
 	}
