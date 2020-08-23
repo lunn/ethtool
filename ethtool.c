@@ -5880,6 +5880,8 @@ static int do_perqueue(struct cmd_context *ctx)
 			"The sub commands will be applied to all %d queues\n",
 			n_queues);
 	} else {
+		if (ctx->argc <= 2)
+			exit_bad_args();
 		ctx->argc--;
 		ctx->argp++;
 		if (parse_hex_u32_bitmap(*ctx->argp, MAX_NUM_QUEUE,
