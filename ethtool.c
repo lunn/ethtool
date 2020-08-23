@@ -223,9 +223,9 @@ static void parse_generic_cmdline(struct cmd_context *ctx,
 				  struct cmdline_info *info,
 				  unsigned int n_info)
 {
-	int argc = ctx->argc;
+	unsigned int argc = ctx->argc;
 	char **argp = ctx->argp;
-	int i, idx;
+	unsigned int i, idx;
 	int found;
 
 	for (i = 0; i < argc; i++) {
@@ -2724,9 +2724,9 @@ static int do_sset(struct cmd_context *ctx)
 	u32 msglvl_wanted = 0;
 	u32 msglvl_mask = 0;
 	struct cmdline_info cmdline_msglvl[n_flags_msglvl];
-	int argc = ctx->argc;
+	unsigned int argc = ctx->argc;
 	char **argp = ctx->argp;
-	int i;
+	unsigned int i;
 	int err = 0;
 
 	for (i = 0; i < n_flags_msglvl; i++)
@@ -3671,7 +3671,7 @@ static int do_grxfh(struct cmd_context *ctx)
 	struct ethtool_rxfh *rss;
 	u32 rss_context = 0;
 	u32 i, indir_bytes;
-	int arg_num = 0;
+	unsigned int arg_num = 0;
 	char *hkey;
 	int err;
 
@@ -4832,9 +4832,8 @@ static int do_gtunable(struct cmd_context *ctx)
 {
 	struct ethtool_tunable_info *tinfo = tunables_info;
 	char **argp = ctx->argp;
-	int argc = ctx->argc;
-	int i;
-	int j;
+	unsigned int argc = ctx->argc;
+	unsigned int i, j;
 
 	if (argc < 1)
 		exit_bad_args();
@@ -4876,7 +4875,7 @@ static int do_gtunable(struct cmd_context *ctx)
 
 static int do_get_phy_tunable(struct cmd_context *ctx)
 {
-	int argc = ctx->argc;
+	unsigned int argc = ctx->argc;
 	char **argp = ctx->argp;
 
 	if (argc < 1)
@@ -4980,9 +4979,9 @@ static int do_reset(struct cmd_context *ctx)
 {
 	struct ethtool_value resetinfo;
 	__u32 data;
-	int argc = ctx->argc;
+	unsigned int argc = ctx->argc;
 	char **argp = ctx->argp;
-	int i;
+	unsigned int i;
 
 	if (argc == 0)
 		exit_bad_args();
@@ -5270,7 +5269,8 @@ static int do_sfec(struct cmd_context *ctx)
 	enum { ARG_NONE, ARG_ENCODING } state = ARG_NONE;
 	struct ethtool_fecparam feccmd;
 	int fecmode = 0, newmode;
-	int rv, i;
+	unsigned int i;
+	int rv;
 
 	for (i = 0; i < ctx->argc; i++) {
 		if (!strcmp(ctx->argp[i], "encoding")) {
