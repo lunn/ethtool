@@ -276,10 +276,10 @@ int dump_link_modes(struct nl_context *nlctx, const struct nlattr *bitset,
 	const struct nlattr *bitset_tb[ETHTOOL_A_BITSET_MAX + 1] = {};
 	DECLARE_ATTR_TB_INFO(bitset_tb);
 	const unsigned int before_len = strlen(before);
+	unsigned int prev = UINT_MAX - 1;
 	const struct nlattr *bits;
 	const struct nlattr *bit;
 	bool first = true;
-	int prev = -2;
 	bool nomask;
 	int ret;
 
@@ -333,7 +333,7 @@ int dump_link_modes(struct nl_context *nlctx, const struct nlattr *bitset,
 			if (first)
 				first = false;
 			/* ugly hack to preserve old output format */
-			if (class == LM_CLASS_REAL && (prev == idx - 1) &&
+			if (class == LM_CLASS_REAL && (idx == prev + 1) &&
 			    prev < link_modes_count &&
 			    link_modes[prev].class == LM_CLASS_REAL &&
 			    link_modes[prev].duplex == DUPLEX_HALF)
@@ -375,7 +375,7 @@ int dump_link_modes(struct nl_context *nlctx, const struct nlattr *bitset,
 			first = false;
 		} else {
 			/* ugly hack to preserve old output format */
-			if ((class == LM_CLASS_REAL) && (prev == idx - 1) &&
+			if ((class == LM_CLASS_REAL) && (idx == prev + 1) &&
 			    (prev < link_modes_count) &&
 			    (link_modes[prev].class == LM_CLASS_REAL) &&
 			    (link_modes[prev].duplex == DUPLEX_HALF))

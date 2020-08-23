@@ -45,7 +45,7 @@ struct nl_context {
 	const char		*cmd;
 	const char		*param;
 	char			**argp;
-	int			argc;
+	unsigned int		argc;
 	bool			ioctl_fallback;
 	bool			wildcard_unsupported;
 };
