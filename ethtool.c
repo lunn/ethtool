@@ -641,8 +641,9 @@ static void dump_link_caps(const char *prefix, const char *an_prefix,
 		  "200000baseCR4/Full" },
 	};
 	int indent;
-	int did1, new_line_pend, i;
+	int did1, new_line_pend;
 	int fecreported = 0;
+	unsigned int i;
 
 	/* Indent just like the separate functions used to */
 	indent = strlen(prefix) + 14;
@@ -1071,7 +1072,7 @@ void dump_hex(FILE *file, const u8 *data, int len, int offset)
 static int dump_regs(int gregs_dump_raw, int gregs_dump_hex,
 		     struct ethtool_drvinfo *info, struct ethtool_regs *regs)
 {
-	int i;
+	unsigned int i;
 
 	if (gregs_dump_raw) {
 		fwrite(regs->data, regs->len, 1, stdout);
@@ -1128,7 +1129,8 @@ static int dump_eeprom(int geeprom_dump_raw,
 static int dump_test(struct ethtool_test *test,
 		     struct ethtool_gstrings *strings)
 {
-	int i, rc;
+	unsigned int i;
+	int rc;
 
 	rc = test->flags & ETH_TEST_FL_FAILED;
 	fprintf(stdout, "The test result is %s\n", rc ? "FAIL" : "PASS");
@@ -1359,7 +1361,7 @@ static void dump_one_feature(const char *indent, const char *name,
 	       : "");
 }
 
-static int linux_version_code(void)
+static unsigned int linux_version_code(void)
 {
 	struct utsname utsname;
 	unsigned version, patchlevel, sublevel = 0;
@@ -1375,10 +1377,10 @@ static void dump_features(const struct feature_defs *defs,
 			  const struct feature_state *state,
 			  const struct feature_state *ref_state)
 {
-	int kernel_ver = linux_version_code();
-	u32 value;
+	unsigned int kernel_ver = linux_version_code();
+	unsigned int i, j;
 	int indent;
-	int i, j;
+	u32 value;
 
 	for (i = 0; i < OFF_FLAG_DEF_SIZE; i++) {
 		/* Don't show features whose state is unknown on this
@@ -1411,7 +1413,7 @@ static void dump_features(const struct feature_defs *defs,
 
 		/* Show matching features */
 		for (j = 0; j < defs->n_features; j++) {
-			if (defs->def[j].off_flag_index != i)
+			if (defs->def[j].off_flag_index != (int)i)
 				continue;
 			if (defs->off_flag_matched[i] != 1)
 				/* Show all matching feature states */
@@ -1668,8 +1670,8 @@ static struct feature_defs *get_feature_defs(struct cmd_context *ctx)
 {
 	struct ethtool_gstrings *names;
 	struct feature_defs *defs;
+	unsigned int i, j;
 	u32 n_features;
-	int i, j;
 
 	names = get_stringset(ctx, ETH_SS_FEATURES, 0, 1);
 	if (names) {
@@ -2236,8 +2238,8 @@ static int do_sfeatures(struct cmd_context *ctx)
 	struct cmdline_info *cmdline_features;
 	struct feature_state *old_state, *new_state;
 	struct ethtool_value eval;
+	unsigned int i, j;
 	int err, rc;
-	int i, j;
 
 	defs = get_feature_defs(ctx);
 	if (!defs) {
@@ -2317,7 +2319,7 @@ static int do_sfeatures(struct cmd_context *ctx)
 				continue;
 
 			for (j = 0; j < defs->n_features; j++) {
-				if (defs->def[j].off_flag_index != i ||
+				if (defs->def[j].off_flag_index != (int)i ||
 				    !FEATURE_BIT_IS_SET(
 					    old_state->features.features,
 					    j, available) ||
@@ -3869,7 +3871,7 @@ static int do_srxfh(struct cmd_context *ctx)
 	char *hfunc_name = NULL;
 	char *hkey = NULL;
 	int err = 0;
-	int i;
+	unsigned int i;
 	u32 arg_num = 0, indir_bytes = 0;
 	u32 req_hfunc = 0;
 	u32 entry_size = sizeof(rss_head.rss_config[0]);
@@ -4135,7 +4137,8 @@ static int do_flash(struct cmd_context *ctx)
 
 static int do_permaddr(struct cmd_context *ctx)
 {
-	int i, err;
+	unsigned int i;
+	int err;
 	struct ethtool_perm_addr *epaddr;
 
 	epaddr = malloc(sizeof(struct ethtool_perm_addr) + MAX_ADDR_LEN);
@@ -4750,7 +4753,7 @@ static int do_stunable(struct cmd_context *ctx)
 	struct cmdline_info cmdline_tunable[TUNABLES_INFO_SIZE];
 	struct ethtool_tunable_info *tinfo = tunables_info;
 	int changed = 0;
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < TUNABLES_INFO_SIZE; i++) {
 		cmdline_tunable[i].name = tunable_strings[tinfo[i].t_id];
