@@ -130,7 +130,7 @@ static void dump_fifo(const char *name, const void *p)
 static void dump_gmac_fifo(const char *name, const void *p)
 {
 	const u32 *r = p;
-	int i;
+	unsigned int i;
 	static const char *regs[] = {
 		"End Address",
 		"Almost Full Thresh",

@@ -348,8 +348,9 @@ int rxclass_rule_getall(struct cmd_context *ctx)
 {
 	struct ethtool_rxnfc *nfccmd;
 	__u32 *rule_locs;
-	int err, i;
+	unsigned int i;
 	__u32 count;
+	int err;
 
 	/* determine rule count */
 	err = rxclass_get_dev_info(ctx, &count, NULL);
@@ -481,8 +482,9 @@ static int rmgr_find_empty_slot(struct rmgr_ctrl *rmgr,
 static int rmgr_init(struct cmd_context *ctx, struct rmgr_ctrl *rmgr)
 {
 	struct ethtool_rxnfc *nfccmd;
-	int err, i;
 	__u32 *rule_locs;
+	unsigned int i;
+	int err;
 
 	/* clear rule manager settings */
 	memset(rmgr, 0, sizeof(*rmgr));
@@ -941,7 +943,7 @@ static int rxclass_get_long(char *str, long long *val, int size)
 
 static int rxclass_get_ulong(char *str, unsigned long long *val, int size)
 {
-	long long max = ~0ULL >> (64 - size);
+	unsigned long long max = ~0ULL >> (64 - size);
 	char *endp;
 
 	errno = 0;
