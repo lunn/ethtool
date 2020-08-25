@@ -243,6 +243,7 @@ int nl_gfeatures(struct cmd_context *ctx)
 /* FEATURES_SET */
 
 struct sfeatures_context {
+	bool			nothing_changed;
 	uint32_t		req_mask[0];
 };
 
@@ -411,10 +412,14 @@ static void show_feature_changes(struct nl_context *nlctx,
 	if (!wanted_val || !wanted_mask || !active_val || !active_mask)
 		goto err;
 
+	sfctx->nothing_changed = true;
 	diff = false;
-	for (i = 0; i < words; i++)
+	for (i = 0; i < words; i++) {
+		if (wanted_mask[i] != sfctx->req_mask[i])
+			sfctx->nothing_changed = false;
 		if (wanted_mask[i] || (active_mask[i] & ~sfctx->req_mask[i]))
 			diff = true;
+	}
 	if (!diff)
 		return;
 
@@ -520,6 +525,10 @@ int nl_sfeatures(struct cmd_context *ctx)
 	if (ret < 0)
 		return 92;
 	ret = nlsock_process_reply(nlsk, sfeatures_reply_cb, nlctx);
+	if (sfctx->nothing_changed) {
+		fprintf(stderr, "Could not change any device features\n");
+		return nlctx->exit_code ?: 1;
+	}
 	if (ret == 0)
 		return 0;
 	return nlctx->exit_code ?: 92;
