@@ -604,7 +604,7 @@ static int parse_numeric_bitset(struct nl_context *nlctx, uint16_t type,
 		parser_err_invalid_value(nlctx, arg);
 		return -EINVAL;
 	}
-	len1 = maskptr ? (maskptr - arg) : strlen(arg);
+	len1 = maskptr ? (unsigned int)(maskptr - arg) : strlen(arg);
 	nwords = DIV_ROUND_UP(len1, 8);
 	nbits = 0;
 

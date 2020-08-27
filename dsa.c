@@ -824,8 +824,8 @@ static int dsa_mv88e6xxx_dump_regs(struct ethtool_regs *regs)
 {
 	const struct dsa_mv88e6xxx_switch *sw = NULL;
 	const u16 *data = (u16 *)regs->data;
+	unsigned int i;
 	u16 id;
-	int i;
 
 	/* Marvell chips have 32 per-port 16-bit registers */
 	if (regs->len < 32 * sizeof(u16))

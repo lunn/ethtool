@@ -168,7 +168,7 @@ static void debug_msg(struct nl_socket *nlsk, const void *msg, unsigned int len,
  *
  * Return: error code extracted from the message
  */
-static int nlsock_process_ack(struct nlmsghdr *nlhdr, ssize_t len,
+static int nlsock_process_ack(struct nlmsghdr *nlhdr, unsigned long len,
 			      unsigned int suppress_nlerr, bool pretty)
 {
 	const struct nlattr *tb[NLMSGERR_ATTR_MAX + 1] = {};

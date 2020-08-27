@@ -967,8 +967,8 @@ int
 natsemi_dump_eeprom(struct ethtool_drvinfo *info __maybe_unused,
 		    struct ethtool_eeprom *ee)
 {
-	int i;
 	u16 *eebuf = (u16 *)ee->data;
+	unsigned int i;
 
 	if (ee->magic != NATSEMI_MAGIC) {
 		fprintf(stderr, "Magic number 0x%08x does not match 0x%08x\n",

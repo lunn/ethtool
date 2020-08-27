@@ -1,4 +1,4 @@
-AM_CFLAGS = -Wall
+AM_CFLAGS = -Wall -Wextra
 AM_CPPFLAGS = -I$(top_srcdir)/uapi
 LDADD = -lm
 

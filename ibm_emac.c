@@ -238,7 +238,7 @@ static void *print_mal_regs(void *buf)
 {
 	struct emac_ethtool_regs_subhdr *hdr = buf;
 	struct mal_regs *p = (struct mal_regs *)(hdr + 1);
-	int i;
+	unsigned int i;
 
 	printf("MAL%d Registers\n", hdr->index);
 	printf("-----------------\n");

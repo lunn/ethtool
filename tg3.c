@@ -7,7 +7,7 @@
 int tg3_dump_eeprom(struct ethtool_drvinfo *info __maybe_unused,
 		    struct ethtool_eeprom *ee)
 {
-	int i;
+	unsigned int i;
 
 	if (ee->magic != TG3_MAGIC) {
 		fprintf(stderr, "Magic number 0x%08x does not match 0x%08x\n",
@@ -26,7 +26,7 @@ int tg3_dump_eeprom(struct ethtool_drvinfo *info __maybe_unused,
 int tg3_dump_regs(struct ethtool_drvinfo *info __maybe_unused,
 		  struct ethtool_regs *regs)
 {
-	int i;
+	unsigned int i;
 	u32 reg;
 
 	fprintf(stdout, "Offset\tValue\n");

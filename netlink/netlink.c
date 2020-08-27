@@ -33,9 +33,9 @@ int nomsg_reply_cb(const struct nlmsghdr *nlhdr, void *data __maybe_unused)
 int attr_cb(const struct nlattr *attr, void *data)
 {
 	const struct attr_tb_info *tb_info = data;
-	int type = mnl_attr_get_type(attr);
+	uint16_t type = mnl_attr_get_type(attr);
 
-	if (type >= 0 && type <= tb_info->max_type)
+	if (type <= tb_info->max_type)
 		tb_info->tb[type] = attr;
 
 	return MNL_CB_OK;

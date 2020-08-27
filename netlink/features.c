@@ -109,9 +109,9 @@ static bool flag_pattern_match(const char *name, const char *pattern)
 int dump_features(const struct nlattr *const *tb,
 		  const struct stringset *feature_names)
 {
+	unsigned int *feature_flags = NULL;
 	struct feature_results results;
 	unsigned int i, j;
-	int *feature_flags = NULL;
 	int ret;
 
 	ret = prepare_feature_results(tb, &results);
@@ -126,7 +126,7 @@ int dump_features(const struct nlattr *const *tb,
 	/* map netdev features to legacy flags */
 	for (i = 0; i < results.count; i++) {
 		const char *name = get_string(feature_names, i);
-		feature_flags[i] = -1;
+		feature_flags[i] = UINT_MAX;
 
 		if (!name || !*name)
 			continue;
@@ -177,7 +177,7 @@ int dump_features(const struct nlattr *const *tb,
 	for (i = 0; i < results.count; i++) {
 		const char *name = get_string(feature_names, i);
 
-		if (!name || !*name || feature_flags[i] >= 0)
+		if (!name || !*name || feature_flags[i] != UINT_MAX)
 			continue;
 		dump_feature(&results, NULL, NULL, i, name, "");
 	}

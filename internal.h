@@ -221,7 +221,7 @@ struct cmd_context {
 	const char *devname;	/* net device name */
 	int fd;			/* socket suitable for ethtool ioctl */
 	struct ifreq ifr;	/* ifreq suitable for ethtool ioctl */
-	int argc;		/* number of arguments to the sub-command */
+	unsigned int argc;	/* number of arguments to the sub-command */
 	char **argp;		/* arguments to the sub-command */
 	unsigned long debug;	/* debugging mask */
 	bool json;		/* Output JSON, if supported */
