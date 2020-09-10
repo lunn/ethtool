@@ -459,6 +459,9 @@ ethtool \- query or control network driver and hardware settings
 .BN last N
 .BN step N
 .BN pair N
+.HP
+.B ethtool \-\-show\-tunnels
+.I devname
 .
 .\" Adjust lines (i.e. full justification) and hyphenate.
 .ad
@@ -1382,6 +1385,12 @@ shown.
 .I devname
 If a device name is used as argument, only notification for this device are
 shown. Default is to show notifications for all devices.
+.RE
+.TP
+.B \-\-show\-tunnels
+Show tunnel-related device capabilities and state.
+List UDP ports kernel has programmed the device to parse as VxLAN,
+or GENEVE tunnels.
 .RE
 .SH BUGS
 Not supported (in part or whole) on all network drivers.

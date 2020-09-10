@@ -5920,6 +5920,11 @@ static const struct option args[] = {
 			  "		[ pair N ]\n"
 	},
 	{
+		.opts	= "--show-tunnels",
+		.nlfunc	= nl_gtunnels,
+		.help	= "Show NIC tunnel offload information",
+	},
+	{
 		.opts	= "-h|--help",
 		.no_dev	= true,
 		.func	= show_usage,
