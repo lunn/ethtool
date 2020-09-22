@@ -1072,6 +1072,7 @@ static const struct {
 	{ "dsa", dsa_dump_regs },
 	{ "fec", fec_dump_regs },
 	{ "igc", igc_dump_regs },
+	{ "bnxt_en", bnxt_dump_regs },
 #endif
 };
 
