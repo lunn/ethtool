@@ -630,8 +630,10 @@ static int parse_numeric_bitset(struct nl_context *nlctx, uint16_t type,
 	}
 
 	value = calloc(nwords, sizeof(uint32_t));
-	if (!value)
+	if (!value) {
+		free(mask);
 		return -ENOMEM;
+	}
 	ret = __parse_num_string(arg, len1, value, force_hex1);
 	if (ret < 0) {
 		parser_err_invalid_value(nlctx, arg);
