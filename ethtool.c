@@ -2393,9 +2393,10 @@ static int do_sfeatures(struct cmd_context *ctx)
 	int any_changed = 0, any_mismatch = 0;
 	u32 off_flags_wanted = 0;
 	u32 off_flags_mask = 0;
-	struct ethtool_sfeatures *efeatures;
+	struct ethtool_sfeatures *efeatures = NULL;
+	struct feature_state *old_state = NULL;
+	struct feature_state *new_state = NULL;
 	struct cmdline_info *cmdline_features;
-	struct feature_state *old_state, *new_state;
 	struct ethtool_value eval;
 	unsigned int i, j;
 	int err, rc;
@@ -2419,8 +2420,6 @@ static int do_sfeatures(struct cmd_context *ctx)
 		memset(efeatures->features, 0,
 		       FEATURE_BITS_TO_BLOCKS(defs->n_features) *
 		       sizeof(efeatures->features[0]));
-	} else {
-		efeatures = NULL;
 	}
 
 	/* Generate cmdline_info for legacy flags and kernel-named
@@ -2579,9 +2578,11 @@ static int do_sfeatures(struct cmd_context *ctx)
 	rc = 0;
 
 err:
+	free(new_state);
+	free(old_state);
 	free(defs);
-	if (efeatures)
-		free(efeatures);
+	free(efeatures);
+
 	return rc;
 }
 
