@@ -202,7 +202,7 @@ static void rtm_link_summary(const struct ifinfomsg *ifinfo)
 		printf(" ifindex=%d", ifinfo->ifi_index);
 	if (ifinfo->ifi_flags)
 		printf(" flags=0x%x", ifinfo->ifi_flags);
-	if (ifinfo->ifi_flags)
+	if (ifinfo->ifi_change)
 		printf(" change=0x%x", ifinfo->ifi_change);
 }
 
