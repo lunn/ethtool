@@ -286,6 +286,30 @@ static const struct pretty_nla_desc __cable_test_tdr_ntf_desc[] = {
 			   cable_test_tdr_nest),
 };
 
+const struct pretty_nla_desc __tunnel_udp_entry_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_TUNNEL_UDP_ENTRY_UNSPEC),
+	NLATTR_DESC_U16(ETHTOOL_A_TUNNEL_UDP_ENTRY_PORT),
+	NLATTR_DESC_U32(ETHTOOL_A_TUNNEL_UDP_ENTRY_TYPE),
+};
+
+const struct pretty_nla_desc __tunnel_udp_table_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_TUNNEL_UDP_TABLE_UNSPEC),
+	NLATTR_DESC_U32(ETHTOOL_A_TUNNEL_UDP_TABLE_SIZE),
+	NLATTR_DESC_NESTED(ETHTOOL_A_TUNNEL_UDP_TABLE_TYPES, bitset),
+	NLATTR_DESC_NESTED(ETHTOOL_A_TUNNEL_UDP_TABLE_ENTRY, tunnel_udp_entry),
+};
+
+const struct pretty_nla_desc __tunnel_udp_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_TUNNEL_UDP_UNSPEC),
+	NLATTR_DESC_NESTED(ETHTOOL_A_TUNNEL_UDP_TABLE, tunnel_udp_table),
+};
+
+const struct pretty_nla_desc __tunnel_info_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_TUNNEL_INFO_UNSPEC),
+	NLATTR_DESC_NESTED(ETHTOOL_A_TUNNEL_INFO_HEADER, header),
+	NLATTR_DESC_NESTED(ETHTOOL_A_TUNNEL_INFO_UDP_PORTS, tunnel_udp),
+};
+
 const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
 	NLMSG_DESC_INVALID(ETHTOOL_MSG_USER_NONE),
 	NLMSG_DESC(ETHTOOL_MSG_STRSET_GET, strset),
@@ -315,6 +339,7 @@ const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
 	NLMSG_DESC(ETHTOOL_MSG_TSINFO_GET, tsinfo),
 	NLMSG_DESC(ETHTOOL_MSG_CABLE_TEST_ACT, cable_test),
 	NLMSG_DESC(ETHTOOL_MSG_CABLE_TEST_TDR_ACT, cable_test_tdr),
+	NLMSG_DESC(ETHTOOL_MSG_TUNNEL_INFO_GET, tunnel_info),
 };
 
 const unsigned int ethnl_umsg_n_desc = ARRAY_SIZE(ethnl_umsg_desc);
@@ -349,6 +374,7 @@ const struct pretty_nlmsg_desc ethnl_kmsg_desc[] = {
 	NLMSG_DESC(ETHTOOL_MSG_TSINFO_GET_REPLY, tsinfo),
 	NLMSG_DESC(ETHTOOL_MSG_CABLE_TEST_NTF, cable_test_ntf),
 	NLMSG_DESC(ETHTOOL_MSG_CABLE_TEST_TDR_NTF, cable_test_tdr_ntf),
+	NLMSG_DESC(ETHTOOL_MSG_TUNNEL_INFO_GET_REPLY, tunnel_info),
 };
 
 const unsigned int ethnl_kmsg_n_desc = ARRAY_SIZE(ethnl_kmsg_desc);
