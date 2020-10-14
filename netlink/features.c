@@ -117,11 +117,9 @@ int dump_features(const struct nlattr *const *tb,
 	ret = prepare_feature_results(tb, &results);
 	if (ret < 0)
 		return -EFAULT;
-
-	ret = -ENOMEM;
 	feature_flags = calloc(results.count, sizeof(feature_flags[0]));
 	if (!feature_flags)
-		goto out_free;
+		return -ENOMEM;
 
 	/* map netdev features to legacy flags */
 	for (i = 0; i < results.count; i++) {
@@ -182,7 +180,6 @@ int dump_features(const struct nlattr *const *tb,
 		dump_feature(&results, NULL, NULL, i, name, "");
 	}
 
-out_free:
 	free(feature_flags);
 	return 0;
 }
