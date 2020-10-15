@@ -117,7 +117,7 @@
 .  hy \\n(HY
 ..
 .
-.TH ETHTOOL 8 "Aug 2020" "Ethtool version @VERSION@"
+.TH ETHTOOL 8 "Oct 2020" "Ethtool version @VERSION@"
 .SH NAME
 ethtool \- query or control network driver and hardware settings
 .

@@ -1,3 +1,15 @@
+Version 5.9 - Oct 15, 2020
+	* Feature: extended link state
+	* Feature: QSFP-DD support
+	* Feature: tunnel information (--show-tunnels)
+	* Feature: Broadcom bnxt support
+	* Fix: improve compatibility between ioctl and netlink output
+	* Fix: cable test TDR amplitude output
+	* Fix: get rid of build warnings
+	* Fix: null pointer dereference running against old kernel (no arg)
+	* Fix: update link mode tables
+	* Fix: fix memory leaks and error handling found by static analysis
+
 Version 5.8 - Aug 4, 2020
 	* Feature: more ethtool netlink message format descriptions
 	* Feature: omit test-features if netlink is enabled
