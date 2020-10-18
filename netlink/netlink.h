@@ -98,17 +98,28 @@ static inline void show_u32(const struct nlattr *attr, const char *label)
 		printf("%sn/a\n", label);
 }
 
-static inline const char *u8_to_bool(const struct nlattr *attr)
+static inline const char *u8_to_bool(const uint8_t *val)
 {
-	if (attr)
-		return mnl_attr_get_u8(attr) ? "on" : "off";
+	if (val)
+		return *val ? "on" : "off";
 	else
 		return "n/a";
 }
 
-static inline void show_bool(const struct nlattr *attr, const char *label)
+static inline void show_bool_val(const char *key, const char *fmt, uint8_t *val)
 {
-	printf("%s%s\n", label, u8_to_bool(attr));
+	if (is_json_context()) {
+		if (val)
+			print_bool(PRINT_JSON, key, NULL, val);
+	} else {
+		print_string(PRINT_FP, NULL, fmt, u8_to_bool(val));
+	}
+}
+
+static inline void show_bool(const char *key, const char *fmt,
+			     const struct nlattr *attr)
+{
+	show_bool_val(key, fmt, attr ? mnl_attr_get_payload(attr) : NULL);
 }
 
 /* misc */

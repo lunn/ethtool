@@ -36,9 +36,9 @@ int coalesce_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 	if (silent)
 		putchar('\n');
 	printf("Coalesce parameters for %s:\n", nlctx->devname);
-	printf("Adaptive RX: %s  TX: %s\n",
-	       u8_to_bool(tb[ETHTOOL_A_COALESCE_USE_ADAPTIVE_RX]),
-	       u8_to_bool(tb[ETHTOOL_A_COALESCE_USE_ADAPTIVE_TX]));
+	show_bool("rx", "Adaptive RX: %s  ",
+		  tb[ETHTOOL_A_COALESCE_USE_ADAPTIVE_RX]);
+	show_bool("tx", "TX: %s\n", tb[ETHTOOL_A_COALESCE_USE_ADAPTIVE_TX]);
 	show_u32(tb[ETHTOOL_A_COALESCE_STATS_BLOCK_USECS],
 		 "stats-block-usecs: ");
 	show_u32(tb[ETHTOOL_A_COALESCE_RATE_SAMPLE_INTERVAL],
