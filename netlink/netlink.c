@@ -135,6 +135,160 @@ bool netlink_cmd_check(struct cmd_context *ctx, unsigned int cmd,
 	return !(nlctx->ops_info[cmd].op_flags & cap);
 }
 
+struct ethtool_op_policy_query_ctx {
+	struct nl_context *nlctx;
+	unsigned int op;
+	unsigned int op_hdr_attr;
+
+	bool op_policy_found;
+	bool hdr_policy_found;
+	unsigned int op_policy_idx;
+	unsigned int hdr_policy_idx;
+	uint64_t flag_mask;
+};
+
+static int family_policy_find_op(struct ethtool_op_policy_query_ctx *policy_ctx,
+				 const struct nlattr *op_policy)
+{
+	const struct nlattr *attr;
+	unsigned int type;
+	int ret;
+
+	type = policy_ctx->nlctx->is_dump ?
+		CTRL_ATTR_POLICY_DUMP : CTRL_ATTR_POLICY_DO;
+
+	mnl_attr_for_each_nested(attr, op_policy) {
+		const struct nlattr *tb[CTRL_ATTR_POLICY_DUMP_MAX + 1] = {};
+		DECLARE_ATTR_TB_INFO(tb);
+
+		if (mnl_attr_get_type(attr) != policy_ctx->op)
+			continue;
+
+		ret = mnl_attr_parse_nested(attr, attr_cb, &tb_info);
+		if (ret < 0)
+			return ret;
+
+		if (!tb[type])
+			continue;
+
+		policy_ctx->op_policy_found = true;
+		policy_ctx->op_policy_idx = mnl_attr_get_u32(tb[type]);
+		break;
+	}
+
+	return 0;
+}
+
+static int family_policy_cb(const struct nlmsghdr *nlhdr, void *data)
+{
+	const struct nlattr *tba[NL_POLICY_TYPE_ATTR_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tba);
+	const struct nlattr *tb[CTRL_ATTR_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	struct ethtool_op_policy_query_ctx *policy_ctx = data;
+	const struct nlattr *policy_attr, *attr_attr, *attr;
+	unsigned int attr_idx, policy_idx;
+	int ret;
+
+	ret = mnl_attr_parse(nlhdr, GENL_HDRLEN, attr_cb, &tb_info);
+	if (ret < 0)
+		return MNL_CB_ERROR;
+
+	if (!policy_ctx->op_policy_found) {
+		if (!tb[CTRL_ATTR_OP_POLICY]) {
+			fprintf(stderr, "Error: op policy map not present\n");
+			return MNL_CB_ERROR;
+		}
+		ret = family_policy_find_op(policy_ctx, tb[CTRL_ATTR_OP_POLICY]);
+		return ret < 0 ? MNL_CB_ERROR : MNL_CB_OK;
+	}
+
+	if (!tb[CTRL_ATTR_POLICY])
+		return MNL_CB_OK;
+
+	policy_attr = mnl_attr_get_payload(tb[CTRL_ATTR_POLICY]);
+	policy_idx = mnl_attr_get_type(policy_attr);
+	attr_attr = mnl_attr_get_payload(policy_attr);
+	attr_idx = mnl_attr_get_type(attr_attr);
+
+	ret = mnl_attr_parse_nested(attr_attr, attr_cb, &tba_info);
+	if (ret < 0)
+		return MNL_CB_ERROR;
+
+	if (policy_idx == policy_ctx->op_policy_idx &&
+	    attr_idx == policy_ctx->op_hdr_attr) {
+		attr = tba[NL_POLICY_TYPE_ATTR_POLICY_IDX];
+		if (!attr) {
+			fprintf(stderr,	"Error: no policy index in what was expected to be ethtool header attribute\n");
+			return MNL_CB_ERROR;
+		}
+		policy_ctx->hdr_policy_found = true;
+		policy_ctx->hdr_policy_idx = mnl_attr_get_u32(attr);
+	}
+
+	if (policy_ctx->hdr_policy_found &&
+	    policy_ctx->hdr_policy_idx == policy_idx &&
+	    attr_idx == ETHTOOL_A_HEADER_FLAGS) {
+		attr = tba[NL_POLICY_TYPE_ATTR_MASK];
+		if (!attr) {
+			fprintf(stderr,	"Error: validation mask not reported for ethtool header flags\n");
+			return MNL_CB_ERROR;
+		}
+
+		policy_ctx->flag_mask = mnl_attr_get_u64(attr);
+	}
+
+	return MNL_CB_OK;
+}
+
+static int read_flags_policy(struct nl_context *nlctx, struct nl_socket *nlsk,
+			     unsigned int nlcmd, unsigned int hdrattr)
+{
+	struct ethtool_op_policy_query_ctx policy_ctx;
+	struct nl_msg_buff *msgbuff = &nlsk->msgbuff;
+	int ret;
+
+	if (nlctx->ops_info[nlcmd].hdr_policy_loaded)
+		return 0;
+
+	memset(&policy_ctx, 0, sizeof(policy_ctx));
+	policy_ctx.nlctx = nlctx;
+	policy_ctx.op = nlcmd;
+	policy_ctx.op_hdr_attr = hdrattr;
+
+	ret = __msg_init(msgbuff, GENL_ID_CTRL, CTRL_CMD_GETPOLICY,
+			 NLM_F_REQUEST | NLM_F_ACK | NLM_F_DUMP, 1);
+	if (ret < 0)
+		return ret;
+	ret = -EMSGSIZE;
+	if (ethnla_put_u16(msgbuff, CTRL_ATTR_FAMILY_ID, nlctx->ethnl_fam))
+		return ret;
+	if (ethnla_put_u32(msgbuff, CTRL_ATTR_OP, nlcmd))
+		return ret;
+
+	nlsock_sendmsg(nlsk, NULL);
+	nlsock_process_reply(nlsk, family_policy_cb, &policy_ctx);
+
+	nlctx->ops_info[nlcmd].hdr_policy_loaded = 1;
+	nlctx->ops_info[nlcmd].hdr_flags = policy_ctx.flag_mask;
+	return 0;
+}
+
+u32 get_stats_flag(struct nl_context *nlctx, unsigned int nlcmd,
+		   unsigned int hdrattr)
+{
+	if (!nlctx->ctx->show_stats)
+		return 0;
+	if (nlcmd > ETHTOOL_MSG_USER_MAX ||
+	    !(nlctx->ops_info[nlcmd].op_flags & GENL_CMD_CAP_HASPOL))
+		return 0;
+
+	if (read_flags_policy(nlctx, nlctx->ethnl_socket, nlcmd, hdrattr) < 0)
+		return 0;
+
+	return nlctx->ops_info[nlcmd].hdr_flags & ETHTOOL_FLAG_STATS;
+}
+
 /* initialization */
 
 static int genl_read_ops(struct nl_context *nlctx,

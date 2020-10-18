@@ -27,6 +27,8 @@ enum link_mode_class {
 
 struct nl_op_info {
 	uint32_t		op_flags;
+	uint32_t		hdr_flags;
+	uint8_t			hdr_policy_loaded:1;
 };
 
 struct nl_context {
@@ -70,6 +72,8 @@ bool netlink_cmd_check(struct cmd_context *ctx, unsigned int cmd,
 		       bool allow_wildcard);
 const char *get_dev_name(const struct nlattr *nest);
 int get_dev_info(const struct nlattr *nest, int *ifindex, char *ifname);
+u32 get_stats_flag(struct nl_context *nlctx, unsigned int nlcmd,
+		   unsigned int hdrattr);
 
 int linkmodes_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int linkinfo_reply_cb(const struct nlmsghdr *nlhdr, void *data);
