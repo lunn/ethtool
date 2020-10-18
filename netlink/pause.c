@@ -5,6 +5,7 @@
  */
 
 #include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -105,6 +106,62 @@ out:
 	return ret;
 }
 
+static int show_pause_stats(const struct nlattr *nest)
+{
+	const struct nlattr *tb[ETHTOOL_A_PAUSE_STAT_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	static const struct {
+		unsigned int attr;
+		char *name;
+	} stats[] = {
+		{ ETHTOOL_A_PAUSE_STAT_TX_FRAMES, "tx_pause_frames" },
+		{ ETHTOOL_A_PAUSE_STAT_RX_FRAMES, "rx_pause_frames" },
+	};
+	bool header = false;
+	unsigned int i;
+	size_t n;
+	int ret;
+
+	ret = mnl_attr_parse_nested(nest, attr_cb, &tb_info);
+	if (ret < 0)
+		return ret;
+
+	open_json_object("statistics");
+	for (i = 0; i < ARRAY_SIZE(stats); i++) {
+		char fmt[32];
+
+		if (!tb[stats[i].attr])
+			continue;
+
+		if (!header && !is_json_context()) {
+			printf("Statistics:\n");
+			header = true;
+		}
+
+		if (mnl_attr_validate(tb[stats[i].attr], MNL_TYPE_U64)) {
+			fprintf(stderr, "malformed netlink message (statistic)\n");
+			goto err_close_stats;
+		}
+
+		n = snprintf(fmt, sizeof(fmt), "  %s: %%" PRIu64 "\n",
+			     stats[i].name);
+		if (n >= sizeof(fmt)) {
+			fprintf(stderr, "internal error - malformed label\n");
+			goto err_close_stats;
+		}
+
+		print_u64(PRINT_ANY, stats[i].name, fmt,
+			  mnl_attr_get_u64(tb[stats[i].attr]));
+	}
+	close_json_object();
+
+	return 0;
+
+err_close_stats:
+	close_json_object();
+	return -1;
+}
+
 int pause_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 {
 	const struct nlattr *tb[ETHTOOL_A_PAUSE_MAX + 1] = {};
@@ -142,6 +199,11 @@ int pause_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 		if (ret < 0)
 			goto err_close_dev;
 	}
+	if (tb[ETHTOOL_A_PAUSE_STATS]) {
+		ret = show_pause_stats(tb[ETHTOOL_A_PAUSE_STATS]);
+		if (ret < 0)
+			goto err_close_dev;
+	}
 	if (!silent)
 		print_nl();
 
@@ -158,6 +220,7 @@ int nl_gpause(struct cmd_context *ctx)
 {
 	struct nl_context *nlctx = ctx->nlctx;
 	struct nl_socket *nlsk = nlctx->ethnl_socket;
+	u32 flags;
 	int ret;
 
 	if (netlink_cmd_check(ctx, ETHTOOL_MSG_PAUSE_GET, true))
@@ -168,8 +231,10 @@ int nl_gpause(struct cmd_context *ctx)
 		return 1;
 	}
 
+	flags = get_stats_flag(nlctx, ETHTOOL_MSG_PAUSE_GET,
+			       ETHTOOL_A_PAUSE_HEADER);
 	ret = nlsock_prep_get_request(nlsk, ETHTOOL_MSG_PAUSE_GET,
-				      ETHTOOL_A_PAUSE_HEADER, 0);
+				      ETHTOOL_A_PAUSE_HEADER, flags);
 	if (ret < 0)
 		return ret;
 
