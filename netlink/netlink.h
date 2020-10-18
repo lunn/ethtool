@@ -25,6 +25,10 @@ enum link_mode_class {
 	LM_CLASS_FEC,
 };
 
+struct nl_op_info {
+	uint32_t		op_flags;
+};
+
 struct nl_context {
 	struct cmd_context	*ctx;
 	void			*cmd_private;
@@ -34,7 +38,7 @@ struct nl_context {
 	unsigned int		suppress_nlerr;
 	uint16_t		ethnl_fam;
 	uint32_t		ethnl_mongrp;
-	uint32_t		*ops_flags;
+	struct nl_op_info	*ops_info;
 	struct nl_socket	*ethnl_socket;
 	struct nl_socket	*ethnl2_socket;
 	struct nl_socket	*rtnl_socket;
