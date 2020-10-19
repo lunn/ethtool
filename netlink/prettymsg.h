@@ -28,13 +28,20 @@ enum pretty_nla_format {
 	NLA_BOOL,
 	NLA_NESTED,
 	NLA_ARRAY,
+	NLA_U32_ENUM,
 };
 
 struct pretty_nla_desc {
 	enum pretty_nla_format		format;
 	const char			*name;
-	const struct pretty_nla_desc	*children;
-	unsigned int			n_children;
+	union {
+		const struct pretty_nla_desc	*children;
+		const char			*const *names;
+	};
+	union {
+		unsigned int			n_children;
+		unsigned int			n_names;
+	};
 };
 
 struct pretty_nlmsg_desc {
@@ -80,6 +87,13 @@ struct pretty_nlmsg_desc {
 		.name = #_name, \
 		.children = __ ## _children_desc ## _desc, \
 		.n_children = 1, \
+	}
+#define NLATTR_DESC_U32_ENUM(_name, _names_table) \
+	[_name] = { \
+		.format = NLA_U32_ENUM, \
+		.name = #_name, \
+		.names = __ ## _names_table ## _names, \
+		.n_children = ARRAY_SIZE(__ ## _names_table ## _names), \
 	}
 
 #define NLMSG_DESC(_name, _attrs) \

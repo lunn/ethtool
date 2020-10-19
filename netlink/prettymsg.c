@@ -137,6 +137,15 @@ static int pretty_print_attr(const struct nlattr *attr,
 	case NLA_BOOL:
 		printf("%s", mnl_attr_get_u8(attr) ? "on" : "off");
 		break;
+	case NLA_U32_ENUM: {
+		uint32_t val = mnl_attr_get_u32(attr);
+
+		if (adesc && val < adesc->n_names && adesc->names[val])
+			printf("%s", adesc->names[val]);
+		else
+			printf("%u", val);
+		break;
+	}
 	default:
 		if (alen <= __DUMP_LINE)
 			__print_binary_short(adata, alen);
