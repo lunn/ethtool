@@ -25,6 +25,12 @@ enum link_mode_class {
 	LM_CLASS_FEC,
 };
 
+struct nl_op_info {
+	uint32_t		op_flags;
+	uint32_t		hdr_flags;
+	uint8_t			hdr_policy_loaded:1;
+};
+
 struct nl_context {
 	struct cmd_context	*ctx;
 	void			*cmd_private;
@@ -34,7 +40,7 @@ struct nl_context {
 	unsigned int		suppress_nlerr;
 	uint16_t		ethnl_fam;
 	uint32_t		ethnl_mongrp;
-	uint32_t		*ops_flags;
+	struct nl_op_info	*ops_info;
 	struct nl_socket	*ethnl_socket;
 	struct nl_socket	*ethnl2_socket;
 	struct nl_socket	*rtnl_socket;
@@ -66,6 +72,8 @@ bool netlink_cmd_check(struct cmd_context *ctx, unsigned int cmd,
 		       bool allow_wildcard);
 const char *get_dev_name(const struct nlattr *nest);
 int get_dev_info(const struct nlattr *nest, int *ifindex, char *ifname);
+u32 get_stats_flag(struct nl_context *nlctx, unsigned int nlcmd,
+		   unsigned int hdrattr);
 
 int linkmodes_reply_cb(const struct nlmsghdr *nlhdr, void *data);
 int linkinfo_reply_cb(const struct nlmsghdr *nlhdr, void *data);
@@ -98,17 +106,28 @@ static inline void show_u32(const struct nlattr *attr, const char *label)
 		printf("%sn/a\n", label);
 }
 
-static inline const char *u8_to_bool(const struct nlattr *attr)
+static inline const char *u8_to_bool(const uint8_t *val)
 {
-	if (attr)
-		return mnl_attr_get_u8(attr) ? "on" : "off";
+	if (val)
+		return *val ? "on" : "off";
 	else
 		return "n/a";
 }
 
-static inline void show_bool(const struct nlattr *attr, const char *label)
+static inline void show_bool_val(const char *key, const char *fmt, uint8_t *val)
 {
-	printf("%s%s\n", label, u8_to_bool(attr));
+	if (is_json_context()) {
+		if (val)
+			print_bool(PRINT_JSON, key, NULL, val);
+	} else {
+		print_string(PRINT_FP, NULL, fmt, u8_to_bool(val));
+	}
+}
+
+static inline void show_bool(const char *key, const char *fmt,
+			     const struct nlattr *attr)
+{
+	show_bool_val(key, fmt, attr ? mnl_attr_get_payload(attr) : NULL);
 }
 
 /* misc */

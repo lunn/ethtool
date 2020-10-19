@@ -5,6 +5,7 @@
  */
 
 #include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -40,8 +41,8 @@ static int pause_autoneg_cb(const struct nlmsghdr *nlhdr, void *data)
 	struct pause_autoneg_status ours = {};
 	struct pause_autoneg_status peer = {};
 	struct nl_context *nlctx = data;
-	bool rx_status = false;
-	bool tx_status = false;
+	uint8_t rx_status = false;
+	uint8_t tx_status = false;
 	bool silent;
 	int err_ret;
 	int ret;
@@ -72,8 +73,11 @@ static int pause_autoneg_cb(const struct nlmsghdr *nlhdr, void *data)
 		else if (peer.pause)
 			tx_status = true;
 	}
-	printf("RX negotiated: %s\nTX negotiated: %s\n",
-	       rx_status ? "on" : "off", tx_status ? "on" : "off");
+
+	open_json_object("negotiated");
+	show_bool_val("rx", "RX negotiated: %s\n", &rx_status);
+	show_bool_val("tx", "TX negotiated: %s\n", &tx_status);
+	close_json_object();
 
 	return MNL_CB_OK;
 }
@@ -102,6 +106,62 @@ out:
 	return ret;
 }
 
+static int show_pause_stats(const struct nlattr *nest)
+{
+	const struct nlattr *tb[ETHTOOL_A_PAUSE_STAT_MAX + 1] = {};
+	DECLARE_ATTR_TB_INFO(tb);
+	static const struct {
+		unsigned int attr;
+		char *name;
+	} stats[] = {
+		{ ETHTOOL_A_PAUSE_STAT_TX_FRAMES, "tx_pause_frames" },
+		{ ETHTOOL_A_PAUSE_STAT_RX_FRAMES, "rx_pause_frames" },
+	};
+	bool header = false;
+	unsigned int i;
+	size_t n;
+	int ret;
+
+	ret = mnl_attr_parse_nested(nest, attr_cb, &tb_info);
+	if (ret < 0)
+		return ret;
+
+	open_json_object("statistics");
+	for (i = 0; i < ARRAY_SIZE(stats); i++) {
+		char fmt[32];
+
+		if (!tb[stats[i].attr])
+			continue;
+
+		if (!header && !is_json_context()) {
+			printf("Statistics:\n");
+			header = true;
+		}
+
+		if (mnl_attr_validate(tb[stats[i].attr], MNL_TYPE_U64)) {
+			fprintf(stderr, "malformed netlink message (statistic)\n");
+			goto err_close_stats;
+		}
+
+		n = snprintf(fmt, sizeof(fmt), "  %s: %%" PRIu64 "\n",
+			     stats[i].name);
+		if (n >= sizeof(fmt)) {
+			fprintf(stderr, "internal error - malformed label\n");
+			goto err_close_stats;
+		}
+
+		print_u64(PRINT_ANY, stats[i].name, fmt,
+			  mnl_attr_get_u64(tb[stats[i].attr]));
+	}
+	close_json_object();
+
+	return 0;
+
+err_close_stats:
+	close_json_object();
+	return -1;
+}
+
 int pause_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 {
 	const struct nlattr *tb[ETHTOOL_A_PAUSE_MAX + 1] = {};
@@ -121,27 +181,46 @@ int pause_reply_cb(const struct nlmsghdr *nlhdr, void *data)
 		return err_ret;
 
 	if (silent)
-		putchar('\n');
-	printf("Pause parameters for %s:\n", nlctx->devname);
-	show_bool(tb[ETHTOOL_A_PAUSE_AUTONEG], "Autonegotiate:\t");
-	show_bool(tb[ETHTOOL_A_PAUSE_RX], "RX:\t\t");
-	show_bool(tb[ETHTOOL_A_PAUSE_TX], "TX:\t\t");
+		print_nl();
+
+	open_json_object(NULL);
+
+	print_string(PRINT_ANY, "ifname", "Pause parameters for %s:\n",
+		     nlctx->devname);
+
+	show_bool("autonegotiate", "Autonegotiate:\t%s\n",
+		  tb[ETHTOOL_A_PAUSE_AUTONEG]);
+	show_bool("rx", "RX:\t\t%s\n", tb[ETHTOOL_A_PAUSE_RX]);
+	show_bool("tx", "TX:\t\t%s\n", tb[ETHTOOL_A_PAUSE_TX]);
+
 	if (!nlctx->is_monitor && tb[ETHTOOL_A_PAUSE_AUTONEG] &&
 	    mnl_attr_get_u8(tb[ETHTOOL_A_PAUSE_AUTONEG])) {
 		ret = show_pause_autoneg_status(nlctx);
 		if (ret < 0)
-			return err_ret;
+			goto err_close_dev;
+	}
+	if (tb[ETHTOOL_A_PAUSE_STATS]) {
+		ret = show_pause_stats(tb[ETHTOOL_A_PAUSE_STATS]);
+		if (ret < 0)
+			goto err_close_dev;
 	}
 	if (!silent)
-		putchar('\n');
+		print_nl();
+
+	close_json_object();
 
 	return MNL_CB_OK;
+
+err_close_dev:
+	close_json_object();
+	return err_ret;
 }
 
 int nl_gpause(struct cmd_context *ctx)
 {
 	struct nl_context *nlctx = ctx->nlctx;
 	struct nl_socket *nlsk = nlctx->ethnl_socket;
+	u32 flags;
 	int ret;
 
 	if (netlink_cmd_check(ctx, ETHTOOL_MSG_PAUSE_GET, true))
@@ -152,11 +231,17 @@ int nl_gpause(struct cmd_context *ctx)
 		return 1;
 	}
 
+	flags = get_stats_flag(nlctx, ETHTOOL_MSG_PAUSE_GET,
+			       ETHTOOL_A_PAUSE_HEADER);
 	ret = nlsock_prep_get_request(nlsk, ETHTOOL_MSG_PAUSE_GET,
-				      ETHTOOL_A_PAUSE_HEADER, 0);
+				      ETHTOOL_A_PAUSE_HEADER, flags);
 	if (ret < 0)
 		return ret;
-	return nlsock_send_get_request(nlsk, pause_reply_cb);
+
+	new_json_obj(ctx->json);
+	ret = nlsock_send_get_request(nlsk, pause_reply_cb);
+	delete_json_obj();
+	return ret;
 }
 
 /* PAUSE_SET */

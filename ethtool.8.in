@@ -140,6 +140,9 @@ ethtool \- query or control network driver and hardware settings
 .B ethtool [--json]
 .I args
 .HP
+.B ethtool [-I | --include-statistics]
+.I args
+.HP
 .B ethtool \-\-monitor
 [
 .I command
@@ -498,6 +501,10 @@ lB	l.
 Output results in JavaScript Object Notation (JSON). Only a subset of
 options support this. Those which do not will continue to output
 plain text in the presence of this option.
+.TP
+.B \-I \-\-include\-statistics
+Include command-related statistics in the output. This option allows
+displaying relevant device statistics for selected get commands.
 .TP
 .B \-a \-\-show\-pause
 Queries the specified Ethernet device for pause parameter information.
