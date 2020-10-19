@@ -180,12 +180,19 @@ static const struct pretty_nla_desc __coalesce_desc[] = {
 	NLATTR_DESC_U32(ETHTOOL_A_COALESCE_RATE_SAMPLE_INTERVAL),
 };
 
+static const struct pretty_nla_desc __pause_stats_desc[] = {
+	NLATTR_DESC_BINARY(ETHTOOL_A_PAUSE_STAT_PAD),
+	NLATTR_DESC_U64(ETHTOOL_A_PAUSE_STAT_TX_FRAMES),
+	NLATTR_DESC_U64(ETHTOOL_A_PAUSE_STAT_RX_FRAMES),
+};
+
 static const struct pretty_nla_desc __pause_desc[] = {
 	NLATTR_DESC_INVALID(ETHTOOL_A_PAUSE_UNSPEC),
 	NLATTR_DESC_NESTED(ETHTOOL_A_PAUSE_HEADER, header),
 	NLATTR_DESC_BOOL(ETHTOOL_A_PAUSE_AUTONEG),
 	NLATTR_DESC_BOOL(ETHTOOL_A_PAUSE_RX),
 	NLATTR_DESC_BOOL(ETHTOOL_A_PAUSE_TX),
+	NLATTR_DESC_NESTED(ETHTOOL_A_PAUSE_STATS, pause_stats),
 };
 
 static const struct pretty_nla_desc __eee_desc[] = {
