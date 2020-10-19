@@ -17,12 +17,15 @@ enum pretty_nla_format {
 	NLA_U8,
 	NLA_U16,
 	NLA_U32,
+	NLA_U64,
 	NLA_X8,
 	NLA_X16,
 	NLA_X32,
+	NLA_X64,
 	NLA_S8,
 	NLA_S16,
 	NLA_S32,
+	NLA_S64,
 	NLA_STRING,
 	NLA_FLAG,
 	NLA_BOOL,
@@ -62,12 +65,15 @@ struct pretty_nlmsg_desc {
 #define NLATTR_DESC_U8(_name)		NLATTR_DESC(_name, NLA_U8)
 #define NLATTR_DESC_U16(_name)		NLATTR_DESC(_name, NLA_U16)
 #define NLATTR_DESC_U32(_name)		NLATTR_DESC(_name, NLA_U32)
+#define NLATTR_DESC_U64(_name)		NLATTR_DESC(_name, NLA_U64)
 #define NLATTR_DESC_X8(_name)		NLATTR_DESC(_name, NLA_X8)
 #define NLATTR_DESC_X16(_name)		NLATTR_DESC(_name, NLA_X16)
 #define NLATTR_DESC_X32(_name)		NLATTR_DESC(_name, NLA_X32)
+#define NLATTR_DESC_X64(_name)		NLATTR_DESC(_name, NLA_X64)
 #define NLATTR_DESC_S8(_name)		NLATTR_DESC(_name, NLA_U8)
 #define NLATTR_DESC_S16(_name)		NLATTR_DESC(_name, NLA_U16)
 #define NLATTR_DESC_S32(_name)		NLATTR_DESC(_name, NLA_U32)
+#define NLATTR_DESC_S64(_name)		NLATTR_DESC(_name, NLA_S64)
 #define NLATTR_DESC_STRING(_name)	NLATTR_DESC(_name, NLA_STRING)
 #define NLATTR_DESC_FLAG(_name)		NLATTR_DESC(_name, NLA_FLAG)
 #define NLATTR_DESC_BOOL(_name)		NLATTR_DESC(_name, NLA_BOOL)
