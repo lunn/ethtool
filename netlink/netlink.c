@@ -435,11 +435,16 @@ out_free:
 
 static void netlink_done(struct cmd_context *ctx)
 {
-	if (!ctx->nlctx)
+	struct nl_context *nlctx = ctx->nlctx;
+
+	if (!nlctx)
 		return;
 
-	free(ctx->nlctx->ops_info);
-	free(ctx->nlctx);
+	nlsock_done(nlctx->ethnl_socket);
+	nlsock_done(nlctx->ethnl2_socket);
+	nlsock_done(nlctx->rtnl_socket);
+	free(nlctx->ops_info);
+	free(nlctx);
 	ctx->nlctx = NULL;
 	cleanup_all_strings();
 }

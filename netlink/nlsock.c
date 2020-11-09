@@ -395,8 +395,11 @@ out_msgbuff:
  */
 void nlsock_done(struct nl_socket *nlsk)
 {
+	if (!nlsk)
+		return;
 	if (nlsk->sk)
 		mnl_socket_close(nlsk->sk);
 	msgbuff_done(&nlsk->msgbuff);
 	memset(nlsk, '\0', sizeof(*nlsk));
+	free(nlsk);
 }
