@@ -457,6 +457,7 @@ void netlink_run_handler(struct cmd_context *ctx, nl_func_t nlfunc,
 			 bool no_fallback)
 {
 	bool wildcard = ctx->devname && !strcmp(ctx->devname, WILDCARD_DEVNAME);
+	bool wildcard_unsupported, ioctl_fallback;
 	struct nl_context *nlctx;
 	const char *reason;
 	int ret;
@@ -478,14 +479,17 @@ void netlink_run_handler(struct cmd_context *ctx, nl_func_t nlfunc,
 	nlctx = ctx->nlctx;
 
 	ret = nlfunc(ctx);
+	wildcard_unsupported = nlctx->wildcard_unsupported;
+	ioctl_fallback = nlctx->ioctl_fallback;
 	netlink_done(ctx);
-	if (no_fallback || ret != -EOPNOTSUPP || !nlctx->ioctl_fallback) {
-		if (nlctx->wildcard_unsupported)
+
+	if (no_fallback || ret != -EOPNOTSUPP || !ioctl_fallback) {
+		if (wildcard_unsupported)
 			fprintf(stderr, "%s\n",
 				"subcommand does not support wildcard dump");
 		exit(ret >= 0 ? ret : 1);
 	}
-	if (nlctx->wildcard_unsupported)
+	if (wildcard_unsupported)
 		reason = "subcommand does not support wildcard dump";
 	else
 		reason = "kernel netlink support for subcommand missing";
