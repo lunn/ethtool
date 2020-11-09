@@ -574,7 +574,7 @@ int nl_cable_test_tdr(struct cmd_context *ctx)
 			       ctx->devname, 0))
 		return -EMSGSIZE;
 
-	ret = nl_parser(nlctx, tdr_params, NULL, PARSER_GROUP_NEST);
+	ret = nl_parser(nlctx, tdr_params, NULL, PARSER_GROUP_NEST, NULL);
 	if (ret < 0)
 		return ret;
 

@@ -1110,9 +1110,16 @@ static const struct param_parser sset_params[] = {
 	{}
 };
 
+/* Maximum number of request messages sent to kernel; must be equal to the
+ * number of different .group values in sset_params[] array.
+ */
+#define SSET_MAX_MSGS 4
+
 int nl_sset(struct cmd_context *ctx)
 {
+	struct nl_msg_buff *msgbuffs[SSET_MAX_MSGS] = {};
 	struct nl_context *nlctx = ctx->nlctx;
+	unsigned int i;
 	int ret;
 
 	nlctx->cmd = "-s";
@@ -1120,11 +1127,29 @@ int nl_sset(struct cmd_context *ctx)
 	nlctx->argc = ctx->argc;
 	nlctx->devname = ctx->devname;
 
-	ret = nl_parser(nlctx, sset_params, NULL, PARSER_GROUP_MSG);
-	if (ret < 0)
-		return 1;
+	ret = nl_parser(nlctx, sset_params, NULL, PARSER_GROUP_MSG, msgbuffs);
+	if (ret < 0) {
+		ret = 1;
+		goto out_free;
+	}
 
-	if (ret == 0)
-		return 0;
+	for (i = 0; i < SSET_MAX_MSGS && msgbuffs[i]; i++) {
+		struct nl_socket *nlsk = nlctx->ethnl_socket;
+
+		ret = nlsock_sendmsg(nlsk, msgbuffs[i]);
+		if (ret < 0)
+			goto out_free;
+		ret = nlsock_process_reply(nlsk, nomsg_reply_cb, NULL);
+		if (ret < 0)
+			goto out_free;
+	}
+
+out_free:
+	for (i = 0; i < SSET_MAX_MSGS && msgbuffs[i]; i++) {
+		msgbuff_done(msgbuffs[i]);
+		free(msgbuffs[i]);
+	}
+	if (ret >= 0)
+		return ret;
 	return nlctx->exit_code ?: 75;
 }

@@ -126,7 +126,7 @@ int nl_sring(struct cmd_context *ctx)
 			       ctx->devname, 0))
 		return -EMSGSIZE;
 
-	ret = nl_parser(nlctx, sring_params, NULL, PARSER_GROUP_NONE);
+	ret = nl_parser(nlctx, sring_params, NULL, PARSER_GROUP_NONE, NULL);
 	if (ret < 0)
 		return 1;
 

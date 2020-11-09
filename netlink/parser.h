@@ -143,6 +143,7 @@ int nl_parse_char_bitset(struct nl_context *nlctx, uint16_t type,
 
 /* main entry point called to parse the command line */
 int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
-	      void *dest, enum parser_group_style group_style);
+	      void *dest, enum parser_group_style group_style,
+	      struct nl_msg_buff **msgbuffs);
 
 #endif /* ETHTOOL_NETLINK_PARSER_H__ */

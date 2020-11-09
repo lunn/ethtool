@@ -920,7 +920,7 @@ static void __parser_set(uint64_t *map, unsigned int idx)
 }
 
 struct tmp_buff {
-	struct nl_msg_buff	msgbuff;
+	struct nl_msg_buff	*msgbuff;
 	unsigned int		id;
 	unsigned int		orig_len;
 	struct tmp_buff		*next;
@@ -951,7 +951,12 @@ static struct tmp_buff *tmp_buff_find_or_create(struct tmp_buff **phead,
 	if (!new_buff)
 		return NULL;
 	new_buff->id = id;
-	msgbuff_init(&new_buff->msgbuff);
+	new_buff->msgbuff = malloc(sizeof(*new_buff->msgbuff));
+	if (!new_buff->msgbuff) {
+		free(new_buff);
+		return NULL;
+	}
+	msgbuff_init(new_buff->msgbuff);
 	new_buff->next = NULL;
 	*pbuff = new_buff;
 
@@ -965,7 +970,10 @@ static void tmp_buff_destroy(struct tmp_buff *head)
 
 	while (buff) {
 		next = buff->next;
-		msgbuff_done(&buff->msgbuff);
+		if (buff->msgbuff) {
+			msgbuff_done(buff->msgbuff);
+			free(buff->msgbuff);
+		}
 		free(buff);
 		buff = next;
 	}
@@ -980,13 +988,22 @@ static void tmp_buff_destroy(struct tmp_buff *head)
  *               param_parser::offset)
  * @group_style: defines if identifiers in .group represent separate messages,
  *               nested attributes or are not allowed
+ * @msgbuffs:    (only used for @group_style = PARSER_GROUP_MSG) array to store
+ *               pointers to composed messages; caller must make sure this
+ *               array is sufficient, i.e. that it has at least as many entries
+ *               as the number of different .group values in params array;
+ *               entries are filled from the start, remaining entries are not
+ *               modified; caller should zero initialize the array before
+ *               calling nl_parser()
  */
 int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
-	      void *dest, enum parser_group_style group_style)
+	      void *dest, enum parser_group_style group_style,
+	      struct nl_msg_buff **msgbuffs)
 {
 	struct nl_socket *nlsk = nlctx->ethnl_socket;
 	const struct param_parser *parser;
 	struct tmp_buff *buffs = NULL;
+	unsigned int n_msgbuffs = 0;
 	struct tmp_buff *buff;
 	unsigned int n_params;
 	uint64_t *params_seen;
@@ -1004,7 +1021,7 @@ int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
 		buff = tmp_buff_find_or_create(&buffs, parser->group);
 		if (!buff)
 			goto out_free_buffs;
-		msgbuff = &buff->msgbuff;
+		msgbuff = buff->msgbuff;
 		ret = msg_init(nlctx, msgbuff, parser->group,
 			       NLM_F_REQUEST | NLM_F_ACK);
 		if (ret < 0)
@@ -1013,7 +1030,7 @@ int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
 		switch (group_style) {
 		case PARSER_GROUP_NEST:
 			ret = -EMSGSIZE;
-			nest = ethnla_nest_start(&buff->msgbuff, parser->group);
+			nest = ethnla_nest_start(buff->msgbuff, parser->group);
 			if (!nest)
 				goto out_free_buffs;
 			break;
@@ -1062,7 +1079,7 @@ int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
 		buff = NULL;
 		if (parser->group)
 			buff = tmp_buff_find(buffs, parser->group);
-		msgbuff = buff ? &buff->msgbuff : &nlsk->msgbuff;
+		msgbuff = buff ? buff->msgbuff : &nlsk->msgbuff;
 
 		param_dest = dest ? ((char *)dest + parser->dest_offset) : NULL;
 		ret = parser->handler(nlctx, parser->type, parser->handler_data,
@@ -1074,12 +1091,12 @@ int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
 	if (group_style == PARSER_GROUP_MSG) {
 		ret = -EOPNOTSUPP;
 		for (buff = buffs; buff; buff = buff->next)
-			if (msgbuff_len(&buff->msgbuff) > buff->orig_len &&
+			if (msgbuff_len(buff->msgbuff) > buff->orig_len &&
 			    netlink_cmd_check(nlctx->ctx, buff->id, false))
 				goto out_free;
 	}
 	for (buff = buffs; buff; buff = buff->next) {
-		struct nl_msg_buff *msgbuff = &buff->msgbuff;
+		struct nl_msg_buff *msgbuff = buff->msgbuff;
 
 		if (group_style == PARSER_GROUP_NONE ||
 		    msgbuff_len(msgbuff) == buff->orig_len)
@@ -1092,12 +1109,8 @@ int nl_parser(struct nl_context *nlctx, const struct param_parser *params,
 				goto out_free;
 			break;
 		case PARSER_GROUP_MSG:
-			ret = nlsock_sendmsg(nlsk, msgbuff);
-			if (ret < 0)
-				goto out_free;
-			ret = nlsock_process_reply(nlsk, nomsg_reply_cb, NULL);
-			if (ret < 0)
-				goto out_free;
+			msgbuffs[n_msgbuffs++] = msgbuff;
+			buff->msgbuff = NULL;
 			break;
 		default:
 			break;

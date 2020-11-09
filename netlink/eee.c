@@ -174,7 +174,7 @@ int nl_seee(struct cmd_context *ctx)
 			       ctx->devname, 0))
 		return -EMSGSIZE;
 
-	ret = nl_parser(nlctx, seee_params, NULL, PARSER_GROUP_NONE);
+	ret = nl_parser(nlctx, seee_params, NULL, PARSER_GROUP_NONE, NULL);
 	if (ret < 0)
 		return 1;
 
