@@ -4855,7 +4855,12 @@ static int do_getmodule(struct cmd_context *ctx)
 	eeprom->offset = geeprom_offset;
 	err = send_ioctl(ctx, eeprom);
 	if (err < 0) {
+		int saved_errno = errno;
+
 		perror("Cannot get Module EEPROM data");
+		if (saved_errno == ENODEV || saved_errno == EIO ||
+		    saved_errno == ENXIO)
+			fprintf(stderr, "SFP module not in cage?\n");
 		free(eeprom);
 		return 1;
 	}
