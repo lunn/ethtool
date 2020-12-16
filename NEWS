@@ -1,3 +1,14 @@
+Version 5.10 - Dec 16, 2020
+	* Feature: infrastructure for JSON output
+	* Feature: separate FLAGS in -h output
+	* Feature: use policy dumps to check flags support
+	* Feature: show pause stats (-a)
+	* Feature: pretty printing of policy dumps
+	* Feature: improve error message when SFP module is missing
+	* Fix: use after free in netlink_run_handler()
+	* Fix: leaked instances of struct nl_socket
+	* Fix: improve compatibility between netlink and ioctl (-s)
+
 Version 5.9 - Oct 15, 2020
 	* Feature: extended link state
 	* Feature: QSFP-DD support
