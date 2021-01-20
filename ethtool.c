@@ -5630,7 +5630,7 @@ static const struct option args[] = {
 			  "		[ wol %d[/%d] | p|u|m|b|a|g|s|f|d... ]\n"
 			  "		[ sopass %x:%x:%x:%x:%x:%x ]\n"
 			  "		[ msglvl %d[/%d] | type on|off ... [--] ]\n"
-			  "		[ master-slave master-preferred|slave-preferred|master-force|slave-force ]\n"
+			  "		[ master-slave preferred-master|preferred-slave|forced-master|forced-slave ]\n"
 	},
 	{
 		.opts	= "-a|--show-pause",
