@@ -30,3 +30,4 @@ test-*.trs
 
 .*.swp
 *.patch
+.dirstamp
