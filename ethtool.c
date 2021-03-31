@@ -5880,11 +5880,15 @@ static const struct option args[] = {
 	{
 		.opts	= "-m|--dump-module-eeprom|--module-info",
 		.func	= do_getmodule,
+		.nlfunc = nl_getmodule,
 		.help	= "Query/Decode Module EEPROM information and optical diagnostics if available",
 		.xhelp	= "		[ raw on|off ]\n"
 			  "		[ hex on|off ]\n"
 			  "		[ offset N ]\n"
 			  "		[ length N ]\n"
+			  "		[ page N ]\n"
+			  "		[ bank N ]\n"
+			  "		[ i2c N ]\n"
 	},
 	{
 		.opts	= "--show-eee",

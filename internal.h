@@ -216,6 +216,16 @@ static inline int ethtool_link_mode_set_bit(unsigned int nr, u32 *mask)
 	return 0;
 }
 
+/* Struct for managing module EEPROM pages */
+struct ethtool_module_eeprom {
+	u32	offset;
+	u32	length;
+	u8	page;
+	u8	bank;
+	u8	i2c_address;
+	u8	*data;
+};
+
 /* Context for sub-commands */
 struct cmd_context {
 	const char *devname;	/* net device name */
