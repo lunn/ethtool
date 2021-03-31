@@ -376,6 +376,7 @@ static bool page_available(struct ethtool_module_eeprom *which)
 	case SFF8024_ID_QSFP_PLUS:
 		return (!which->bank && which->page <= 3);
 	case SFF8024_ID_QSFP_DD:
+	case SFF8024_ID_DSFP:
 		return (which->page > 0 && !flat_mem);
 	default:
 		return true;
@@ -408,6 +409,7 @@ static int decoder_prefetch(struct nl_context *nlctx)
 		err = page_fetch(nlctx, &request);
 		break;
 	case SFF8024_ID_QSFP_DD:
+	case SFF8024_ID_DSFP:
 		memset(&request, 0, sizeof(request));
 		request.i2c_address = GETMODULE_I2C_ADDRESS_LOW;
 		request.offset = 128;
@@ -443,6 +445,9 @@ static void decoder_print(void)
 		break;
 	case SFF8024_ID_QSFP_DD:
 		qsfp_dd_show_all(page_zero->data);
+		break;
+	case SFF8024_ID_DSFP:
+		cmis4_show_all(page_zero, page_one);
 		break;
 	default:
 		dump_hex(stdout, page_zero->data, page_zero->length, page_zero->offset);

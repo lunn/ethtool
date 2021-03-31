@@ -124,7 +124,7 @@ static void qsfp_dd_print_smf_cbl_len(const __u8 *id)
 	float val = 0.0f;
 
 	/* Get the multiplier from the first two bits */
-	switch (id[QSFP_DD_SMF_LEN_OFFSET] & QSFP_DD_LEN_MUL_MASK) {
+	switch (id[QSFP_DD_SMF_LEN_OFFSET_LOCAL] & QSFP_DD_LEN_MUL_MASK) {
 	case QSFP_DD_MULTIPLIER_00:
 		mul = 0.1f;
 		break;
@@ -136,7 +136,7 @@ static void qsfp_dd_print_smf_cbl_len(const __u8 *id)
 	}
 
 	/* Get base value from first 6 bits and multiply by mul */
-	val = (id[QSFP_DD_SMF_LEN_OFFSET] & QSFP_DD_LEN_VAL_MASK);
+	val = (id[QSFP_DD_SMF_LEN_OFFSET_LOCAL] & QSFP_DD_LEN_VAL_MASK);
 	val = (float)val * mul;
 	printf("\t%-41s : %0.2fkm\n", fn, val);
 }
@@ -274,6 +274,20 @@ static void qsfp_dd_show_mod_lvl_monitors(const __u8 *id)
 		  OFFSET_TO_U16(QSFP_DD_CURR_CURR_OFFSET));
 }
 
+static void qsfp_dd_show_link_len_from_page(const __u8 *page_one_data)
+{
+	qsfp_dd_print_smf_cbl_len(page_one_data);
+	sff_show_value_with_unit(page_one_data, QSFP_DD_OM5_LEN_OFFSET_LOCAL,
+				 "Length (OM5)", 2, "m");
+	sff_show_value_with_unit(page_one_data, QSFP_DD_OM4_LEN_OFFSET_LOCAL,
+				 "Length (OM4)", 2, "m");
+	sff_show_value_with_unit(page_one_data, QSFP_DD_OM3_LEN_OFFSET_LOCAL,
+				 "Length (OM3 50/125um)", 2, "m");
+	sff_show_value_with_unit(page_one_data, QSFP_DD_OM2_LEN_OFFSET_LOCAL,
+				 "Length (OM2 50/125um)", 1, "m");
+}
+
+
 /**
  * Print relevant info about the maximum supported fiber media length
  * for each type of fiber media at the maximum module-supported bit rate.
@@ -283,15 +297,7 @@ static void qsfp_dd_show_mod_lvl_monitors(const __u8 *id)
  */
 static void qsfp_dd_show_link_len(const __u8 *id)
 {
-	qsfp_dd_print_smf_cbl_len(id);
-	sff_show_value_with_unit(id, QSFP_DD_OM5_LEN_OFFSET,
-				 "Length (OM5)", 2, "m");
-	sff_show_value_with_unit(id, QSFP_DD_OM4_LEN_OFFSET,
-				 "Length (OM4)", 2, "m");
-	sff_show_value_with_unit(id, QSFP_DD_OM3_LEN_OFFSET,
-				 "Length (OM3 50/125um)", 2, "m");
-	sff_show_value_with_unit(id, QSFP_DD_OM2_LEN_OFFSET,
-				 "Length (OM2 50/125um)", 1, "m");
+	qsfp_dd_show_link_len_from_page(id + PAG01H_UPPER_OFFSET);
 }
 
 /**
@@ -330,4 +336,24 @@ void qsfp_dd_show_all(const __u8 *id)
 	qsfp_dd_show_link_len(id);
 	qsfp_dd_show_vendor_info(id);
 	qsfp_dd_show_rev_compliance(id);
+}
+
+void cmis4_show_all(struct ethtool_module_eeprom *page_zero,
+		    struct ethtool_module_eeprom *page_one)
+{
+	const __u8 *page_zero_data = page_zero->data;
+
+	qsfp_dd_show_identifier(page_zero_data);
+	qsfp_dd_show_power_info(page_zero_data);
+	qsfp_dd_show_connector(page_zero_data);
+	qsfp_dd_show_cbl_asm_len(page_zero_data);
+	qsfp_dd_show_sig_integrity(page_zero_data);
+	qsfp_dd_show_mit_compliance(page_zero_data);
+	qsfp_dd_show_mod_lvl_monitors(page_zero_data);
+
+	if (page_one)
+		qsfp_dd_show_link_len_from_page(page_one->data);
+
+	qsfp_dd_show_vendor_info(page_zero_data);
+	qsfp_dd_show_rev_compliance(page_zero_data);
 }
