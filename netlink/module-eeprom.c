@@ -464,7 +464,7 @@ int nl_getmodule(struct cmd_context *ctx)
 	int ret;
 
 	if (netlink_cmd_check(ctx, ETHTOOL_MSG_MODULE_EEPROM_GET, false))
-		return EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
 	nlctx->cmd = "-m";
 	nlctx->argp = ctx->argp;
