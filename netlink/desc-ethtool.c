@@ -317,6 +317,17 @@ const struct pretty_nla_desc __tunnel_info_desc[] = {
 	NLATTR_DESC_NESTED(ETHTOOL_A_TUNNEL_INFO_UDP_PORTS, tunnel_udp),
 };
 
+const struct pretty_nla_desc __eeprom_info_desc[] = {
+	NLATTR_DESC_INVALID(ETHTOOL_A_MODULE_EEPROM_UNSPEC),
+	NLATTR_DESC_NESTED(ETHTOOL_A_MODULE_EEPROM_HEADER, header),
+	NLATTR_DESC_U32(ETHTOOL_A_MODULE_EEPROM_OFFSET),
+	NLATTR_DESC_U32(ETHTOOL_A_MODULE_EEPROM_LENGTH),
+	NLATTR_DESC_U8(ETHTOOL_A_MODULE_EEPROM_PAGE),
+	NLATTR_DESC_U8(ETHTOOL_A_MODULE_EEPROM_BANK),
+	NLATTR_DESC_U8(ETHTOOL_A_MODULE_EEPROM_I2C_ADDRESS),
+	NLATTR_DESC_BINARY(ETHTOOL_A_MODULE_EEPROM_DATA)
+};
+
 const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
 	NLMSG_DESC_INVALID(ETHTOOL_MSG_USER_NONE),
 	NLMSG_DESC(ETHTOOL_MSG_STRSET_GET, strset),
@@ -347,6 +358,7 @@ const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
 	NLMSG_DESC(ETHTOOL_MSG_CABLE_TEST_ACT, cable_test),
 	NLMSG_DESC(ETHTOOL_MSG_CABLE_TEST_TDR_ACT, cable_test_tdr),
 	NLMSG_DESC(ETHTOOL_MSG_TUNNEL_INFO_GET, tunnel_info),
+	NLMSG_DESC(ETHTOOL_MSG_MODULE_EEPROM_GET, eeprom_info),
 };
 
 const unsigned int ethnl_umsg_n_desc = ARRAY_SIZE(ethnl_umsg_desc);
@@ -382,6 +394,8 @@ const struct pretty_nlmsg_desc ethnl_kmsg_desc[] = {
 	NLMSG_DESC(ETHTOOL_MSG_CABLE_TEST_NTF, cable_test_ntf),
 	NLMSG_DESC(ETHTOOL_MSG_CABLE_TEST_TDR_NTF, cable_test_tdr_ntf),
 	NLMSG_DESC(ETHTOOL_MSG_TUNNEL_INFO_GET_REPLY, tunnel_info),
+	NLMSG_DESC(ETHTOOL_MSG_MODULE_EEPROM_GET_REPLY, eeprom_info),
 };
 
 const unsigned int ethnl_kmsg_n_desc = ARRAY_SIZE(ethnl_kmsg_desc);
+
