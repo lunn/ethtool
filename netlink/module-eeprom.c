@@ -435,6 +435,7 @@ static void decoder_print(void)
 	u8 module_id = page_zero->data[SFF8636_ID_OFFSET];
 
 	switch (module_id) {
+	case SFF8024_ID_SOLDERED_MODULE:
 	case SFF8024_ID_SFP:
 		sff8079_show_all(page_zero->data);
 		break;
