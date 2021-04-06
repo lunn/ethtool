@@ -239,11 +239,52 @@ static void sff8472_parse_eeprom(const __u8 *id, struct sff_diags *sd)
 		sff8472_calibration(id, sd);
 }
 
+void sff8472_show_compliance(u8 code)
+{
+	printf("\t%-41s : 0x%02x", "8472 Compliance", code);
+	switch (code) {
+	case 0x00:
+		printf(" (None)\n");
+		break;
+	case 0x01:
+		printf(" (Rev 9.3)\n");
+		break;
+	case 0x02:
+		printf(" (Rev 9.5)\n");
+		break;
+	case 0x03:
+		printf(" (Rev 10.2)\n");
+		break;
+	case 0x04:
+		printf(" (Rev 10.4)\n");
+		break;
+	case 0x05:
+		printf(" (Rev 11.0)\n");
+		break;
+	case 0x06:
+		printf(" (Rev 11.3)\n");
+		break;
+	case 0x07:
+		printf(" (Rev 11.4)\n");
+		break;
+	case 0x08:
+		printf(" (Rev 12.3)\n");
+		break;
+	default:
+		printf(" (Unallocated)\n");
+	}
+}
+
 void sff8472_show_all(const __u8 *id)
 {
 	struct sff_diags sd = {0};
 	char *rx_power_string = NULL;
 	int i;
+
+	if (id[SFF_A0_COMP])
+		sff8472_show_compliance(id[SFF_A0_COMP]);
+	else
+		return;
 
 	sff8472_parse_eeprom(id, &sd);
 
