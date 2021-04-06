@@ -154,16 +154,14 @@ static void page_free(struct ethtool_module_eeprom *page)
 	free(page);
 }
 
-static void cache_delete(uint32_t page, uint32_t bank, u8 i2c_address)
+static void cache_delete(struct ethtool_module_eeprom *page)
 {
 	struct ethtool_module_eeprom *entry;
 	struct list_head *head, *next;
 
 	list_for_each_safe(head, next, &page_list) {
 		entry = ((struct page_entry *)head)->page;
-		if (entry->page == page &&
-		    entry->bank == bank &&
-		    entry->i2c_address == i2c_address) {
+		if (entry == page) {
 			list_del(head);
 			free(head);
 			page_free(entry);
@@ -316,8 +314,7 @@ static int getmodule_page_fetch_reply_cb(const struct nlmsghdr *nlhdr,
 		if (existing_page) {
 			page = page_join(existing_page, response);
 			page_free(response);
-			cache_delete(existing_page->page, existing_page->bank,
-				     existing_page->i2c_address);
+			cache_delete(existing_page);
 			return cache_add(page);
 		}
 	}
