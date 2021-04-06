@@ -154,7 +154,7 @@ static void page_free(struct ethtool_module_eeprom *page)
 	free(page);
 }
 
-static void cache_delete(uint32_t page, uint32_t bank)
+static void cache_delete(uint32_t page, uint32_t bank, u8 i2c_address)
 {
 	struct ethtool_module_eeprom *entry;
 	struct list_head *head, *next;
@@ -162,7 +162,8 @@ static void cache_delete(uint32_t page, uint32_t bank)
 	list_for_each_safe(head, next, &page_list) {
 		entry = ((struct page_entry *)head)->page;
 		if (entry->page == page &&
-		    entry->bank == bank) {
+		    entry->bank == bank &&
+		    entry->i2c_address == i2c_address) {
 			list_del(head);
 			free(head);
 			page_free(entry);
@@ -256,7 +257,8 @@ static struct ethtool_module_eeprom *page_join(struct ethtool_module_eeprom *pag
 	return tmp;
 }
 
-static struct ethtool_module_eeprom *cache_get(u32 page, u32 bank)
+static struct ethtool_module_eeprom *cache_get(u32 page, u32 bank,
+					       u8 i2c_address)
 {
 	struct ethtool_module_eeprom *entry;
 	struct list_head *head, *next;
@@ -264,7 +266,8 @@ static struct ethtool_module_eeprom *cache_get(u32 page, u32 bank)
 	list_for_each_safe(head, next, &page_list) {
 		entry = ((struct page_entry *)head)->page;
 		if (entry->page == page &&
-		    entry->bank == bank)
+		    entry->bank == bank &&
+		    entry->i2c_address == i2c_address)
 			return entry;
 	}
 
@@ -308,11 +311,13 @@ static int getmodule_page_fetch_reply_cb(const struct nlmsghdr *nlhdr,
 	memcpy(response->data, eeprom_data, response->length);
 
 	if (!request->page) {
-		existing_page = cache_get(request->page, request->bank);
+		existing_page = cache_get(request->page, request->bank,
+					  request->i2c_address);
 		if (existing_page) {
 			page = page_join(existing_page, response);
 			page_free(response);
-			cache_delete(existing_page->page, existing_page->bank);
+			cache_delete(existing_page->page, existing_page->bank,
+				     existing_page->i2c_address);
 			return cache_add(page);
 		}
 	}
@@ -331,7 +336,7 @@ static int page_fetch(struct nl_context *nlctx, const struct ethtool_module_eepr
 		return EINVAL;
 
 	/* Satisfy request right away, if region is already in cache */
-	page = cache_get(request->page, request->bank);
+	page = cache_get(request->page, request->bank, request->i2c_address);
 	if (page &&
 	    page->i2c_address == request->i2c_address && 
 	    page->offset <= request->offset &&
@@ -363,7 +368,8 @@ static int page_fetch(struct nl_context *nlctx, const struct ethtool_module_eepr
 
 static bool page_available(struct ethtool_module_eeprom *which)
 {
-	struct ethtool_module_eeprom *page_zero = cache_get(0, 0);
+	struct ethtool_module_eeprom *page_zero = cache_get(
+		0, 0, GETMODULE_I2C_ADDRESS_LOW);
 	u8 id = page_zero->data[SFF8636_ID_OFFSET];
 	u8 flat_mem = page_zero->data[2] & 0x80;
 
@@ -385,7 +391,8 @@ static bool page_available(struct ethtool_module_eeprom *which)
 
 static int decoder_prefetch(struct nl_context *nlctx)
 {
-	struct ethtool_module_eeprom *page_zero_lower = cache_get(0, 0);
+	struct ethtool_module_eeprom *page_zero_lower = cache_get(
+		0, 0, GETMODULE_I2C_ADDRESS_LOW);
 	struct ethtool_module_eeprom request = {0};
 	u8 module_id = page_zero_lower->data[0];
 	int err = 0;
@@ -430,8 +437,10 @@ static int decoder_prefetch(struct nl_context *nlctx)
 
 static void decoder_print(void)
 {
-	struct ethtool_module_eeprom *page_zero = cache_get(0, 0);
-	struct ethtool_module_eeprom *page_one = cache_get(1, 0);
+	struct ethtool_module_eeprom *page_zero = cache_get(
+		0, 0, GETMODULE_I2C_ADDRESS_LOW);
+	struct ethtool_module_eeprom *page_one = cache_get(
+		1, 0, GETMODULE_I2C_ADDRESS_LOW);
 	u8 module_id = page_zero->data[SFF8636_ID_OFFSET];
 
 	switch (module_id) {
@@ -506,7 +515,8 @@ int nl_getmodule(struct cmd_context *ctx)
 		ret = page_fetch(nlctx, &request);
 		if (ret < 0)
 			return ret;
-		reply_page = cache_get(request.page, request.bank);
+		reply_page = cache_get(request.page, request.bank,
+				       request.i2c_address);
 		if (!reply_page)
 			goto err_invalid;
 
