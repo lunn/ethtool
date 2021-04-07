@@ -50,6 +50,7 @@
 #include <linux/netlink.h>
 
 #include "common.h"
+#include "sff-common.h"
 #include "netlink/extapi.h"
 
 #ifndef MAX_ADDR_LEN
@@ -4787,6 +4788,62 @@ static int do_tsinfo(struct cmd_context *ctx)
 	return 0;
 }
 
+static int populate_page(u32 pageno, u8 i2c_address,
+			 u32 offset, u32 length,
+			 u8 *data)
+{
+	struct ethtool_module_eeprom *page;
+
+	page = calloc(1, sizeof(*page));
+	if (!page)
+		return -ENOMEM;
+
+	page->offset = offset;
+	page->length = length;
+	page->pageno = pageno;
+	page->bank = 0;
+	page->i2c_address = i2c_address;
+	page->data = data;
+
+	return sff_cache_add(page);
+}
+
+static int populate_cache(struct ethtool_modinfo *modinfo,
+			  struct ethtool_eeprom *eeprom)
+{
+	switch (modinfo->type) {
+	case ETH_MODULE_SFF_8079:
+		if (eeprom->len >= 256)
+			populate_page(0, 0x50, 0, 256, eeprom->data);
+		break;
+	case ETH_MODULE_SFF_8472:
+		if (eeprom->len >= 256)
+			populate_page(0, 0x50, 0, 256, eeprom->data);
+		if (eeprom->len >= 512) {
+			populate_page(0, 0x51, 0, 256, eeprom->data + 256);
+		}
+		break;
+	case ETH_MODULE_SFF_8436:
+	case ETH_MODULE_SFF_8636:
+		if (eeprom->len >= 128 && eeprom->len < 255)
+			populate_page(0, 0x50, 0, 128, eeprom->data);
+		else
+			if (eeprom->len >= 256)
+			populate_page(0, 0x50, 0, 256, eeprom->data);
+		if (eeprom->len >= 384)
+			populate_page(1, 0x50, 128, 128, eeprom->data+256);
+		if (eeprom->len >= 512)
+			populate_page(2, 0x50, 128, 128, eeprom->data+384);
+		if (eeprom->len >= 640)
+			populate_page(3, 0x50, 128, 128, eeprom->data+512);
+		break;
+	default:
+		break;
+	}
+
+	return 0;
+}
+
 static int do_getmodule(struct cmd_context *ctx)
 {
 	struct ethtool_modinfo modinfo;
@@ -4882,6 +4939,7 @@ static int do_getmodule(struct cmd_context *ctx)
 		    (eeprom->len != modinfo.eeprom_len)) {
 			geeprom_dump_hex = 1;
 		} else if (!geeprom_dump_hex) {
+			populate_cache(&modinfo, eeprom);
 			switch (modinfo.type) {
 #ifdef ETHTOOL_ENABLE_PRETTY_DUMP
 			case ETH_MODULE_SFF_8079:
