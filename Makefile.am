@@ -37,6 +37,7 @@ ethtool_SOURCES += \
 		  netlink/channels.c netlink/coalesce.c netlink/pause.c \
 		  netlink/eee.c netlink/tsinfo.c \
 		  netlink/desc-ethtool.c netlink/desc-genlctrl.c \
+		  netlink/module-eeprom.c \
 		  netlink/desc-rtnl.c netlink/cable_test.c netlink/tunnels.c \
 		  uapi/linux/ethtool_netlink.h \
 		  uapi/linux/netlink.h uapi/linux/genetlink.h \
