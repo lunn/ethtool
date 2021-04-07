@@ -26,7 +26,7 @@ static struct
 	u8 dump_raw;
 	u32 offset;
 	u32 length;
-	u32 page;
+	u32 pageno;
 	u32 bank;
 	u32 i2c_address;
 } getmodule_cmd_params;
@@ -83,7 +83,7 @@ static const struct param_parser getmodule_params[] = {
 	{
 		.arg		= "page",
 		.handler	= getmodule_parse_u32,
-		.handler_data	= &getmodule_cmd_params.page,
+		.handler_data	= &getmodule_cmd_params.pageno,
 		.min_argc	= 1,
 	},
 	{
@@ -108,7 +108,7 @@ static struct ethtool_module_eeprom *page_join(struct ethtool_module_eeprom *pag
 	u32 total_length;
 
 	if (!page_a || !page_b ||
-	    page_a->page != page_b->page ||
+	    page_a->pageno != page_b->pageno ||
 	    page_a->bank != page_b->bank ||
 	    page_a->i2c_address != page_b->i2c_address)
 		return NULL;
@@ -116,7 +116,7 @@ static struct ethtool_module_eeprom *page_join(struct ethtool_module_eeprom *pag
 	total_length = page_a->length + page_b->length;
 	joined_page = calloc(1, sizeof(*joined_page));
 	joined_page->data = calloc(1, total_length);
-	joined_page->page = page_a->page;
+	joined_page->pageno = page_a->pageno;
 	joined_page->bank = page_a->bank;
 	joined_page->length = total_length;
 	joined_page->i2c_address = page_a->i2c_address;
@@ -161,7 +161,7 @@ static int getmodule_page_fetch_reply_cb(const struct nlmsghdr *nlhdr,
 
 	request = (struct ethtool_module_eeprom *)data;
 	response->offset = request->offset;
-	response->page = request->page;
+	response->pageno = request->pageno;
 	response->bank = request->bank;
 	response->i2c_address = request->i2c_address;
 	response->length = mnl_attr_get_payload_len(tb[ETHTOOL_A_MODULE_EEPROM_DATA]);
@@ -170,8 +170,8 @@ static int getmodule_page_fetch_reply_cb(const struct nlmsghdr *nlhdr,
 	response->data = malloc(response->length);
 	memcpy(response->data, eeprom_data, response->length);
 
-	if (!request->page) {
-		lower_page = sff_cache_get(request->page, request->bank,
+	if (!request->pageno) {
+		lower_page = sff_cache_get(request->pageno, request->bank,
 					   response->i2c_address);
 		if (lower_page) {
 			joined = page_join(lower_page, response);
@@ -195,7 +195,8 @@ static int page_fetch(struct nl_context *nlctx, const struct ethtool_module_eepr
 		return -EINVAL;
 
 	/* Satisfy request right away, if region is already in cache */
-	page = sff_cache_get(request->page, request->bank, request->i2c_address);
+	page = sff_cache_get(request->pageno, request->bank,
+			     request->i2c_address);
 	if (page && page->offset <= request->offset &&
 	    page->offset + page->length >= request->offset + request->length) {
 		return 0;
@@ -208,7 +209,7 @@ static int page_fetch(struct nl_context *nlctx, const struct ethtool_module_eepr
 
 	if (ethnla_put_u32(msg, ETHTOOL_A_MODULE_EEPROM_LENGTH, request->length) ||
 	    ethnla_put_u32(msg, ETHTOOL_A_MODULE_EEPROM_OFFSET, request->offset) ||
-	    ethnla_put_u8(msg, ETHTOOL_A_MODULE_EEPROM_PAGE, request->page) ||
+	    ethnla_put_u8(msg, ETHTOOL_A_MODULE_EEPROM_PAGE, request->pageno) ||
 	    ethnla_put_u8(msg, ETHTOOL_A_MODULE_EEPROM_BANK, request->bank) ||
 	    ethnla_put_u8(msg, ETHTOOL_A_MODULE_EEPROM_I2C_ADDRESS, request->i2c_address))
 		return -EMSGSIZE;
@@ -233,14 +234,14 @@ static bool page_available(struct ethtool_module_eeprom *which)
 	switch (id) {
 	case SFF8024_ID_SOLDERED_MODULE:
 	case SFF8024_ID_SFP:
-		return (!which->bank && which->page <= 1);
+		return (!which->bank && which->pageno <= 1);
 	case SFF8024_ID_QSFP:
 	case SFF8024_ID_QSFP28:
 	case SFF8024_ID_QSFP_PLUS:
-		return (!which->bank && which->page <= 3);
+		return (!which->bank && which->pageno <= 3);
 	case SFF8024_ID_QSFP_DD:
 	case SFF8024_ID_DSFP:
-		return (which->page > 0 && !flat_mem);
+		return (which->pageno > 0 && !flat_mem);
 	default:
 		return true;
 	}
@@ -270,7 +271,7 @@ static int decoder_prefetch(struct nl_context *nlctx)
 		request.i2c_address = ETH_I2C_ADDRESS_LOW;
 		request.offset = 128;
 		request.length = 128;
-		request.page = 3;
+		request.pageno = 3;
 		break;
 	case SFF8024_ID_QSFP_DD:
 	case SFF8024_ID_DSFP:
@@ -278,7 +279,7 @@ static int decoder_prefetch(struct nl_context *nlctx)
 		request.i2c_address = ETH_I2C_ADDRESS_LOW;
 		request.offset = 128;
 		request.length = 128;
-		request.page = 1;
+		request.pageno = 1;
 		break;
 	}
 
@@ -348,14 +349,14 @@ int nl_getmodule(struct cmd_context *ctx)
 
 #ifdef ETHTOOL_ENABLE_PRETTY_DUMP
 	if (getmodule_cmd_params.bank ||
-	    getmodule_cmd_params.page ||
+	    getmodule_cmd_params.pageno ||
 	    getmodule_cmd_params.offset || getmodule_cmd_params.length)
 #endif
 		getmodule_cmd_params.dump_hex = true;
 
 	request.offset = getmodule_cmd_params.offset;
 	request.length = getmodule_cmd_params.length ?: 128;
-	request.page = getmodule_cmd_params.page;
+	request.pageno = getmodule_cmd_params.pageno;
 	request.bank = getmodule_cmd_params.bank;
 	request.i2c_address = getmodule_cmd_params.i2c_address ?: ETH_I2C_ADDRESS_LOW;
 
@@ -366,7 +367,7 @@ int nl_getmodule(struct cmd_context *ctx)
 		ret = page_fetch(nlctx, &request);
 		if (ret < 0)
 			return ret;
-		reply_page = sff_cache_get(request.page, request.bank,
+		reply_page = sff_cache_get(request.pageno, request.bank,
 					   request.i2c_address);
 		if (!reply_page)
 			goto err_invalid;

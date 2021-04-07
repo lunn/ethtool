@@ -220,7 +220,7 @@ static inline int ethtool_link_mode_set_bit(unsigned int nr, u32 *mask)
 struct ethtool_module_eeprom {
 	u32	offset;
 	u32	length;
-	u8	page;
+	u8	pageno;
 	u8	bank;
 	u8	i2c_address;
 	u8	*data;

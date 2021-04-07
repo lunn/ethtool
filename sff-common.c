@@ -83,14 +83,14 @@ void sff_cache_free(void)
 	}
 }
 
-struct ethtool_module_eeprom *sff_cache_get(u32 page, u32 bank, u8 i2c_address)
+struct ethtool_module_eeprom *sff_cache_get(u32 pageno, u32 bank, u8 i2c_address)
 {
 	struct ethtool_module_eeprom *entry;
 	struct list_head *head, *next;
 
 	list_for_each_safe(head, next, &page_list) {
 		entry = ((struct page_entry *)head)->page;
-		if (entry->page == page && entry->bank == bank &&
+		if (entry->pageno == pageno && entry->bank == bank &&
 		    entry->i2c_address == i2c_address)
 			return entry;
 	}
