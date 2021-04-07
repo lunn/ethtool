@@ -21,8 +21,82 @@
  */
 
 #include <stdio.h>
+#include <errno.h>
 #include <math.h>
 #include "sff-common.h"
+#include "list.h"
+
+struct page_entry {
+	struct list_head link;
+	struct ethtool_module_eeprom *page;
+};
+
+static struct list_head page_list = LIST_HEAD_INIT(page_list);
+
+int sff_cache_add(struct ethtool_module_eeprom *page)
+{
+	struct page_entry *list_element;
+
+	if (!page)
+		return -1;
+	list_element = malloc(sizeof(*list_element));
+	if (!list_element)
+		return -ENOMEM;
+	list_element->page = page;
+
+	list_add(&list_element->link, &page_list);
+	return 0;
+}
+
+void sff_page_free(struct ethtool_module_eeprom *page)
+{
+	free(page->data);
+	free(page);
+}
+
+void sff_cache_delete(struct ethtool_module_eeprom *page)
+{
+	struct ethtool_module_eeprom *entry;
+	struct list_head *head, *next;
+
+	list_for_each_safe(head, next, &page_list) {
+		entry = ((struct page_entry *)head)->page;
+		if (entry == page) {
+			list_del(head);
+			free(head);
+			sff_page_free(entry);
+			break;
+		}
+	}
+}
+
+void sff_cache_free(void)
+{
+	struct ethtool_module_eeprom *entry;
+	struct list_head *head, *next;
+
+	list_for_each_safe(head, next, &page_list) {
+		entry = ((struct page_entry *)head)->page;
+		list_del(head);
+		free(head);
+		sff_page_free(entry);
+	}
+}
+
+struct ethtool_module_eeprom *sff_cache_get(u32 page, u32 bank, u8 i2c_address)
+{
+	struct ethtool_module_eeprom *entry;
+	struct list_head *head, *next;
+
+	list_for_each_safe(head, next, &page_list) {
+		entry = ((struct page_entry *)head)->page;
+		if (entry->page == page && entry->bank == bank &&
+		    entry->i2c_address == i2c_address)
+			return entry;
+	}
+
+	return NULL;
+}
 
 double convert_mw_to_dbm(double mw)
 {

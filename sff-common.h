@@ -191,6 +191,12 @@ struct sff_diags {
 	struct sff_channel_diags scd[MAX_CHANNEL_NUM];
 };
 
+int sff_cache_add(struct ethtool_module_eeprom *page);
+void sff_cache_delete(struct ethtool_module_eeprom *page);
+void sff_cache_free(void);
+struct ethtool_module_eeprom *sff_cache_get(u32 page, u32 bank, u8 i2c_address);
+void sff_page_free(struct ethtool_module_eeprom *page);
+
 double convert_mw_to_dbm(double mw);
 void sff_show_value_with_unit(const __u8 *id, unsigned int reg,
 			      const char *name, unsigned int mult,
