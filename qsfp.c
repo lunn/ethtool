@@ -672,38 +672,39 @@ static void sff8636_show_revision_compliance(const __u8 *id)
  * Second byte are 1/256th of degree, which are added to the dec part.
  */
 #define SFF8636_OFFSET_TO_TEMP(offset) ((__s16)OFFSET_TO_U16(offset))
+#define OFFSET_TO_U16_PTR(ptr, offset) (ptr[offset] << 8 | ptr[(offset) + 1])
 
-static void sff8636_dom_parse(const __u8 *id, struct sff_diags *sd)
+static void sff8636_dom_parse(const __u8 *id, const __u8 *page_three, struct sff_diags *sd)
 {
 	int i = 0;
 
 	/* Monitoring Thresholds for Alarms and Warnings */
-	sd->sfp_voltage[MCURR] = OFFSET_TO_U16(SFF8636_VCC_CURR);
-	sd->sfp_voltage[HALRM] = OFFSET_TO_U16(SFF8636_VCC_HALRM);
-	sd->sfp_voltage[LALRM] = OFFSET_TO_U16(SFF8636_VCC_LALRM);
-	sd->sfp_voltage[HWARN] = OFFSET_TO_U16(SFF8636_VCC_HWARN);
-	sd->sfp_voltage[LWARN] = OFFSET_TO_U16(SFF8636_VCC_LWARN);
+	sd->sfp_voltage[MCURR] = OFFSET_TO_U16_PTR(id, SFF8636_VCC_CURR);
+	sd->sfp_voltage[HALRM] = OFFSET_TO_U16_PTR(page_three, SFF8636_VCC_HALRM);
+	sd->sfp_voltage[LALRM] = OFFSET_TO_U16_PTR(page_three, SFF8636_VCC_LALRM);
+	sd->sfp_voltage[HWARN] = OFFSET_TO_U16_PTR(page_three, SFF8636_VCC_HWARN);
+	sd->sfp_voltage[LWARN] = OFFSET_TO_U16_PTR(page_three, SFF8636_VCC_LWARN);
 
 	sd->sfp_temp[MCURR] = SFF8636_OFFSET_TO_TEMP(SFF8636_TEMP_CURR);
-	sd->sfp_temp[HALRM] = SFF8636_OFFSET_TO_TEMP(SFF8636_TEMP_HALRM);
-	sd->sfp_temp[LALRM] = SFF8636_OFFSET_TO_TEMP(SFF8636_TEMP_LALRM);
-	sd->sfp_temp[HWARN] = SFF8636_OFFSET_TO_TEMP(SFF8636_TEMP_HWARN);
-	sd->sfp_temp[LWARN] = SFF8636_OFFSET_TO_TEMP(SFF8636_TEMP_LWARN);
+	sd->sfp_temp[HALRM] = (__s16)OFFSET_TO_U16_PTR(page_three, SFF8636_TEMP_HALRM);
+	sd->sfp_temp[LALRM] = (__s16)OFFSET_TO_U16_PTR(page_three, SFF8636_TEMP_LALRM);
+	sd->sfp_temp[HWARN] = (__s16)OFFSET_TO_U16_PTR(page_three, SFF8636_TEMP_HWARN);
+	sd->sfp_temp[LWARN] = (__s16)OFFSET_TO_U16_PTR(page_three, SFF8636_TEMP_LWARN);
 
-	sd->bias_cur[HALRM] = OFFSET_TO_U16(SFF8636_TX_BIAS_HALRM);
-	sd->bias_cur[LALRM] = OFFSET_TO_U16(SFF8636_TX_BIAS_LALRM);
-	sd->bias_cur[HWARN] = OFFSET_TO_U16(SFF8636_TX_BIAS_HWARN);
-	sd->bias_cur[LWARN] = OFFSET_TO_U16(SFF8636_TX_BIAS_LWARN);
+	sd->bias_cur[HALRM] = OFFSET_TO_U16_PTR(page_three, SFF8636_TX_BIAS_HALRM);
+	sd->bias_cur[LALRM] = OFFSET_TO_U16_PTR(page_three, SFF8636_TX_BIAS_LALRM);
+	sd->bias_cur[HWARN] = OFFSET_TO_U16_PTR(page_three, SFF8636_TX_BIAS_HWARN);
+	sd->bias_cur[LWARN] = OFFSET_TO_U16_PTR(page_three, SFF8636_TX_BIAS_LWARN);
 
-	sd->tx_power[HALRM] = OFFSET_TO_U16(SFF8636_TX_PWR_HALRM);
-	sd->tx_power[LALRM] = OFFSET_TO_U16(SFF8636_TX_PWR_LALRM);
-	sd->tx_power[HWARN] = OFFSET_TO_U16(SFF8636_TX_PWR_HWARN);
-	sd->tx_power[LWARN] = OFFSET_TO_U16(SFF8636_TX_PWR_LWARN);
+	sd->tx_power[HALRM] = OFFSET_TO_U16_PTR(page_three, SFF8636_TX_PWR_HALRM);
+	sd->tx_power[LALRM] = OFFSET_TO_U16_PTR(page_three, SFF8636_TX_PWR_LALRM);
+	sd->tx_power[HWARN] = OFFSET_TO_U16_PTR(page_three, SFF8636_TX_PWR_HWARN);
+	sd->tx_power[LWARN] = OFFSET_TO_U16_PTR(page_three, SFF8636_TX_PWR_LWARN);
 
-	sd->rx_power[HALRM] = OFFSET_TO_U16(SFF8636_RX_PWR_HALRM);
-	sd->rx_power[LALRM] = OFFSET_TO_U16(SFF8636_RX_PWR_LALRM);
-	sd->rx_power[HWARN] = OFFSET_TO_U16(SFF8636_RX_PWR_HWARN);
-	sd->rx_power[LWARN] = OFFSET_TO_U16(SFF8636_RX_PWR_LWARN);
+	sd->rx_power[HALRM] = OFFSET_TO_U16_PTR(page_three, SFF8636_RX_PWR_HALRM);
+	sd->rx_power[LALRM] = OFFSET_TO_U16_PTR(page_three, SFF8636_RX_PWR_LALRM);
+	sd->rx_power[HWARN] = OFFSET_TO_U16_PTR(page_three, SFF8636_RX_PWR_HWARN);
+	sd->rx_power[LWARN] = OFFSET_TO_U16_PTR(page_three, SFF8636_RX_PWR_LWARN);
 
 
 	/* Channel Specific Data */
@@ -740,7 +741,7 @@ static void sff8636_dom_parse(const __u8 *id, struct sff_diags *sd)
 
 }
 
-static void sff8636_show_dom(const __u8 *id, __u32 eeprom_len)
+static void sff8636_show_dom(const __u8 *id, const __u8 *page_three, __u32 eeprom_len)
 {
 	struct sff_diags sd = {0};
 	char *rx_power_string = NULL;
@@ -767,7 +768,7 @@ static void sff8636_show_dom(const __u8 *id, __u32 eeprom_len)
 	sd.tx_power_type = id[SFF8636_DIAG_TYPE_OFFSET] &
 						SFF8636_RX_PWR_TYPE_MASK;
 
-	sff8636_dom_parse(id, &sd);
+	sff8636_dom_parse(id, page_three, &sd);
 
 	PRINT_TEMP("Module temperature", sd.sfp_temp[MCURR]);
 	PRINT_VCC("Module voltage", sd.sfp_voltage[MCURR]);
@@ -818,6 +819,42 @@ static void sff8636_show_dom(const __u8 *id, __u32 eeprom_len)
 	}
 }
 
+
+static void sff6836_show_page_zero(const __u8 *id)
+{
+	sff8636_show_ext_identifier(id);
+	sff8636_show_connector(id);
+	sff8636_show_transceiver(id);
+	sff8636_show_encoding(id);
+	sff_show_value_with_unit(id, SFF8636_BR_NOMINAL_OFFSET,
+			"BR, Nominal", 100, "Mbps");
+	sff8636_show_rate_identifier(id);
+	sff_show_value_with_unit(id, SFF8636_SM_LEN_OFFSET,
+		     "Length (SMF,km)", 1, "km");
+	sff_show_value_with_unit(id, SFF8636_OM3_LEN_OFFSET,
+			"Length (OM3 50um)", 2, "m");
+	sff_show_value_with_unit(id, SFF8636_OM2_LEN_OFFSET,
+			"Length (OM2 50um)", 1, "m");
+	sff_show_value_with_unit(id, SFF8636_OM1_LEN_OFFSET,
+		     "Length (OM1 62.5um)", 1, "m");
+	sff_show_value_with_unit(id, SFF8636_CBL_LEN_OFFSET,
+		     "Length (Copper or Active cable)", 1, "m");
+	sff8636_show_wavelength_or_copper_compliance(id);
+	sff_show_ascii(id, SFF8636_VENDOR_NAME_START_OFFSET,
+		       SFF8636_VENDOR_NAME_END_OFFSET, "Vendor name");
+	sff8636_show_oui(id, SFF8636_VENDOR_OUI_OFFSET);
+	sff_show_ascii(id, SFF8636_VENDOR_PN_START_OFFSET,
+		       SFF8636_VENDOR_PN_END_OFFSET, "Vendor PN");
+	sff_show_ascii(id, SFF8636_VENDOR_REV_START_OFFSET,
+		       SFF8636_VENDOR_REV_END_OFFSET, "Vendor rev");
+	sff_show_ascii(id, SFF8636_VENDOR_SN_START_OFFSET,
+		       SFF8636_VENDOR_SN_END_OFFSET, "Vendor SN");
+	sff_show_ascii(id, SFF8636_DATE_YEAR_OFFSET,
+		       SFF8636_DATE_VENDOR_LOT_OFFSET + 1, "Date code");
+	sff8636_show_revision_compliance(id);
+
+}
+
 void sff8636_show_all(const __u8 *id, __u32 eeprom_len)
 {
 	if (id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP_DD) {
@@ -829,36 +866,17 @@ void sff8636_show_all(const __u8 *id, __u32 eeprom_len)
 	if ((id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP) ||
 		(id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP_PLUS) ||
 		(id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP28)) {
-		sff8636_show_ext_identifier(id);
-		sff8636_show_connector(id);
-		sff8636_show_transceiver(id);
-		sff8636_show_encoding(id);
-		sff_show_value_with_unit(id, SFF8636_BR_NOMINAL_OFFSET,
-				"BR, Nominal", 100, "Mbps");
-		sff8636_show_rate_identifier(id);
-		sff_show_value_with_unit(id, SFF8636_SM_LEN_OFFSET,
-			     "Length (SMF,km)", 1, "km");
-		sff_show_value_with_unit(id, SFF8636_OM3_LEN_OFFSET,
-				"Length (OM3 50um)", 2, "m");
-		sff_show_value_with_unit(id, SFF8636_OM2_LEN_OFFSET,
-				"Length (OM2 50um)", 1, "m");
-		sff_show_value_with_unit(id, SFF8636_OM1_LEN_OFFSET,
-			     "Length (OM1 62.5um)", 1, "m");
-		sff_show_value_with_unit(id, SFF8636_CBL_LEN_OFFSET,
-			     "Length (Copper or Active cable)", 1, "m");
-		sff8636_show_wavelength_or_copper_compliance(id);
-		sff_show_ascii(id, SFF8636_VENDOR_NAME_START_OFFSET,
-			       SFF8636_VENDOR_NAME_END_OFFSET, "Vendor name");
-		sff8636_show_oui(id, SFF8636_VENDOR_OUI_OFFSET);
-		sff_show_ascii(id, SFF8636_VENDOR_PN_START_OFFSET,
-			       SFF8636_VENDOR_PN_END_OFFSET, "Vendor PN");
-		sff_show_ascii(id, SFF8636_VENDOR_REV_START_OFFSET,
-			       SFF8636_VENDOR_REV_END_OFFSET, "Vendor rev");
-		sff_show_ascii(id, SFF8636_VENDOR_SN_START_OFFSET,
-			       SFF8636_VENDOR_SN_END_OFFSET, "Vendor SN");
-		sff_show_ascii(id, SFF8636_DATE_YEAR_OFFSET,
-			       SFF8636_DATE_VENDOR_LOT_OFFSET + 1, "Date code");
-		sff8636_show_revision_compliance(id);
-		sff8636_show_dom(id, eeprom_len);
+		sff6836_show_page_zero(id);
+		sff8636_show_dom(id, id + SFF8636_PAGE03H_OFFSET, eeprom_len);
 	}
 }
+
+void sff8636_show_all_paged(const struct ethtool_module_eeprom *page_zero,
+			    const struct ethtool_module_eeprom *page_three)
+{
+	sff8636_show_identifier(page_zero->data);
+	sff6836_show_page_zero(page_zero->data);
+	if (page_three)
+		sff8636_show_dom(page_zero->data, page_three->data, ETH_MODULE_SFF_8636_MAX_LEN);
+}
+

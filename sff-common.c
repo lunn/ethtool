@@ -139,6 +139,9 @@ void sff8024_show_identifier(const __u8 *id, int id_offset)
 	case SFF8024_ID_QSFP_DD:
 		printf(" (QSFP-DD Double Density 8X Pluggable Transceiver (INF-8628))\n");
 		break;
+	case SFF8024_ID_DSFP:
+		printf(" (DSFP Dual Small Form Factor Pluggable Transceiver)\n");
+		break;
 	default:
 		printf(" (reserved or unknown)\n");
 		break;

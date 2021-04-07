@@ -101,25 +101,28 @@
 #define PAG01H_UPPER_OFFSET			(0x01 * 0x80)
 
 /* Supported Link Length (Page 1) */
-#define QSFP_DD_SMF_LEN_OFFSET			(PAG01H_UPPER_OFFSET + 0x84)
-#define QSFP_DD_OM5_LEN_OFFSET			(PAG01H_UPPER_OFFSET + 0x85)
-#define QSFP_DD_OM4_LEN_OFFSET			(PAG01H_UPPER_OFFSET + 0x86)
-#define QSFP_DD_OM3_LEN_OFFSET			(PAG01H_UPPER_OFFSET + 0x87)
-#define QSFP_DD_OM2_LEN_OFFSET			(PAG01H_UPPER_OFFSET + 0x88)
+#define QSFP_DD_SMF_LEN_OFFSET			0x84
+#define QSFP_DD_OM5_LEN_OFFSET			0x85
+#define QSFP_DD_OM4_LEN_OFFSET			0x86
+#define QSFP_DD_OM3_LEN_OFFSET			0x87
+#define QSFP_DD_OM2_LEN_OFFSET			0x88
 
 /* Wavelength (Page 1) */
-#define QSFP_DD_NOM_WAVELENGTH_MSB		(PAG01H_UPPER_OFFSET + 0x8A)
-#define QSFP_DD_NOM_WAVELENGTH_LSB		(PAG01H_UPPER_OFFSET + 0x8B)
-#define QSFP_DD_WAVELENGTH_TOL_MSB		(PAG01H_UPPER_OFFSET + 0x8C)
-#define QSFP_DD_WAVELENGTH_TOL_LSB		(PAG01H_UPPER_OFFSET + 0x8D)
+#define QSFP_DD_NOM_WAVELENGTH_MSB		0x8A
+#define QSFP_DD_NOM_WAVELENGTH_LSB		0x8B
+#define QSFP_DD_WAVELENGTH_TOL_MSB		0x8C
+#define QSFP_DD_WAVELENGTH_TOL_LSB		0x8D
 
 /* Signal integrity controls */
-#define QSFP_DD_SIG_INTEG_TX_OFFSET		(PAG01H_UPPER_OFFSET + 0xA1)
-#define QSFP_DD_SIG_INTEG_RX_OFFSET		(PAG01H_UPPER_OFFSET + 0xA2)
+#define QSFP_DD_SIG_INTEG_TX_OFFSET		0xA1
+#define QSFP_DD_SIG_INTEG_RX_OFFSET		0xA2
 
 #define YESNO(x) (((x) != 0) ? "Yes" : "No")
 #define ONOFF(x) (((x) != 0) ? "On" : "Off")
 
 void qsfp_dd_show_all(const __u8 *id);
+
+void cmis4_show_all(const struct ethtool_module_eeprom *page_zero,
+		    const struct ethtool_module_eeprom *page_one);
 
 #endif /* QSFP_DD_H__ */
