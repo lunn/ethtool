@@ -194,7 +194,8 @@ struct sff_diags {
 int sff_cache_add(struct ethtool_module_eeprom *page);
 void sff_cache_delete(struct ethtool_module_eeprom *page);
 void sff_cache_free(void);
-struct ethtool_module_eeprom *sff_cache_get(u32 pageno, u32 bank,
+struct ethtool_module_eeprom *sff_cache_get(struct cmd_context *ctx,
+					    u32 pageno, u32 bank,
 					    u8 i2c_address);
 void sff_page_free(struct ethtool_module_eeprom *page);
 

@@ -171,7 +171,7 @@ static int getmodule_page_fetch_reply_cb(const struct nlmsghdr *nlhdr,
 	memcpy(response->data, eeprom_data, response->length);
 
 	if (!request->pageno) {
-		lower_page = sff_cache_get(request->pageno, request->bank,
+		lower_page = sff_cache_get(NULL, request->pageno, request->bank,
 					   response->i2c_address);
 		if (lower_page) {
 			joined = page_join(lower_page, response);
@@ -196,7 +196,7 @@ int nl_page_fetch(struct nl_context *nlctx,
 		return -EINVAL;
 
 	/* Satisfy request right away, if region is already in cache */
-	page = sff_cache_get(request->pageno, request->bank,
+	page = sff_cache_get(NULL, request->pageno, request->bank,
 			     request->i2c_address);
 	if (page && page->offset <= request->offset &&
 	    page->offset + page->length >= request->offset + request->length) {
@@ -228,7 +228,7 @@ int nl_page_fetch(struct nl_context *nlctx,
 static bool page_available(struct ethtool_module_eeprom *which)
 {
 	struct ethtool_module_eeprom *page_zero = sff_cache_get(
-		0, 0, ETH_I2C_ADDRESS_LOW);
+		NULL, 0, 0, ETH_I2C_ADDRESS_LOW);
 	u8 id = page_zero->data[SFF8636_ID_OFFSET];
 	u8 flat_mem = page_zero->data[2] & 0x80;
 
@@ -251,7 +251,7 @@ static bool page_available(struct ethtool_module_eeprom *which)
 static int decoder_prefetch(struct nl_context *nlctx)
 {
 	struct ethtool_module_eeprom *page_zero_lower = sff_cache_get(
-		0, 0, ETH_I2C_ADDRESS_LOW);
+		NULL, 0, 0, ETH_I2C_ADDRESS_LOW);
 	struct ethtool_module_eeprom request = {0};
 	u8 module_id = page_zero_lower->data[0];
 	int err = 0;
@@ -290,11 +290,11 @@ static int decoder_prefetch(struct nl_context *nlctx)
 static void decoder_print(void)
 {
 	struct ethtool_module_eeprom *page_three = sff_cache_get(
-		3, 0, ETH_I2C_ADDRESS_LOW);
+		NULL, 3, 0, ETH_I2C_ADDRESS_LOW);
 	struct ethtool_module_eeprom *page_zero = sff_cache_get(
-		0, 0, ETH_I2C_ADDRESS_LOW);
+		NULL, 0, 0, ETH_I2C_ADDRESS_LOW);
 	struct ethtool_module_eeprom *page_one = sff_cache_get(
-		1, 0, ETH_I2C_ADDRESS_LOW);
+		NULL, 1, 0, ETH_I2C_ADDRESS_LOW);
 	u8 module_id = page_zero->data[SFF8636_ID_OFFSET];
 
 	switch (module_id) {
@@ -368,7 +368,7 @@ int nl_getmodule(struct cmd_context *ctx)
 		ret = nl_page_fetch(nlctx, &request);
 		if (ret < 0)
 			return ret;
-		reply_page = sff_cache_get(request.pageno, request.bank,
+		reply_page = sff_cache_get(NULL, request.pageno, request.bank,
 					   request.i2c_address);
 		if (!reply_page)
 			goto err_invalid;

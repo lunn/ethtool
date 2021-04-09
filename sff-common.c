@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <math.h>
 #include "sff-common.h"
+#include "netlink/extapi.h"
 #include "list.h"
 
 struct page_entry {
@@ -83,7 +84,9 @@ void sff_cache_free(void)
 	}
 }
 
-struct ethtool_module_eeprom *sff_cache_get(u32 pageno, u32 bank, u8 i2c_address)
+struct ethtool_module_eeprom *sff_cache_get(
+	struct cmd_context *ctx __maybe_unused,
+	u32 pageno, u32 bank, u8 i2c_address)
 {
 	struct ethtool_module_eeprom *entry;
 	struct list_head *head, *next;
@@ -95,6 +98,30 @@ struct ethtool_module_eeprom *sff_cache_get(u32 pageno, u32 bank, u8 i2c_address
 			return entry;
 	}
 
+#ifdef ETHTOOL_ENABLE_NETLINK
+	if (ctx && ctx->nlctx) {
+		struct ethtool_module_eeprom request;
+		int ret;
+
+		request.pageno = pageno;
+		request.bank = bank;
+		request.i2c_address = i2c_address;
+		request.length = 128;
+		request.offset = 128;
+
+		ret = nl_page_fetch(ctx->nlctx, &request);
+		if (ret < 0)
+			return NULL;
+
+		if (pageno == 0) {
+			request.offset = 0;
+
+			nl_page_fetch(ctx->nlctx, &request);
+		}
+
+		return sff_cache_get(ctx, pageno, bank, i2c_address);
+	}
+#endif
 	return NULL;
 }
 
