@@ -120,9 +120,7 @@
 #define YESNO(x) (((x) != 0) ? "Yes" : "No")
 #define ONOFF(x) (((x) != 0) ? "On" : "Off")
 
-void qsfp_dd_show_all(const __u8 *id);
-
-void cmis4_show_all(const struct ethtool_module_eeprom *page_zero,
-		    const struct ethtool_module_eeprom *page_one);
+void qsfp_dd_show_all(struct cmd_context *ctx);
+void cmis4_show_all(struct cmd_context *ctx);
 
 #endif /* QSFP_DD_H__ */

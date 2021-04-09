@@ -741,7 +741,7 @@ static void sff8636_dom_parse(const __u8 *id, const __u8 *page_three, struct sff
 
 }
 
-static void sff8636_show_dom(const __u8 *id, const __u8 *page_three, __u32 eeprom_len)
+static void sff8636_show_dom(const __u8 *id, const __u8 *page_three)
 {
 	struct sff_diags sd = {0};
 	char *rx_power_string = NULL;
@@ -756,11 +756,9 @@ static void sff8636_show_dom(const __u8 *id, const __u8 *page_three, __u32 eepro
 	 * If pagging support exists, then supports_alarms is marked as 1
 	 */
 
-	if (eeprom_len == ETH_MODULE_SFF_8636_MAX_LEN) {
-		if (!(id[SFF8636_STATUS_2_OFFSET] &
-					SFF8636_STATUS_PAGE_3_PRESENT)) {
-			sd.supports_alarms = 1;
-		}
+	if (!(id[SFF8636_STATUS_2_OFFSET] &
+	      SFF8636_STATUS_PAGE_3_PRESENT)) {
+		sd.supports_alarms = 1;
 	}
 
 	sd.rx_power_type = id[SFF8636_DIAG_TYPE_OFFSET] &
@@ -855,28 +853,34 @@ static void sff6836_show_page_zero(const __u8 *id)
 
 }
 
-void sff8636_show_all(const __u8 *id, __u32 eeprom_len)
+void sff8636_show_all(struct cmd_context *ctx)
 {
+	struct ethtool_module_eeprom *page;
+	const __u8 *three;
+	const __u8 *id;
+
+	page = sff_cache_get(ctx, 0, 0, 0x50);
+	if (!page)
+		return;
+
+	id = page->data;
 	if (id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP_DD) {
-		qsfp_dd_show_all(id);
+		qsfp_dd_show_all(ctx);
 		return;
 	}
 
 	sff8636_show_identifier(id);
+
+	page = sff_cache_get(ctx, 3, 0, 0x50);
+	if (!page)
+		return;
+
+	three = page->data;
+
 	if ((id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP) ||
 		(id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP_PLUS) ||
 		(id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP28)) {
 		sff6836_show_page_zero(id);
-		sff8636_show_dom(id, id + SFF8636_PAGE03H_OFFSET, eeprom_len);
+		sff8636_show_dom(id, three);
 	}
 }
-
-void sff8636_show_all_paged(const struct ethtool_module_eeprom *page_zero,
-			    const struct ethtool_module_eeprom *page_three)
-{
-	sff8636_show_identifier(page_zero->data);
-	sff6836_show_page_zero(page_zero->data);
-	if (page_three)
-		sff8636_show_dom(page_zero->data, page_three->data, ETH_MODULE_SFF_8636_MAX_LEN);
-}
-

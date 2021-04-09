@@ -390,9 +390,7 @@ void sff8079_show_all(struct cmd_context *ctx);
 void sff8472_show_all(struct cmd_context *ctx);
 
 /* QSFP Optics diagnostics */
-void sff8636_show_all(const __u8 *id, __u32 eeprom_len);
-void sff8636_show_all_paged(const struct ethtool_module_eeprom *page_zero,
-			    const struct ethtool_module_eeprom *page_three);
+void sff8636_show_all(struct cmd_context *ctx);
 
 /* FUJITSU Extended Socket network device */
 int fjes_dump_regs(struct ethtool_drvinfo *info, struct ethtool_regs *regs);

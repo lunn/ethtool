@@ -289,12 +289,8 @@ static int decoder_prefetch(struct nl_context *nlctx)
 
 static void decoder_print(struct nl_context *nlctx)
 {
-	struct ethtool_module_eeprom *page_three = sff_cache_get(
-		NULL, 3, 0, ETH_I2C_ADDRESS_LOW);
 	struct ethtool_module_eeprom *page_zero = sff_cache_get(
 		NULL, 0, 0, ETH_I2C_ADDRESS_LOW);
-	struct ethtool_module_eeprom *page_one = sff_cache_get(
-		NULL, 1, 0, ETH_I2C_ADDRESS_LOW);
 	u8 module_id = page_zero->data[SFF8636_ID_OFFSET];
 
 	switch (module_id) {
@@ -306,11 +302,11 @@ static void decoder_print(struct nl_context *nlctx)
 	case SFF8024_ID_QSFP:
 	case SFF8024_ID_QSFP28:
 	case SFF8024_ID_QSFP_PLUS:
-		sff8636_show_all_paged(page_zero, page_three);
+		sff8636_show_all(nlctx->ctx);
 		break;
 	case SFF8024_ID_QSFP_DD:
 	case SFF8024_ID_DSFP:
-		cmis4_show_all(page_zero, page_one);
+		cmis4_show_all(nlctx->ctx);
 		break;
 	default:
 		dump_hex(stdout, page_zero->data, page_zero->length, page_zero->offset);

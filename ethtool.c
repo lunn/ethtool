@@ -4951,8 +4951,7 @@ static int do_getmodule(struct cmd_context *ctx)
 				break;
 			case ETH_MODULE_SFF_8436:
 			case ETH_MODULE_SFF_8636:
-				sff8636_show_all(eeprom->data,
-						 modinfo.eeprom_len);
+				sff8636_show_all(ctx);
 				break;
 #endif
 			default:

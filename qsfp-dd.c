@@ -274,7 +274,14 @@ static void qsfp_dd_show_mod_lvl_monitors(const __u8 *id)
 		  OFFSET_TO_U16(QSFP_DD_CURR_CURR_OFFSET));
 }
 
-static void qsfp_dd_show_link_len_from_page(const __u8 *page_one_data)
+/**
+ * Print relevant info about the maximum supported fiber media length
+ * for each type of fiber media at the maximum module-supported bit rate.
+ * Relevant documents:
+ * [1] CMIS Rev. 3, page 64, section 1.7.4.2, Table 39
+ * [2] CMIS Rev. 4, page 99, section 8.4.2, Table 8-27
+ */
+static void qsfp_dd_show_link_len(const __u8 *page_one_data)
 {
 	qsfp_dd_print_smf_cbl_len(page_one_data);
 	sff_show_value_with_unit(page_one_data, QSFP_DD_OM5_LEN_OFFSET,
@@ -287,18 +294,6 @@ static void qsfp_dd_show_link_len_from_page(const __u8 *page_one_data)
 				 "Length (OM2 50/125um)", 1, "m");
 }
 
-
-/**
- * Print relevant info about the maximum supported fiber media length
- * for each type of fiber media at the maximum module-supported bit rate.
- * Relevant documents:
- * [1] CMIS Rev. 3, page 64, section 1.7.4.2, Table 39
- * [2] CMIS Rev. 4, page 99, section 8.4.2, Table 8-27
- */
-static void qsfp_dd_show_link_len(const __u8 *id)
-{
-	qsfp_dd_show_link_len_from_page(id + PAG01H_UPPER_OFFSET);
-}
 
 /**
  * Show relevant information about the vendor. Relevant documents:
@@ -324,8 +319,18 @@ static void qsfp_dd_show_vendor_info(const __u8 *id)
 			       QSFP_DD_CLEI_END_OFFSET, "CLEI code");
 }
 
-void qsfp_dd_show_all(const __u8 *id)
+void qsfp_dd_show_all(struct cmd_context *ctx)
 {
+	struct ethtool_module_eeprom *page;
+	const __u8 *one;
+	const __u8 *id;
+
+	page = sff_cache_get(ctx, 0, 0, 0x50);
+	if (!page)
+		return;
+
+	id = page->data;
+
 	qsfp_dd_show_identifier(id);
 	qsfp_dd_show_power_info(id);
 	qsfp_dd_show_connector(id);
@@ -333,27 +338,45 @@ void qsfp_dd_show_all(const __u8 *id)
 	qsfp_dd_show_sig_integrity(id);
 	qsfp_dd_show_mit_compliance(id);
 	qsfp_dd_show_mod_lvl_monitors(id);
-	qsfp_dd_show_link_len(id);
+
+	page = sff_cache_get(ctx, 1, 0, 0x50);
+	if (page) {
+		one = page->data;
+
+		qsfp_dd_show_link_len(one);
+	}
+
 	qsfp_dd_show_vendor_info(id);
 	qsfp_dd_show_rev_compliance(id);
 }
 
-void cmis4_show_all(const struct ethtool_module_eeprom *page_zero,
-		    const struct ethtool_module_eeprom *page_one)
+void cmis4_show_all(struct cmd_context *ctx)
 {
-	const __u8 *page_zero_data = page_zero->data;
+	struct ethtool_module_eeprom *page;
+	const __u8 *one;
+	const __u8 *id;
 
-	qsfp_dd_show_identifier(page_zero_data);
-	qsfp_dd_show_power_info(page_zero_data);
-	qsfp_dd_show_connector(page_zero_data);
-	qsfp_dd_show_cbl_asm_len(page_zero_data);
-	qsfp_dd_show_sig_integrity(page_zero_data);
-	qsfp_dd_show_mit_compliance(page_zero_data);
-	qsfp_dd_show_mod_lvl_monitors(page_zero_data);
+	page = sff_cache_get(ctx, 0, 0, 0x50);
+	if (!page)
+		return;
 
-	if (page_one)
-		qsfp_dd_show_link_len_from_page(page_one->data);
+	id = page->data;
 
-	qsfp_dd_show_vendor_info(page_zero_data);
-	qsfp_dd_show_rev_compliance(page_zero_data);
+	qsfp_dd_show_identifier(id);
+	qsfp_dd_show_power_info(id);
+	qsfp_dd_show_connector(id);
+	qsfp_dd_show_cbl_asm_len(id);
+	qsfp_dd_show_sig_integrity(id);
+	qsfp_dd_show_mit_compliance(id);
+	qsfp_dd_show_mod_lvl_monitors(id);
+
+	page = sff_cache_get(ctx, 1, 0, 0x50);
+	if (page) {
+		one = page->data;
+
+		qsfp_dd_show_link_len(one);
+	}
+
+	qsfp_dd_show_vendor_info(id);
+	qsfp_dd_show_rev_compliance(id);
 }
