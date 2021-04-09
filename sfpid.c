@@ -396,8 +396,17 @@ static void sff8079_show_options(const __u8 *id)
 		printf("%s Power level 3 requirement\n", pfx);
 }
 
-void sff8079_show_all(const __u8 *id)
+void sff8079_show_all(struct cmd_context *ctx)
 {
+	struct ethtool_module_eeprom *page;
+	const __u8 *id;
+
+	page = sff_cache_get(ctx, 0, 0, 0x50);
+	if (!page)
+		return;
+
+	id = page->data;
+
 	sff8079_show_identifier(id);
 	if (((id[0] == 0x02) || (id[0] == 0x03)) && (id[1] == 0x04)) {
 		unsigned int br_nom, br_min, br_max;

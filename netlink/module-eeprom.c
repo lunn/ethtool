@@ -287,7 +287,7 @@ static int decoder_prefetch(struct nl_context *nlctx)
 	return nl_page_fetch(nlctx, &request);
 }
 
-static void decoder_print(void)
+static void decoder_print(struct nl_context *nlctx)
 {
 	struct ethtool_module_eeprom *page_three = sff_cache_get(
 		NULL, 3, 0, ETH_I2C_ADDRESS_LOW);
@@ -300,7 +300,7 @@ static void decoder_print(void)
 	switch (module_id) {
 	case SFF8024_ID_SOLDERED_MODULE:
 	case SFF8024_ID_SFP:
-		sff8079_show_all(page_zero->data);
+		sff8079_show_all(nlctx->ctx);
 		break;
 	case SFF8024_ID_QSFP:
 	case SFF8024_ID_QSFP28:
@@ -383,7 +383,7 @@ int nl_getmodule(struct cmd_context *ctx)
 		ret = decoder_prefetch(nlctx);
 		if (ret)
 			goto cleanup;
-		decoder_print();
+		decoder_print(nlctx);
 	}
 
 err_invalid:
