@@ -184,7 +184,8 @@ static int getmodule_page_fetch_reply_cb(const struct nlmsghdr *nlhdr,
 	return sff_cache_add(response);
 }
 
-static int page_fetch(struct nl_context *nlctx, const struct ethtool_module_eeprom *request)
+int nl_page_fetch(struct nl_context *nlctx,
+		  const struct ethtool_module_eeprom *request)
 {
 	struct nl_socket *nlsock = nlctx->ethnl_socket;
 	struct nl_msg_buff *msg = &nlsock->msgbuff;
@@ -259,7 +260,7 @@ static int decoder_prefetch(struct nl_context *nlctx)
 	request.i2c_address = ETH_I2C_ADDRESS_LOW;
 	request.offset = 128;
 	request.length = 128;
-	err = page_fetch(nlctx, &request);
+	err = nl_page_fetch(nlctx, &request);
 	if (err)
 		return err;
 
@@ -283,7 +284,7 @@ static int decoder_prefetch(struct nl_context *nlctx)
 		break;
 	}
 
-	return page_fetch(nlctx, &request);
+	return nl_page_fetch(nlctx, &request);
 }
 
 static void decoder_print(void)
@@ -343,7 +344,7 @@ int nl_getmodule(struct cmd_context *ctx)
 
 	request.i2c_address = ETH_I2C_ADDRESS_LOW;
 	request.length = 128;
-	ret = page_fetch(nlctx, &request);
+	ret = nl_page_fetch(nlctx, &request);
 	if (ret)
 		goto cleanup;
 
@@ -364,7 +365,7 @@ int nl_getmodule(struct cmd_context *ctx)
 		if (!page_available(&request))
 			goto err_invalid;
 
-		ret = page_fetch(nlctx, &request);
+		ret = nl_page_fetch(nlctx, &request);
 		if (ret < 0)
 			return ret;
 		reply_page = sff_cache_get(request.pageno, request.bank,

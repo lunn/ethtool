@@ -43,6 +43,9 @@ int nl_getmodule(struct cmd_context *ctx);
 
 void nl_monitor_usage(void);
 
+int nl_page_fetch(struct nl_context *nlctx,
+		  const struct ethtool_module_eeprom *request);
+
 #else /* ETHTOOL_ENABLE_NETLINK */
 
 static inline void netlink_run_handler(struct cmd_context *ctx __maybe_unused,
