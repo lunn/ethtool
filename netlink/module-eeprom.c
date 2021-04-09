@@ -290,8 +290,13 @@ static int decoder_prefetch(struct nl_context *nlctx)
 static void decoder_print(struct nl_context *nlctx)
 {
 	struct ethtool_module_eeprom *page_zero = sff_cache_get(
-		NULL, 0, 0, ETH_I2C_ADDRESS_LOW);
-	u8 module_id = page_zero->data[SFF8636_ID_OFFSET];
+		nlctx->ctx, 0, 0, ETH_I2C_ADDRESS_LOW);
+	u8 module_id;
+
+	if (!page_zero)
+		return;
+
+	module_id = page_zero->data[SFF8636_ID_OFFSET];
 
 	switch (module_id) {
 	case SFF8024_ID_SOLDERED_MODULE:
