@@ -287,6 +287,25 @@ static int decoder_prefetch(struct nl_context *nlctx)
 	return nl_page_fetch(nlctx, &request);
 }
 
+void decoder_print_hex(void)
+{
+	struct ethtool_module_eeprom *page;
+	u32 i2c_address;
+	u32 pageno;
+
+	for (i2c_address = 0;
+	     i2c_address <= ETH_I2C_MAX_ADDRESS;
+	     i2c_address++) {
+		for (pageno = 0; pageno <= 255; pageno++) {
+			page = sff_cache_get(NULL, pageno, 0, i2c_address);
+			if (!page)
+				continue;
+			printf("Page %d, Address 0x%x\n", pageno, i2c_address);
+			dump_hex(stdout, page->data, page->length, page->offset);
+		}
+	}
+}
+
 static void decoder_print(struct nl_context *nlctx)
 {
 	struct ethtool_module_eeprom *page_zero = sff_cache_get(
@@ -314,7 +333,7 @@ static void decoder_print(struct nl_context *nlctx)
 		cmis4_show_all(nlctx->ctx);
 		break;
 	default:
-		dump_hex(stdout, page_zero->data, page_zero->length, page_zero->offset);
+		decoder_print_hex();
 		break;
 	}
 }
