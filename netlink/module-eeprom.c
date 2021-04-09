@@ -301,6 +301,7 @@ static void decoder_print(struct nl_context *nlctx)
 	case SFF8024_ID_SOLDERED_MODULE:
 	case SFF8024_ID_SFP:
 		sff8079_show_all(nlctx->ctx);
+		sff8472_show_all(nlctx->ctx);
 		break;
 	case SFF8024_ID_QSFP:
 	case SFF8024_ID_QSFP28:

@@ -387,7 +387,7 @@ int rxclass_rule_del(struct cmd_context *ctx, __u32 loc);
 void sff8079_show_all(struct cmd_context *ctx);
 
 /* Optics diagnostics */
-void sff8472_show_all(const __u8 *id);
+void sff8472_show_all(struct cmd_context *ctx);
 
 /* QSFP Optics diagnostics */
 void sff8636_show_all(const __u8 *id, __u32 eeprom_len);

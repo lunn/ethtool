@@ -29,13 +29,6 @@
 
 #define SFF_A0_OPTIONS_AW                 (1 << 7)
 
-/*
- * See ethtool.c comments about SFF-8472, this is the offset
- * at which the A2 page is in the EEPROM blob returned by the
- * kernel.
- */
-#define SFF_A2_BASE                       0x100
-
 /* A2-based offsets for DOM */
 #define SFF_A2_TEMP                       96
 #define SFF_A2_TEMP_HALRM                 0
@@ -122,11 +115,11 @@ static struct sff8472_aw_flags {
 
 /* Most common case: 16-bit unsigned integer in a certain unit */
 #define A2_OFFSET_TO_U16(offset) \
-	(id[SFF_A2_BASE + (offset)] << 8 | id[SFF_A2_BASE + (offset) + 1])
+	(id[(offset)] << 8 | id[(offset) + 1])
 
 /* Calibration slope is a number between 0.0 included and 256.0 excluded. */
 #define A2_OFFSET_TO_SLP(offset) \
-	(id[SFF_A2_BASE + (offset)] + id[SFF_A2_BASE + (offset) + 1] / 256.)
+	(id[(offset)] + id[(offset) + 1] / 256.)
 
 /* Calibration offset is an integer from -32768 to 32767 */
 #define A2_OFFSET_TO_OFF(offset) \
@@ -134,7 +127,7 @@ static struct sff8472_aw_flags {
 
 /* RXPWR(x) are IEEE-754 floating point numbers in big-endian format */
 #define A2_OFFSET_TO_RXPWRx(offset) \
-	(befloattoh((__u32 *)(id + SFF_A2_BASE + (offset))))
+	(befloattoh((__u32 *)(id + (offset))))
 
 /*
  * 2-byte internal temperature conversions:
@@ -222,13 +215,16 @@ static void sff8472_calibration(const __u8 *id, struct sff_diags *sd)
 	}
 }
 
-static void sff8472_parse_eeprom(const __u8 *id, struct sff_diags *sd)
+static void sff8472_parse_eeprom_a0(const __u8 *id, struct sff_diags *sd)
 {
 	sd->supports_dom = id[SFF_A0_DOM] & SFF_A0_DOM_IMPL;
 	sd->supports_alarms = id[SFF_A0_OPTIONS] & SFF_A0_OPTIONS_AW;
 	sd->calibrated_ext = id[SFF_A0_DOM] & SFF_A0_DOM_EXTCAL;
 	sd->rx_power_type = id[SFF_A0_DOM] & SFF_A0_DOM_PWRT;
+}
 
+static void sff8472_parse_eeprom_a2(const __u8 *id, struct sff_diags *sd)
+{
 	sff8472_dom_parse(id, sd);
 
 	/*
@@ -275,24 +271,40 @@ void sff8472_show_compliance(u8 code)
 	}
 }
 
-void sff8472_show_all(const __u8 *id)
+void sff8472_show_all(struct cmd_context *ctx)
 {
+	struct ethtool_module_eeprom *page;
 	struct sff_diags sd = {0};
 	char *rx_power_string = NULL;
+	const __u8 *id, *dom;
 	int i;
+
+	page = sff_cache_get(ctx, 0, 0, 0x50);
+	if (!page)
+		return;
+
+	id = page->data;
 
 	if (id[SFF_A0_COMP])
 		sff8472_show_compliance(id[SFF_A0_COMP]);
 	else
 		return;
 
-	sff8472_parse_eeprom(id, &sd);
+	sff8472_parse_eeprom_a0(id, &sd);
 
 	if (!sd.supports_dom) {
 		printf("\t%-41s : No\n", "Optical diagnostics support");
 		return;
 	}
 	printf("\t%-41s : Yes\n", "Optical diagnostics support");
+
+	page = sff_cache_get(ctx, 0, 0, 0x51);
+	if (!page)
+		return;
+
+	dom = page->data;
+
+	sff8472_parse_eeprom_a2(dom, &sd);
 
 	PRINT_BIAS("Laser bias current", sd.bias_cur[MCURR]);
 	PRINT_xX_PWR("Laser output power", sd.tx_power[MCURR]);
@@ -313,7 +325,7 @@ void sff8472_show_all(const __u8 *id)
 
 		for (i = 0; sff8472_aw_flags[i].str; ++i) {
 			printf("\t%-41s : %s\n", sff8472_aw_flags[i].str,
-			       id[SFF_A2_BASE + sff8472_aw_flags[i].offset]
+			       dom[sff8472_aw_flags[i].offset]
 			       & sff8472_aw_flags[i].value ? "On" : "Off");
 		}
 		sff_show_thresholds(sd);
