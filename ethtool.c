@@ -4940,28 +4940,14 @@ static int do_getmodule(struct cmd_context *ctx)
 			geeprom_dump_hex = 1;
 		} else if (!geeprom_dump_hex) {
 			populate_cache(&modinfo, eeprom);
-			switch (modinfo.type) {
 #ifdef ETHTOOL_ENABLE_PRETTY_DUMP
-			case ETH_MODULE_SFF_8079:
-				sff8079_show_all(ctx);
-				break;
-			case ETH_MODULE_SFF_8472:
-				sff8079_show_all(ctx);
-				sff8472_show_all(ctx);
-				break;
-			case ETH_MODULE_SFF_8436:
-			case ETH_MODULE_SFF_8636:
-				sff8636_show_all(ctx);
-				break;
+			sff_decoder_print(ctx);
+#else
+			geeprom_dump_hex = 1;
 #endif
-			default:
-				geeprom_dump_hex = 1;
-				break;
-			}
 		}
 		if (geeprom_dump_hex)
-			dump_hex(stdout, eeprom->data,
-				 eeprom->len, eeprom->offset);
+			sff_decoder_print_hex();
 	}
 
 	free(eeprom);
