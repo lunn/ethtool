@@ -301,12 +301,6 @@ int nl_getmodule(struct cmd_context *ctx)
 		return 1;
 	}
 
-	request.i2c_address = ETH_I2C_ADDRESS_LOW;
-	request.length = 128;
-	ret = nl_page_fetch(nlctx, &request);
-	if (ret)
-		goto cleanup;
-
 #ifdef ETHTOOL_ENABLE_PRETTY_DUMP
 	if (getmodule_cmd_params.bank ||
 	    getmodule_cmd_params.pageno ||
@@ -342,7 +336,6 @@ int nl_getmodule(struct cmd_context *ctx)
 
 err_invalid:
 	ret = -EINVAL;
-cleanup:
 	sff_cache_free();
 	return ret;
 }
