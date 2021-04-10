@@ -25,6 +25,12 @@
 
 #include <stdio.h>
 #include "internal.h"
+#include "qsfp.h"
+#include "qsfp-dd.h"
+
+#define ETH_I2C_ADDRESS_LOW	0x50
+#define ETH_I2C_ADDRESS_HIGH	0x51
+#define ETH_I2C_MAX_ADDRESS	0x7F
 
 /* Revision compliance */
 #define  SFF8636_REV_UNSPECIFIED		0x00
@@ -198,6 +204,8 @@ struct ethtool_module_eeprom *sff_cache_get(struct cmd_context *ctx,
 					    u32 pageno, u32 bank,
 					    u8 i2c_address);
 void sff_page_free(struct ethtool_module_eeprom *page);
+void sff_decoder_print(struct cmd_context *ctx);
+void sff_decoder_print_hex(void);
 
 double convert_mw_to_dbm(double mw);
 void sff_show_value_with_unit(const __u8 *id, unsigned int reg,

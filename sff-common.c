@@ -125,6 +125,55 @@ struct ethtool_module_eeprom *sff_cache_get(
 	return NULL;
 }
 
+void sff_decoder_print_hex(void)
+{
+	struct ethtool_module_eeprom *page;
+	u32 i2c_address;
+	u32 pageno;
+
+	for (i2c_address = ETH_I2C_ADDRESS_LOW;
+	     i2c_address <= ETH_I2C_ADDRESS_HIGH;
+	     i2c_address++) {
+		for (pageno = 0; pageno <= 255; pageno++) {
+			page = sff_cache_get(NULL, pageno, 0, i2c_address);
+			if (!page)
+				continue;
+			printf("Page %d, Address 0x%x\n", pageno, i2c_address);
+			dump_hex(stdout, page->data, page->length, page->offset);
+		}
+	}
+}
+
+void sff_decoder_print(struct cmd_context *ctx)
+{
+	struct ethtool_module_eeprom *page_zero = sff_cache_get(
+		ctx, 0, 0, ETH_I2C_ADDRESS_LOW);
+	if (!page_zero)
+		return;
+
+	u8 module_id = page_zero->data[SFF8636_ID_OFFSET];
+
+	switch (module_id) {
+	case SFF8024_ID_SOLDERED_MODULE:
+	case SFF8024_ID_SFP:
+		sff8079_show_all(ctx);
+		sff8472_show_all(ctx);
+		break;
+	case SFF8024_ID_QSFP:
+	case SFF8024_ID_QSFP28:
+	case SFF8024_ID_QSFP_PLUS:
+		sff8636_show_all(ctx);
+		break;
+	case SFF8024_ID_QSFP_DD:
+	case SFF8024_ID_DSFP:
+		cmis4_show_all(ctx);
+		break;
+	default:
+		sff_decoder_print_hex();
+		break;
+	}
+}
+
 double convert_mw_to_dbm(double mw)
 {
 	return (10. * log10(mw / 1000.)) + 30.;
