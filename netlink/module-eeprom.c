@@ -225,29 +225,6 @@ int nl_page_fetch(struct nl_context *nlctx,
 	return nlsock_process_reply(nlsock, nomsg_reply_cb, NULL);
 }
 
-static bool page_available(struct ethtool_module_eeprom *which)
-{
-	struct ethtool_module_eeprom *page_zero = sff_cache_get(
-		NULL, 0, 0, ETH_I2C_ADDRESS_LOW);
-	u8 id = page_zero->data[SFF8636_ID_OFFSET];
-	u8 flat_mem = page_zero->data[2] & 0x80;
-
-	switch (id) {
-	case SFF8024_ID_SOLDERED_MODULE:
-	case SFF8024_ID_SFP:
-		return (!which->bank && which->pageno <= 1);
-	case SFF8024_ID_QSFP:
-	case SFF8024_ID_QSFP28:
-	case SFF8024_ID_QSFP_PLUS:
-		return (!which->bank && which->pageno <= 3);
-	case SFF8024_ID_QSFP_DD:
-	case SFF8024_ID_DSFP:
-		return (which->pageno > 0 && !flat_mem);
-	default:
-		return true;
-	}
-}
-
 void decoder_print_hex(void)
 {
 	struct ethtool_module_eeprom *page;
@@ -344,8 +321,6 @@ int nl_getmodule(struct cmd_context *ctx)
 	request.i2c_address = getmodule_cmd_params.i2c_address ?: ETH_I2C_ADDRESS_LOW;
 
 	if (getmodule_cmd_params.dump_hex || getmodule_cmd_params.dump_raw) {
-		if (!page_available(&request))
-			goto err_invalid;
 
 		ret = nl_page_fetch(nlctx, &request);
 		if (ret < 0)
