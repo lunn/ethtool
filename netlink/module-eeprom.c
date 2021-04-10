@@ -117,7 +117,7 @@ static int cache_add(struct ethtool_module_eeprom *page)
 		return -1;
 	list_element = malloc(sizeof(*list_element));
 	if (!list_element)
-		return ENOMEM;
+		return -ENOMEM;
 	list_element->page = page;
 
 	list_add(&list_element->link, &page_list);
@@ -230,7 +230,7 @@ static int getmodule_page_fetch_reply_cb(const struct nlmsghdr *nlhdr,
 
 	response = calloc(1, sizeof(*response));
 	if (!response)
-		return ENOMEM;
+		return -ENOMEM;
 
 	request = (struct ethtool_module_eeprom *)data;
 	response->offset = request->offset;
@@ -264,7 +264,7 @@ static int page_fetch(struct nl_context *nlctx, const struct ethtool_module_eepr
 	int ret;
 
 	if (!request || request->i2c_address > ETH_I2C_MAX_ADDRESS)
-		return EINVAL;
+		return -EINVAL;
 
 	/* Satisfy request right away, if region is already in cache */
 	page = cache_get(request->page, request->bank, request->i2c_address);
@@ -283,7 +283,7 @@ static int page_fetch(struct nl_context *nlctx, const struct ethtool_module_eepr
 	    ethnla_put_u8(msg, ETHTOOL_A_MODULE_EEPROM_PAGE, request->page) ||
 	    ethnla_put_u8(msg, ETHTOOL_A_MODULE_EEPROM_BANK, request->bank) ||
 	    ethnla_put_u8(msg, ETHTOOL_A_MODULE_EEPROM_I2C_ADDRESS, request->i2c_address))
-		return EMSGSIZE;
+		return -EMSGSIZE;
 
 	ret = nlsock_sendmsg(nlsock, NULL);
 	if (ret < 0)
@@ -450,7 +450,7 @@ int nl_getmodule(struct cmd_context *ctx)
 	}
 
 err_invalid:
-	ret = EINVAL;
+	ret = -EINVAL;
 cleanup:
 	cache_free();
 	return ret;
