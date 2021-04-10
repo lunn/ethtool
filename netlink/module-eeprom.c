@@ -248,45 +248,6 @@ static bool page_available(struct ethtool_module_eeprom *which)
 	}
 }
 
-static int decoder_prefetch(struct nl_context *nlctx)
-{
-	struct ethtool_module_eeprom *page_zero_lower = sff_cache_get(
-		NULL, 0, 0, ETH_I2C_ADDRESS_LOW);
-	struct ethtool_module_eeprom request = {0};
-	u8 module_id = page_zero_lower->data[0];
-	int err = 0;
-
-	/* Fetch rest of page 00 */
-	request.i2c_address = ETH_I2C_ADDRESS_LOW;
-	request.offset = 128;
-	request.length = 128;
-	err = nl_page_fetch(nlctx, &request);
-	if (err)
-		return err;
-
-	switch (module_id) {
-	case SFF8024_ID_QSFP:
-	case SFF8024_ID_QSFP28:
-	case SFF8024_ID_QSFP_PLUS:
-		memset(&request, 0, sizeof(request));
-		request.i2c_address = ETH_I2C_ADDRESS_LOW;
-		request.offset = 128;
-		request.length = 128;
-		request.pageno = 3;
-		break;
-	case SFF8024_ID_QSFP_DD:
-	case SFF8024_ID_DSFP:
-		memset(&request, 0, sizeof(request));
-		request.i2c_address = ETH_I2C_ADDRESS_LOW;
-		request.offset = 128;
-		request.length = 128;
-		request.pageno = 1;
-		break;
-	}
-
-	return nl_page_fetch(nlctx, &request);
-}
-
 void decoder_print_hex(void)
 {
 	struct ethtool_module_eeprom *page;
@@ -401,9 +362,6 @@ int nl_getmodule(struct cmd_context *ctx)
 		else
 			dump_hex(stdout, eeprom_data, dump_length, request.offset);
 	} else {
-		ret = decoder_prefetch(nlctx);
-		if (ret)
-			goto cleanup;
 		decoder_print(nlctx);
 	}
 
