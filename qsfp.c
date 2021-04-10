@@ -864,11 +864,6 @@ void sff8636_show_all(struct cmd_context *ctx)
 		return;
 
 	id = page->data;
-	if (id[SFF8636_ID_OFFSET] == SFF8024_ID_QSFP_DD) {
-		qsfp_dd_show_all(ctx);
-		return;
-	}
-
 	sff8636_show_identifier(id);
 
 	page = sff_cache_get(ctx, 3, 0, 0x50);

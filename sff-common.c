@@ -165,6 +165,8 @@ void sff_decoder_print(struct cmd_context *ctx)
 		sff8636_show_all(ctx);
 		break;
 	case SFF8024_ID_QSFP_DD:
+		qsfp_dd_show_all(ctx);
+		break;
 	case SFF8024_ID_DSFP:
 		cmis4_show_all(ctx);
 		break;
